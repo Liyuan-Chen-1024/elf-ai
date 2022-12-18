@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+ web:
+  build:
+   context: .
+  ports:
+   - 8000:8000
+  volumes:
+   - ./:/app
+  networks:
+    - webnet
+ redis:
+  command: bash -c "redis-server --save 10 1 --requirepass 5s6dfsd7"
+  image: redis
+  ports:
+    - 6379:6379
+  volumes:
+    - ~/docker_volumes/redis-data:/data
+  networks:
+    - webnet
+
+networks:
+  webnet:
