@@ -7,14 +7,6 @@ from rest_framework.response import Response
 from .models import TVShow
 from .serializers import TVShowSerializer
 
-def index(request):
-    a = 1/1
-    return render(request, "media/index.html")
-
-def index2(request):
-    pass
-
-
 @api_view(['GET', 'POST'])
 def tvshows_list(request):
     if request.method == 'GET':

@@ -3,9 +3,15 @@ FROM python:3.11
 # Create app directory
 WORKDIR /app
 
-RUN apt-get update && apt-get install g++ gcc libxml2 libxslt-dev
-RUN apt-get update && apt install nodejs npm -y
+# Install NPM and Node
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    npm
+RUN npm install npm@latest -g && \
+    npm install n -g && \
+    n latest
 
+RUN apt-get update && apt-get install g++ gcc libxml2 libxslt-dev
 RUN python -m pip install --upgrade pip
 
 # Install app dependencies
