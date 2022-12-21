@@ -4,3 +4,5 @@ db.sqlite3
 __pycache__
 mydatabase
 node_modules
+info.log
+error.log
