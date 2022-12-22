@@ -1,12 +1,14 @@
 import os
+import subprocess
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-import subprocess
+from rest_framework.decorators import authentication_classes, permission_classes
 
-@api_view(['GET'])
+@api_view(['GET'])    
 @authentication_classes([])
 @permission_classes([])
 def deploy_service(request, service):
