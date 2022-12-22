@@ -14,6 +14,8 @@ RUN pip install -r requirements.txt
 # Bundle app source
 COPY . .
 
+RUN python3 manage.py migrate
+
 # Setup SSH with secure root login
 RUN apt-get update \
  && apt-get install -y openssh-server netcat \

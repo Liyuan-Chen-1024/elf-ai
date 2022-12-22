@@ -10,6 +10,7 @@ services:
    - 9922:22
   volumes:
    - ./:/app
+   - ~/docker_volumes/deployservice/:/deployservice
   networks:
     - webnet
  redis_jarvis:
