@@ -3,14 +3,6 @@ FROM python:3.11
 # Create app directory
 WORKDIR /app
 
-# Install NPM and Node
-RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    npm
-RUN npm install npm@latest -g && \
-    npm install n -g && \
-    n latest
-
 RUN apt-get update && apt-get install -y g++ gcc libxml2 cron libxslt-dev python-dev default-libmysqlclient-de
 RUN python -m pip install --upgrade pip
 
