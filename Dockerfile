@@ -11,7 +11,7 @@ RUN npm install npm@latest -g && \
     npm install n -g && \
     n latest
 
-RUN apt-get update && apt-get install -y g++ gcc libxml2 cron libxslt-dev default-libmysqlclient-dev python3-dev
+RUN apt-get update && apt-get install -y g++ gcc libxml2 cron libxslt-dev python-dev default-libmysqlclient-de
 RUN python -m pip install --upgrade pip
 
 # Install app dependencies
