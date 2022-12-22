@@ -6,9 +6,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import subprocess
 
+@api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
-@api_view(['GET'])
 def deploy_service(request, service):
     queue_file = os.path.expanduser('/deployservice/queue')
     
