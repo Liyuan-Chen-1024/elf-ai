@@ -2,6 +2,7 @@ FROM python:3.11
 
 # Create app directory
 WORKDIR /app
+USER 1000
 
 RUN apt-get update && apt-get install -y g++ gcc libxml2 cron libxslt-dev default-mysql-client
 RUN python -m pip install --upgrade pip
