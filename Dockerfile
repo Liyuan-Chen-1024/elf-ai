@@ -3,7 +3,7 @@ FROM python:3.11
 # Create app directory
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y g++ gcc libxml2 cron libxslt-dev python-dev libmariadbclient-dev mysql-python
+RUN apt-get update && apt-get install -y g++ gcc libxml2 cron libxslt-dev python-dev libmariadbclient-dev py-mysqldb
 RUN python -m pip install --upgrade pip
 
 # Install app dependencies
