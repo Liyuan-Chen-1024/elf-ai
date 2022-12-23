@@ -5,7 +5,7 @@ services:
     build:
       context: .
       args:
-      - DJANGO_SETTINGS=core.settings
+        - DJANGO_SETTINGS=core.settings
     ports:
       - 8000:8000
       - 9922:22
