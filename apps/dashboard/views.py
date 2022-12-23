@@ -8,10 +8,12 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.decorators import authentication_classes, permission_classes
 
-@api_view(['GET'])    
+@api_view(['GET', 'POST'])    
 @authentication_classes([])
 @permission_classes([])
 def deploy_service(request, service):
+    required_secret = 'f2hf9hf9oh8f9o023fdoi'
+    
     queue_file = os.path.expanduser('/deployservice/queue')
     
     current_queue = {}
@@ -26,7 +28,7 @@ def deploy_service(request, service):
                 continue
 
             if service not in current_queue:
-                current_queue = ts
+                current_queue[service] = ts
             else:
                 if current_queue[service] < ts:
                     current_queue[service] = ts
