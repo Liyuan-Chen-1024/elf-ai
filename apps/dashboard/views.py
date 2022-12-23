@@ -24,7 +24,7 @@ def deploy_service(request, service):
             service, ts = line.split(",")
             ts = int(ts.strip())
 
-            if ts < time.time() - 120:
+            if ts < time.time() - 60:
                 continue
 
             if service not in current_queue:
