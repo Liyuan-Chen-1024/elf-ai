@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'apps.media',
+    'apps.dashboard',
+    'apps.plex',
 ]
 
 MIDDLEWARE = [

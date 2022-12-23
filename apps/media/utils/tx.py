@@ -6,12 +6,12 @@ class TXWrapper:
 
     @classmethod
     def add(cls, url, download_dir='/data'):
-        client = Client(host="192.168.1.10")
+        client = Client(host="tx")
         return client.add_torrent(torrent=url, download_dir=download_dir)
 
     @classmethod
     def manage_queue(cls):
-        client = Client(host="192.168.1.10")
+        client = Client(host="tx")
         torrents = client.get_torrents(
             arguments=[
                 'id',

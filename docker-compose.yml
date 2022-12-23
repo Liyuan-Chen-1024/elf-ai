@@ -1,25 +1,46 @@
 version: '3.8'
 
 services:
- web:
-  build:
-   context: .
-  ports:
-   - 8000:8000
-  volumes:
-   - ./:/app
-   - ~/docker_volumes/deployservice/:/deployservice
-  networks:
-    - webnet
- redis:
-  command: bash -c "redis-server --save 10 1 --requirepass 5s6dfsd7"
-  image: redis
-  ports:
-    - 6379:6379
-  volumes:
-    - ~/docker_volumes/redis-data:/data
-  networks:
-    - webnet
-
-networks:
-  webnet:
+  jarvis:
+    build:
+      context: .
+      args:
+      - DJANGO_SETTINGS=core.settings
+    ports:
+      - 8000:8000
+      - 9922:22
+    volumes:
+      - ./:/app
+      - ~/docker_volumes/deployservice/:/deployservice
+    links: 
+      - tx
+      - redis
+  redis:
+    command: bash -c "redis-server --save 10 1 --requirepass 8hd8293hd92"
+    image: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - ~/docker_volumes/redis-data:/data
+  tx:
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - '$HOME/downloads:/data'
+    environment:
+      - OPENVPN_PROVIDER=NordVPN
+      - OPENVPN_CONFIG=ro
+      - NORDVPN_COUNTRY=RO
+      - NORDVPN_PROTOCOL=udp
+      - NORDVPN_CATEGORY=P2P
+      - OPENVPN_USERNAME=ihibv6TpxEEcA2mmQVJEYtf5
+      - OPENVPN_PASSWORD=jBrRQMXJvvhPurt12WyExL9K
+      - LOCAL_NETWORK=192.168.0.0/16
+    logging:
+      driver: json-file
+      options:
+        max-size: 30m
+    ports:
+      - '9091:9091'
+      - '9117:9117'
+    image: haugene/transmission-openvpn

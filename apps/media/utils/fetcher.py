@@ -27,7 +27,7 @@ def epguides_api_request(path):
     return parse_json_from_url('https://epguides.frecar.no/{0}'.format(path))
 
 def potato_api_request(path):
-    return parse_json_from_url('http://192.168.1.10:3002/{0}'.format(path))
+    return parse_json_from_url('https://potato.frecar.no/{0}'.format(path))
 
 def parse_json_from_url(url):
     log.info("Reading data from: %s" % url)

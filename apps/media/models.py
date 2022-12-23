@@ -1,5 +1,7 @@
 import os
 from django.db import models 
+from django.utils import timezone
+
 import logging
 from django.conf import settings
 from apps.media.utils.fetcher import potato_api_request, epguides_api_request
@@ -15,12 +17,12 @@ log = logging.getLogger("jarvis_fetcher")
 class TVShow(models.Model):
     epguide_name = models.CharField(max_length=250)
     full_name = models.CharField(max_length=250)
-    current_season = models.IntegerField()
-    current_episode = models.IntegerField()
+    current_season = models.IntegerField(default=1)
+    current_episode = models.IntegerField(default=1)
     active = models.BooleanField(default=False)
     keep = models.BooleanField(default=False)
-    datetime_edited = models.DateTimeField()
-    datetime_added = models.DateTimeField()
+    datetime_edited = models.DateTimeField(default=timezone.now)
+    datetime_added = models.DateTimeField(default=timezone.now)
     downloaded_current_episode = models.BooleanField(default=False)
     episode_lookup_type = models.CharField(default="number", max_length=255)
     first_release_date = models.DateField(null=True)
@@ -72,7 +74,7 @@ class TVShow(models.Model):
                 self.current_season,
                 self.current_episode
             ))
-        
+
         if not magnets:
             return None
     
@@ -97,7 +99,9 @@ class TVShow(models.Model):
             pass
         
         magnet = self.fetch_best_magnet_for_current_episode()
-
+        if not magnet:
+            return False
+        
         download_dir = get_tv_folder(self.keep)
 
         return TXWrapper.add(
@@ -126,7 +130,7 @@ class TVShow(models.Model):
             self.update_last_next_and_first_episodes_data()
         
         if not self.active:
-            log.info("Skipping {0}, marked as inactive".format(self.title))
+            log.info("Skipping {0}, marked as inactive".format(self.full_name))
 
         if not self.downloaded_current_episode:
             if self.download_current_episode():
