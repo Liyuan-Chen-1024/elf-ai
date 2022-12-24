@@ -14,8 +14,8 @@ RUN pip install -r requirements.txt
 # Bundle app source
 COPY . .
 
-COPY crontab /etc/cron.d/cool-task
-RUN chmod 0644 /etc/cron.d/cool-task
+COPY crontab /etc/cron.d/cool-jarvis
+RUN chmod 0644 /etc/cron.d/cool-jarvis && crontab /etc/cron.d/cool-jarvis
 
 # Setup SSH with secure root login
 RUN apt-get update \
