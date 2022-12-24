@@ -6,3 +6,4 @@ mydatabase
 node_modules
 info.log
 error.log
+static/
