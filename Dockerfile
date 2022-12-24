@@ -17,12 +17,6 @@ COPY . .
 COPY crontab /etc/cron.d/cool-jarvis
 RUN chmod 0644 /etc/cron.d/cool-jarvis && crontab /etc/cron.d/cool-jarvis
 
-# Setup SSH with secure root login
-RUN apt-get update \
- && apt-get install -y openssh-server netcat \
- && mkdir /var/run/sshd \
- && echo 'root:password' | chpasswd \
- && sed -i 's/\#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-
-EXPOSE 22
 EXPOSE 8000
+
+CMD ["tail", "-f", "/dev/null"]

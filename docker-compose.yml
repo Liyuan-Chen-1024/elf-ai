@@ -5,8 +5,8 @@ services:
     command: >
       sh -c "cron && 
              python3 manage.py collectstatic --noinput &&
-             python3 manage.py migrate &&
-             /usr/sbin/sshd -D" 
+             python3 manage.py migrate
+             tail -f /dev/null" 
     build:
       context: .
     ports:
