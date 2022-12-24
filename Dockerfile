@@ -14,9 +14,9 @@ RUN pip install -r requirements.txt
 # Bundle app source
 COPY . .
 
-#COPY cronjobs /etc/cron.d/jarvis-cronjobs
+COPY cronjobs /etc/cron.d/jarvis-cronjobs
 #RUN chmod 0644 /etc/cron.d/jarvis-cronjobs && crontab /etc/cron.d/jarvis-cronjobs
-RUN crontab /app/cronjobs
+RUN crontab /etc/cron.d/jarvis-cronjobs
 RUN touch /var/log/cron.log
 
 EXPOSE 8000
