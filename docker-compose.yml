@@ -2,10 +2,13 @@ version: '3.12-rc-buster'
 
 services:
   jarvis:
+    command: >
+      sh -c "cron && 
+             python3 manage.py collectstatic --noinput &&
+             python3 manage.py migrate &&
+             /usr/sbin/sshd -D" 
     build:
       context: .
-      args:
-        - DJANGO_SETTINGS=core.settings
     ports:
       - 8000:8000
       - 9922:22
