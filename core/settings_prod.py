@@ -2,8 +2,8 @@ from core.settings import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['*.frecar.no']
-CSRF_TRUSTED_ORIGINS = ['https://*.frecar.no']
+ALLOWED_HOSTS = ['jarvis.frecar.no']
+CSRF_TRUSTED_ORIGINS = ['https://jarvis.frecar.no']
 
 DATABASES = {
     'default': {
