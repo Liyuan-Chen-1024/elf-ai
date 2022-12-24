@@ -16,7 +16,6 @@ COPY . .
 
 ADD crontab /etc/cron.d/jarvis-cron
 RUN chmod 0644 /etc/cron.d/jarvis-cron
-RUN crontab /etc/cron.d/jarvis-cron
 
 # Setup SSH with secure root login
 RUN apt-get update \
