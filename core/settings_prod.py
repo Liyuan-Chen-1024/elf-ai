@@ -15,3 +15,7 @@ DATABASES = {
         'PORT': '3306',
     }
 }
+
+## App
+
+TX_HOST = '192.168.1.10'

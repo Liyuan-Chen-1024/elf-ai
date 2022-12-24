@@ -1,17 +1,18 @@
 import random
 import datetime
 from transmission_rpc import Client
+from django.conf import settings
 
 class TXWrapper:
 
     @classmethod
     def add(cls, url, download_dir='/data'):
-        client = Client(host="127.0.0.1")
+        client = Client(host=settings.TX_HOST)
         return client.add_torrent(torrent=url, download_dir=download_dir)
 
     @classmethod
     def manage_queue(cls):
-        client = Client(host="127.0.0.1")
+        client = Client(host=settings.TX_HOST)
         torrents = client.get_torrents(
             arguments=[
                 'id',

@@ -137,3 +137,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
+
+## Apps
+TX_HOST = '127.0.0.1'
