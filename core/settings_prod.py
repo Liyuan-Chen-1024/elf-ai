@@ -1,6 +1,6 @@
 from core.settings import *
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['jarvis.frecar.no']
 
