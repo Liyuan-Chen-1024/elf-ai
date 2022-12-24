@@ -1,11 +1,8 @@
-import random
 import os
 import logging
-import datetime
 import logging.config
-import requests
-# import os.path
 from django.conf import settings
+import requests
 
 # Configure logging
 LOGGING_CONF = os.path.join(settings.BASE_DIR, "logging.ini")

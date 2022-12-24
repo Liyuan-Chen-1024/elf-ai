@@ -14,8 +14,8 @@ RUN pip install -r requirements.txt
 # Bundle app source
 COPY . .
 
-RUN crontab -l | { cat; echo "*/5 * * * * cd /app && python3 manage.py fetch_tv_shows "; } | crontab -
-RUN crontab -l | { cat; echo "* */2 * * * cd /app && python3 manage.py manage_tx_queue "; } | crontab -
+RUN crontab -l | { cat; echo "*/5 * * * * cd /app && python manage.py fetch_tv_shows --settings=core.settings_prod "; } | crontab -
+RUN crontab -l | { cat; echo "* */2 * * * cd /app && python manage.py manage_tx_queue --settings=core.settings_prod "; } | crontab -
 
 # Setup SSH with secure root login
 RUN apt-get update \
