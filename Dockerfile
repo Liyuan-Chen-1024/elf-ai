@@ -14,9 +14,9 @@ RUN pip install -r requirements.txt
 # Bundle app source
 COPY . .
 
-ADD crontab /etc/cron.d/hello-cron
-RUN chmod 0644 /etc/cron.d/hello-cron
-RUN touch /var/log/cron.log
+ADD crontab /etc/cron.d/jarvis-cron
+RUN chmod 0644 /etc/cron.d/jarvis-cron
+RUN crontab /etc/cron.d/jarvis-cron
 
 # Setup SSH with secure root login
 RUN apt-get update \
