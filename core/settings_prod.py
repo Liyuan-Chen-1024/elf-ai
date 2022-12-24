@@ -2,7 +2,8 @@ from core.settings import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['jarvis.frecar.no']
+ALLOWED_HOSTS = ['*.frecar.no']
+CSRF_TRUSTED_ORIGINS = ['*.frecar.no']
 
 DATABASES = {
     'default': {
