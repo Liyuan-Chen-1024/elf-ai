@@ -16,8 +16,8 @@ COPY . .
 
 ARG DJANGO_SETTINGS
 
-RUN python3 manage.py migrate --settings=$DJANGO_SETTINGS
-RUN python3 manage.py seed --settings=$DJANGO_SETTINGS
+RUN python manage.py migrate --settings=$DJANGO_SETTINGS
+RUN python manage.py seed --settings=$DJANGO_SETTINGS
 
 RUN crontab -l | { cat; echo "*/5 * * * * cd /app && python3 manage.py fetch_tv_shows "; } | crontab -
 RUN crontab -l | { cat; echo "* */2 * * * cd /app && python3 manage.py manage_tx_queue "; } | crontab -
