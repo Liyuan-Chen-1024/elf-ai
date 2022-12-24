@@ -16,7 +16,6 @@ COPY . .
 
 COPY crontab /etc/cron.d/cool-task
 RUN chmod 0644 /etc/cron.d/cool-task
-RUN service cron start
 
 # Setup SSH with secure root login
 RUN apt-get update \
