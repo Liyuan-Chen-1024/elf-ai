@@ -11,8 +11,12 @@ COPY requirements.txt ./
 
 RUN pip install -r requirements.txt
 
+ARG ENABLE_CRON
+
 # Bundle app source
 COPY . .
+
+RUN if [ "$ENABLE_CRON" = "1" ] ; then crontab cronjobs ; fi
 
 EXPOSE 8000
 
