@@ -19,3 +19,10 @@ DATABASES = {
 ## App
 
 TX_HOST = '192.168.1.10'
+
+
+storage = [
+    '/nstore1/',
+    '/nstore2/',
+    '/nstore3/'
+]
