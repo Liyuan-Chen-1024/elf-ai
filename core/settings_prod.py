@@ -21,7 +21,7 @@ DATABASES = {
 TX_HOST = '192.168.1.10'
 
 
-storage = [
+STORAGE = [
     '/nstore1/',
     '/nstore2/',
     '/nstore3/'
