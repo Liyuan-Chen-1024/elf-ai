@@ -9,17 +9,6 @@ LOGGING_CONF = os.path.join(settings.BASE_DIR, "logging.ini")
 logging.config.fileConfig(LOGGING_CONF)
 log = logging.getLogger("jarvis_fetcher")
 
-def get_tvshow_download_folder(keep=False):
-    return 'tv_folder'
-    #if keep:
-    #    return random.choice(config.items("tvshow_download_folders_keep"))[1]
-    #else:
-    #    return random.choice(config.items("tvshow_download_folders"))[1]
-
-def get_movie_download_folder():
-    return 'movie_folder'
-    #return random.choice(config.items("movie_download_folders"))[1]
-
 def epguides_api_request(path):
     return parse_json_from_url('https://epguides.frecar.no/{0}'.format(path))
 
