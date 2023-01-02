@@ -31,6 +31,9 @@ class TVShow(models.Model):
     last_release_episode = models.IntegerField(null=True)
     next_release_date = models.DateField(null=True)
 
+    def __str__(self):
+      return "{0} {1}".format(self.epguide_name, self.full_name)
+
     @property
     def key_season_episode(self):
         return '{0}/{1}/{2}'.format(
