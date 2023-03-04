@@ -4,6 +4,7 @@ from django.utils import timezone
 
 import logging
 from django.conf import settings
+from apps.media.utils.exceptions import EpisodeNotFoundException, ShowNotFoundException
 from apps.media.utils.fetcher import potato_api_request, epguides_api_request
 from apps.media.utils.files import get_tv_folder
 from apps.media.utils.tx import TXWrapper
@@ -30,7 +31,7 @@ class TVShow(models.Model):
     last_release_season = models.IntegerField(null=True)
     last_release_episode = models.IntegerField(null=True)
     next_release_date = models.DateField(null=True)
-
+    
     def __str__(self):
       return "{0} {1}".format(self.epguide_name, self.full_name)
 
@@ -53,12 +54,10 @@ class TVShow(models.Model):
         self.last_release_season = last_episode['season']
         self.last_release_episode = last_episode['number']
 
-        next_episode = epguides_api_request(
-            "show/{0}/next/".format(self.epguide_name)
-        )
+        next_episode = self.get_next_episode()
 
-        if next_episode and 'episode' in next_episode:
-            self.next_release_date = next_episode['episode']['release_date']
+        if next_episode:
+            self.next_release_date = next_episode['release_date']
     
         if not self.first_release_date:
             self.first_release_date = epguides_api_request(
@@ -94,7 +93,7 @@ class TVShow(models.Model):
         return epguides_api_request(
             'show/{0}/released/'.format(self.key_season_episode)
         )['status']
-
+    
     def download_current_episode(self):
         if not self.current_episode_released():
             pass
@@ -114,18 +113,22 @@ class TVShow(models.Model):
         
     
     def get_next_episode(self):
-        return epguides_api_request(
-            'show/{0}/next/'.format(self.key_season_episode)
-        )['episode']
-
+        try:
+            return epguides_api_request(
+                'show/{0}/next/'.format(self.key_season_episode)
+            )['episode']
+        except EpisodeNotFoundException:
+            pass
+        
+        return None
+    
     def is_next_episode_released(self):
-        next_episode_released = epguides_api_request(
-            'show/{0}/next/released/'.format(self.key_season_episode)
-        )
-
-        if next_episode_released and next_episode_released['status']:
-            return next_episode_released
-
+        try:
+            return epguides_api_request(
+                'show/{0}/next/released/'.format(self.key_season_episode)
+            )
+        except EpisodeNotFoundException:
+            pass
         return False
 
     def download_all_available_episodes_starting_at_current_episode(self):

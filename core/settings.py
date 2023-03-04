@@ -139,7 +139,7 @@ REST_FRAMEWORK = {
 }
 
 ## Apps
-TX_HOST = '127.0.0.1'
+TX_HOST = 'tx'
 
 STORAGE = [
     '/Users/frecar/Downloads/',
