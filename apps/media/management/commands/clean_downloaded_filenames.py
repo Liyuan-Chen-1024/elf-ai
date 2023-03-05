@@ -35,12 +35,13 @@ strip_list = ["eztv", "[.re]", ".ripp", "-gossip", "-ggez", "-game0ver", "-cakes
               ".convert", "giuseppetnt", "-sneaky", "-convoy", "-plutonium", "dd5.1", '-avs', "[cttv]", "[cap.109]", "[subtitles included]", "[ethd]", "h264",
               "-fum", "-rarbg", "-jah", "-rtn", "-jitb", ".0.", "-bs", "-avs", "webrip", "aac2", "-btw", ".web", "[srigga]", "counter.co", "www.scenetime.com",
               "[utr]", "-qman", "[ www.day.com ]", "[no-rar]", "-momentum", "(eng sub)", "-kings", "temporada", "[publichd]", "www.Torrenting.com",
-              "www.torrenting.com", "www.torrenting.me", "www.ing.com", "www.com", "www.SceneTime.com", "X265", "720p", "1080p", "web-dl", "downloaded",
+              "www.torrenting.com", "www.torrenting.me", "www.ing.com", "www.com", "www.SceneTime.com", "x265", "X265", "720p", "1080p", "web-dl", "downloaded",
               "HEVC", "torrenting", "torrent", "[rarbg]", "hdtv", "pseudo", "265", "x264", "h.264", "ettv", "\[prime\]", "[brassetv]", "-dimension",
-              "-killers", "-sva", "-tbs", "-brisk", "-morose", "-ntb", "-ntb", "-fleet", "[]", '()', '{}', "[ ]", "( )", "{ }", "www", "glodls",
-              "[Mulvacoded]", "[Mulvacoded", "complete", "[mulvacoded", "-got", "dd+", "-trollhd", "day.com ]", "thebiscuitman]", ".ita", ".eng",
-              ".mux", "[www.ourrelease.org]", "www.ourrelease.org]", "ourrelease.org]", "[i_c", "dd51", "bluury", "~{king}", "~{king",
-              "[cap", "couch.com]", "[n1c]", "[n1c", "-sfm", "[tgx", "-300mb"]
+              "-killers", "-sva", "-tbs", "-brisk", "-morose", "-ntb", "-ntb", "-fleet", "[]", '()', '{}', "[ ]", "( )", "{ }", "www", "glodls", ".hdr.",
+              "[Mulvacoded]", "[Mulvacoded", "complete", "[mulvacoded", "-got", "dd+", "-trollhd", "day.com ]", "thebiscuitman]", ".ita", ".eng", 
+              ".mux", "[www.ourrelease.org]", "www.ourrelease.org]", "ourrelease.org]", "[i_c", "dd51", "bluury", "~{king}", "~{king", "2160p.h", "web 2.0", "- ime",
+              "[cap", "couch.com]", "[n1c]", "[n1c", "-sfm", "[tgx", "-300mb", "-smurf", "-wiki", ".hmax", "- web", "-roccat", "-MeGust",
+              "ita eng spa subs", "( )", "byme7alh", ".atmos", "-nixon"]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
@@ -51,6 +52,8 @@ def ensure_file_extension(name):
         renamed_name = renamed_name.replace("mkv", ".mkv")
     if renamed_name[len(renamed_name)-3:] == 'mp4' and not renamed_name[len(renamed_name)-4] == '.':
         renamed_name = renamed_name.replace("mp4", ".mp4")
+    if renamed_name[len(renamed_name)-3:] == 'nfo' and not renamed_name[len(renamed_name)-4] == '.':
+        renamed_name = renamed_name.replace("nfo", ".nfo")
     return renamed_name
 
 
@@ -60,7 +63,7 @@ def replace_words(name):
         el = el.lower()
         while el in renamed_name.lower():
             renamed_name = renamed_name.lower().replace(el, '')
-    return renamed_name
+    return renamed_name.lower()
 
 
 def replace_chars(name):
