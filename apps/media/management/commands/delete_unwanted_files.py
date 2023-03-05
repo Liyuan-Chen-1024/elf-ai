@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for storage in settings.STORAGE:
-            execute(os.path.join(storage, 'tvshows'))
+            execute(storage)
 
 file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", 
                              "mp3", ".url", ".txt", ".png", ".sfv"]

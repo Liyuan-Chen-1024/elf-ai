@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for storage in settings.STORAGE:
-            rename(os.path.join(storage, 'tvshows'))
+            rename(storage)
 
 
 strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "-game0ver", "-cakes", "-m0retv", "-strontium", "-ggwp", "_tvm", "afi-", "-kogi", "-xlf", "-minx",
