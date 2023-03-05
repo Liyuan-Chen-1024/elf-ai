@@ -51,7 +51,7 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "-met", "crazzyboy", ".stan.", ".ainz", "an0mal1", "rzerox", ".nf.", "-stb", "375mb", "350mb", "-coo7", "-t6d", "e-subs", "multisub", "[.io]",
               'COMANDOTORRENTS', 'p-cmrg', "-greenblade", ".anoxmous", ".tigole", "Featurettes", "-truffle", "-daa", "-teneighty", "dts-jyk", "-jyk", ".idx", "..joy",
               "(.silence", "[7.1]", ".7.1", "yts.mx", "-hazmatt", ".ch.", ".ch", "[4k]", "[4k", "-rovers", "usabit.com", "en-sub", "rissy.teigen", ".4k.",
-              "iprip", "2-dri", "bdrip", "dts-hd", "yify", "subidn_crew", "bitita", "-nahom", "dvdrip", "xvid", "-lena"]
+              "iprip", "2-dri", "bdrip", "dts-hd", "yify", "subidn_crew", "bitita", "-nahom", "dvdrip", "xvid", "-lena", "(2015/", "yts.lt"]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
