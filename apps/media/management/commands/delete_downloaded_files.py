@@ -19,12 +19,11 @@ file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", "mp3", ".u
 
 def delete_unwanted_files(path):
     for root, dirs, files in os.walk(path, topdown=True):
-        print(root)
         for name in files:
-            print(name)
             path_name = os.path.join(root, name)
             for ext in file_extensions_to_delete:
                 if ext in path_name:
+                    print(path_name)
                     os.remove(path_name)        
 
 def unrar_files(path):
