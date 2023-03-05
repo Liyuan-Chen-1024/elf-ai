@@ -1,5 +1,5 @@
 from django.contrib import admin
-
+import math
 from .models import TVShow, MediaFile
 
 class TVShowAdmin(admin.ModelAdmin):
@@ -11,10 +11,12 @@ class TVShowAdmin(admin.ModelAdmin):
 admin.site.register(TVShow, TVShowAdmin)
 
 class MediaFileAdmin(admin.ModelAdmin):
-    list_display = ('path', 'ext', 'st_size')
+    list_display = ('path', 'ext', 'gb_size')
     search_fields = ['path', 'ext']
-    list_filter = ('path', 'ext')
+    list_filter = ('ext')
 
+    def gb_size(self, obj):
+        return round(obj.st_size / 1024**3, 2)
 
 admin.site.register(MediaFile, MediaFileAdmin)
 
