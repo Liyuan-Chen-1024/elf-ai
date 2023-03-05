@@ -26,6 +26,7 @@ class MediaFile(models.Model):
     st_mtime=models.BigIntegerField(null=True, blank=True)
     st_ctime=models.BigIntegerField(null=True, blank=True)
     last_read_from_disk = models.BigIntegerField(null=True, blank=True)
+    keep = models.BooleanField(default=False)
     
     @staticmethod
     def create_or_update_from_path(path):
@@ -42,6 +43,8 @@ class MediaFile(models.Model):
             media_file.dirname = os.path.dirname(path)
             media_file.last_read_from_disk = time.time()
             media_file.ext = os.path.splitext(path)[1]
+            if '/keep/' in path:
+                media_file.keep = True
             media_file.save()
         else:
             media_file.delete()

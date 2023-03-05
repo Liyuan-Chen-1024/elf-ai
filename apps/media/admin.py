@@ -11,9 +11,9 @@ class TVShowAdmin(admin.ModelAdmin):
 admin.site.register(TVShow, TVShowAdmin)
 
 class MediaFileAdmin(admin.ModelAdmin):
-    list_display = ('path', 'ext', 'gb_size')
-    search_fields = ['path', 'ext']
-    list_filter = ('ext',)
+    list_display = ('path', 'ext', 'keep', 'gb_size')
+    search_fields = ['path']
+    list_filter = ('ext','keep',)
 
     def gb_size(self, obj):
         return round(obj.st_size / 1024**3, 2)

@@ -16,7 +16,7 @@ class Command(BaseCommand):
             execute(os.path.join(storage, 'tvshows'))
 
 file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", 
-                             "mp3", ".url", ".txt", ".png"]
+                             "mp3", ".url", ".txt", ".png", ".sfv"]
 
 unwanted_dir_names = ["screenshots", "screens"]
 
