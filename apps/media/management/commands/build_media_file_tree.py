@@ -14,10 +14,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for storage in settings.STORAGE:
-            storage = '/app/testing'
-            print(storage)
             for root, dirs, files in os.walk(storage, topdown=True):
-                print(files)
                 for name in files:
                     path_name = os.path.join(root, name)
                     MediaFile.create_or_update_from_path(path_name)
