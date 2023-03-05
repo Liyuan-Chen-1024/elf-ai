@@ -7,21 +7,22 @@ import os
 
 from apps.media.utils.tx import TXWrapper
 
+
 class Command(BaseCommand):
     help = 'Closes the specified poll for voting'
 
     def handle(self, *args, **options):
         for storage in settings.STORAGE:
             rename(os.path.join(storage, 'tvshows'))
-       
 
-strip_list = ["eztv", "[.re]", ".ripp", "-gossip", "-ggez", "-game0ver", "-cakes", "-m0retv", "-strontium", "-ggwp", "_tvm", "afi-", "-kogi", "-xlf", "-minx",
+
+strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "-game0ver", "-cakes", "-m0retv", "-strontium", "-ggwp", "_tvm", "afi-", "-kogi", "-xlf", "-minx",
               "-jebaited", "-casstudio", "-stigma", "-sigma", "-align", "-oath", "-btx", "-webtube", "-soaplove", "com -", "glhf", "-kompost", "comandos.com",
               "[web]", "[dual", "dual.", "andos.com", "acesse ]", "org  ", "org - ", "multi web", "-cielos", "final internal", "internal web", " h ", "-hybris",
               "-max", "maximersk", "-trump", "-xpoz", "(nitro)", "Tomas&minami", "www.Speed.cd", "-memento", "-metcon", "-rapta", "speed.cd", ".WEB", "WEB.",
               "[rarbg]", "reenc", "-deejayahmed", "ReEnc", "-DeeJayAhmed", "-river", "esubs", "-vlad", "-visum", "-mzabi", "-cravers", "-dl", "-cookiemonster",
               "repack", "hulu", "-cravers", "-gungrave", "-dhd", "[MPup]", "[MPup", "-webif", "-showscen", "dtv", "dd2", "-etrg", "bf1", "-it00nz", "-organic",
-              "[exyu-subs]", "couch.net", "[769mb]", "4g", "769mb", "-eng", ".dd", "-crimson", "-justiso", "swsub",  "-novarip", "-luci", ".h.", "-btn", "-bamboozle",
+              "[exyu-subs]", "couch.net", "[769mb]", "4g", "769mb", "-eng", "-evo", ".dd", "-crimson", "-justiso", "swsub",  "-novarip", "-luci", ".h.", "-btn", "-bamboozle",
               "[1337x]", "[1337x", "[sn]", "[sn", "-tulio", "-yfn", "-dl", "-bamboozle",  "pcness", "-MeGusta", "[exyu-subs", "-sorny", "-yfn", "-ajp69", "-gungrave",
               "-ajp69", "cbs", "-2hd", "-byteshare", "[srigga]", "[srigga", "bluray", "brrip", "sujaidr",  "[www.newpct1.com]", "[cap.211]", "[cap.211",
               "[.newpct1.com]", "-cls", "[cap.103]", "[cap.102]", "[cap.110]", "[ Español ]", "[ Español", "from -", "-ism", "from [.me ]", "Uncensored", "cc 0",
@@ -36,12 +37,16 @@ strip_list = ["eztv", "[.re]", ".ripp", "-gossip", "-ggez", "-game0ver", "-cakes
               "-fum", "-rarbg", "-jah", "-rtn", "-jitb", ".0.", "-bs", "-avs", "webrip", "aac2", "-btw", ".web", "[srigga]", "counter.co", "www.scenetime.com",
               "[utr]", "-qman", "[ www.day.com ]", "[no-rar]", "-momentum", "(eng sub)", "-kings", "temporada", "[publichd]", "www.Torrenting.com",
               "www.torrenting.com", "www.torrenting.me", "www.ing.com", "www.com", "www.SceneTime.com", "x265", "X265", "720p", "1080p", "web-dl", "downloaded",
-              "HEVC", "torrenting", "torrent", "[rarbg]", "hdtv", "pseudo", "265", "x264", "h.264", "ettv", "\[prime\]", "[brassetv]", "-dimension",
-              "-killers", "-sva", "-tbs", "-brisk", "-morose", "-ntb", "-ntb", "-fleet", "[]", '()', '{}', "[ ]", "( )", "{ }", "www", "glodls", ".hdr.",
-              "[Mulvacoded]", "[Mulvacoded", "complete", "[mulvacoded", "-got", "dd+", "-trollhd", "day.com ]", "thebiscuitman]", ".ita", ".eng", 
+              "HEVC", "torrenting", "torrent", "[rarbg]", "hdtv", "pseudo", "265", ".0264", "x264", "h.264", "ettv", "\[prime\]", "[brassetv]", "-dimension", "-robots",
+              "-killers", "-sva", "-tbs", "-brisk", "-morose", "-ntb", "-ntb", "-fleet", "[]", '()', '{}', "[ ]", "( )", "{ }", "www", "glodls", ".hdr.", "-bae",
+              "[Mulvacoded]", "[Mulvacoded", "complete", "[mulvacoded", "-got", "dd+", "-trollhd", "day.com ]", "thebiscuitman]", ".ita", ".eng", "-linkle",
               ".mux", "[www.ourrelease.org]", "www.ourrelease.org]", "ourrelease.org]", "[i_c", "dd51", "bluury", "~{king}", "~{king", "2160p.h", "web 2.0", "- ime",
-              "[cap", "couch.com]", "[n1c]", "[n1c", "-sfm", "[tgx", "-300mb", "-smurf", "-wiki", ".hmax", "- web", "-roccat", "-MeGust",
-              "ita eng spa subs", "( )", "byme7alh", ".atmos", "-nixon"]
+              "[cap", "couch.com]", "[n1c]", "[n1c", "-sfm", "[tgx", "-300mb", "-smurf", "-wiki", ".hmax", "- web", "-roccat", "-MeGust", "-ion10", "-ctrlhd",
+              "ita eng spa subs", "( )", "byme7alh", ".atmos", "-nixon", "-afg", "tv2nite", "/screens", "- AMZN", "Web-DL", "-ftp", "-sdcc", "-hillary", "-darkflix",
+              "-starz", "-afi", "-dexterous", "-failed", "-ligate", "-amcon", "-ntg", "-mrn", "[SEV]", "-worldmkv", "psyz", " -eccentricone", "-skedaddle", 
+              "- goki", "[taoe]", "2.0 phun", "-spamtv", "-tommy", "-nyh", "-tepes", "web qman", "web e 2.0", "-esc", "vyndros", "-ghosts", "-tdr", "p264", " multi w",
+              "-peculate", "-videohole", "-oldseasons", "web dl", "dsnyp e", "2160p joy", "-plzproper", "-walt", "-dimepiece", "-b2b", "-walmart", "-dvsux", 
+              "e--", "e-+", "e++", "-syncopy", "-ctrlhd", "web -t", "-cryptic", "-playweb", ]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
@@ -75,6 +80,12 @@ def replace_chars(name):
         renamed_name = renamed_name[0:len(renamed_name)-1]
     return renamed_name
 
+def remove_surrounding_quotes(name):
+    quotes = ["'", '"']
+    for q in quotes:
+        if name[0] == q and name[len(name)-1] == q:
+            return name[1:len(name)-1]
+    return name 
 
 def rename(path):
     for root, dirs, files in os.walk(path, topdown=True):
@@ -88,6 +99,7 @@ def rename(path):
             renamed_name = name
             renamed_name = replace_words(renamed_name)
             renamed_name = replace_chars(renamed_name)
+            renamed_name = remove_surrounding_quotes(renamed_name)
             renamed_name = ensure_file_extension(renamed_name)
             if renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
                 try:
@@ -122,6 +134,7 @@ def rename(path):
             renamed_name = name
             renamed_name = replace_words(renamed_name)
             renamed_name = replace_chars(renamed_name)
+            renamed_name = remove_surrounding_quotes(renamed_name)
 
             if renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
                 try:
@@ -131,6 +144,3 @@ def rename(path):
                 except Exception as e:
                     print("failed moving", path_name)
                     print(e)
-
-
-
