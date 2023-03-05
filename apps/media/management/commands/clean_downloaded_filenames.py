@@ -80,9 +80,9 @@ def replace_chars(name):
         '  ', ' ').replace(".-.", ".").replace(".+.", ".").replace(" ", ".")
     if len(renamed_name) == 0:
         return name
-    while len(renamed_name) > 2 and renamed_name[0] in char_excl:
+    while len(renamed_name) > 4 and renamed_name[0] in char_excl:
         renamed_name = renamed_name[1:]
-    while len(renamed_name) > 2 and renamed_name[len(renamed_name)-1] in char_excl:
+    while len(renamed_name) > 4 and renamed_name[len(renamed_name)-1] in char_excl:
         renamed_name = renamed_name[0:len(renamed_name)-1]
     return renamed_name
 
@@ -99,7 +99,7 @@ def rename_files(path):
             renamed_name = replace_words(renamed_name)
             renamed_name = replace_chars(renamed_name)
             renamed_name = ensure_file_extension(renamed_name)
-            if renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
+            if len(renamed_name) > 4 and renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
                 try:
                     print("moving file", path_name, " to ",
                           os.path.join(root, renamed_name))
