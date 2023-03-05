@@ -78,9 +78,11 @@ def replace_words(name):
 def replace_chars(name):
     renamed_name = name.replace('..', '.').replace("'s", "s").replace(
         '  ', ' ').replace(".-.", ".").replace(".+.", ".").replace(" ", ".")
-    while len(renamed_name) > 0 and renamed_name[0] in char_excl:
+    if len(renamed_name) == 0:
+        return name
+    while len(renamed_name) > 2 and renamed_name[0] in char_excl:
         renamed_name = renamed_name[1:]
-    while renamed_name[len(renamed_name)-1] in char_excl:
+    while len(renamed_name) > 2 and renamed_name[len(renamed_name)-1] in char_excl:
         renamed_name = renamed_name[0:len(renamed_name)-1]
     return renamed_name
 
