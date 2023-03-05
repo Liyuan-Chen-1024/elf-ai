@@ -27,12 +27,18 @@ class MediaFile(models.Model):
     st_ctime=models.BigIntegerField(null=True, blank=True)
     last_read_from_disk = models.BigIntegerField(null=True, blank=True)
     keep = models.BooleanField(default=False)
+    is_movie = models.BooleanField(default=False)
     
     @staticmethod
     def create_or_update_from_path(path):
         media_file = MediaFile.objects.get_or_create(path=path)[0]
         if media_file.exists_on_disk():
             stats = os.stat(path)
+
+            if stats.st_mtime and media_file.last_read_from_disk:
+                if media_file.last_read_from_disk > stats.st_mtime:
+                    return
+
             media_file.st_ctime = stats.st_ctime
             media_file.st_mtime = stats.st_mtime
             media_file.st_atime = stats.st_atime
@@ -45,6 +51,10 @@ class MediaFile(models.Model):
             media_file.ext = os.path.splitext(path)[1]
             if '/keep/' in path:
                 media_file.keep = True
+            if '/movies/' in path:
+                media_file.is_movie = True
+            else:
+                media_file.is_movie = False
             media_file.save()
         else:
             media_file.delete()
