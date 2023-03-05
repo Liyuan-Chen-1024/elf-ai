@@ -29,9 +29,6 @@ def delete_unwanted_files(path):
                     print("rm {0}", path_name)
                     os.remove(path_name)        
 
-def unrar_files(path):
-    pass
-
 def delete_unwanted_directories(path):
     for root, dirs, files in os.walk(path, topdown=True):
         for name in dirs:
@@ -48,12 +45,7 @@ def delete_empty_directories(path):
                 print("rmdir {0}", path_name)
                 os.rmdir(path_name)
 
-def delete_e0080p(path):
-    pass
-
 def execute(path):
-    #unrar_files(path)
     delete_unwanted_files(path)
     delete_unwanted_directories(path)
     delete_empty_directories(path)
-    #delete_e0080p(path)

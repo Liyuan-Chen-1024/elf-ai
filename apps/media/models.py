@@ -9,10 +9,52 @@ from apps.media.utils.fetcher import potato_api_request, epguides_api_request
 from apps.media.utils.files import get_tv_folder
 from apps.media.utils.tx import TXWrapper
 import random
-
+import time
 LOGGING_CONF = os.path.join(settings.BASE_DIR, "logging.ini")
 logging.config.fileConfig(LOGGING_CONF)
 log = logging.getLogger("jarvis_fetcher")
+
+class MediaFile(models.Model):
+    path = models.TextField()
+    dirname = models.TextField(null=True, blank=True)
+    ext = models.CharField(null=True, blank=True, max_length=20)
+    st_mode = models.IntegerField(null=True, blank=True)
+    st_uid=models.IntegerField(null=True, blank=True)
+    st_gid=models.IntegerField(null=True, blank=True)
+    st_size=models.IntegerField(null=True, blank=True)
+    st_atime=models.IntegerField(null=True, blank=True)
+    st_mtime=models.IntegerField(null=True, blank=True)
+    st_ctime=models.IntegerField(null=True, blank=True)
+    last_read_from_disk = models.IntegerField(null=True, blank=True)
+    
+    @staticmethod
+    def create_or_update_from_path(path):
+        media_file = MediaFile.objects.get_or_create(path=path)[0]
+        if media_file.exists_on_disk():
+            stats = os.stat(path)
+            media_file.st_ctime = stats.st_ctime
+            media_file.st_mtime = stats.st_mtime
+            media_file.st_atime = stats.st_atime
+            media_file.st_size = stats.st_size
+            media_file.st_gid = stats.st_gid
+            media_file.st_uid = stats.st_uid
+            media_file.st_mode = stats.st_mode
+            media_file.dirname = os.path.dirname(path)
+            media_file.last_read_from_disk = time.time()
+            media_file.ext = os.path.splitext(path)[1]
+            media_file.save()
+        else:
+            media_file.delete()
+
+    def __str__(self):
+      return "{0}".format(self.path)
+
+    def exists_on_disk(self):
+        return os.path.exists(self.path)
+
+    def remove_from_disk(self):
+        os.remove(self.path)
+        self.delete()
 
 # Create your models here.
 class TVShow(models.Model):
