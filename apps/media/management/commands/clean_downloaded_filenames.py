@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
+import os
+
+from apps.media.utils.tx import TXWrapper
+
+class Command(BaseCommand):
+    help = 'Closes the specified poll for voting'
+
+    def handle(self, *args, **options):
+        for storage in settings.STORAGE:
+            rename(os.path.join(storage, 'tvshows'))
+       
+
+strip_list = ["eztv", "[.re]", ".ripp", "-gossip", "-ggez", "-game0ver", "-cakes", "-m0retv", "-strontium", "-ggwp", "_tvm", "afi-", "-kogi", "-xlf", "-minx",
+              "-jebaited", "-casstudio", "-stigma", "-sigma", "-align", "-oath", "-btx", "-webtube", "-soaplove", "com -", "glhf", "-kompost", "comandos.com",
+              "[web]", "[dual", "dual.", "andos.com", "acesse ]", "org  ", "org - ", "multi web", "-cielos", "final internal", "internal web", " h ", "-hybris",
+              "-max", "maximersk", "-trump", "-xpoz", "(nitro)", "Tomas&minami", "www.Speed.cd", "-memento", "-metcon", "-rapta", "speed.cd", ".WEB", "WEB.",
+              "[rarbg]", "reenc", "-deejayahmed", "ReEnc", "-DeeJayAhmed", "-river", "esubs", "-vlad", "-visum", "-mzabi", "-cravers", "-dl", "-cookiemonster",
+              "repack", "hulu", "-cravers", "-gungrave", "-dhd", "[MPup]", "[MPup", "-webif", "-showscen", "dtv", "dd2", "-etrg", "bf1", "-it00nz", "-organic",
+              "[exyu-subs]", "couch.net", "[769mb]", "4g", "769mb", "-eng", ".dd", "-crimson", "-justiso", "swsub",  "-novarip", "-luci", ".h.", "-btn", "-bamboozle",
+              "[1337x]", "[1337x", "[sn]", "[sn", "-tulio", "-yfn", "-dl", "-bamboozle",  "pcness", "-MeGusta", "[exyu-subs", "-sorny", "-yfn", "-ajp69", "-gungrave",
+              "-ajp69", "cbs", "-2hd", "-byteshare", "[srigga]", "[srigga", "bluray", "brrip", "sujaidr",  "[www.newpct1.com]", "[cap.211]", "[cap.211",
+              "[.newpct1.com]", "-cls", "[cap.103]", "[cap.102]", "[cap.110]", "[ Español ]", "[ Español", "from -", "-ism", "from [.me ]", "Uncensored", "cc 0",
+              "snahp", "Day Com ]", "it]", "Ac3", "-mtb", "-heat", "www.urrelease.rg", "[vr56", "-2016", ".dl", "(1)", "d0ct0rlew", "shaanig", "-podo", "[publichd",
+              "rcvr", "(  ape", "Castellano", "HDTV", "~arizone", "[kyle-e", "ac3", "-hatchetgear", "kyle-e", "-viethd", "spazio-tempo", "[ www.ing.me ]", "from -",
+              "10bit", "-fmdab", "-evolve", "-immerse", "rmteam", "DD 5.1", "ddp5.1", "m2tv", "-nogrp", "rartv", "[rartv]", "X264-DIMENSION", "[rarbg]", "sharpysword",
+              "chestnut", "hbo", "-monkee", "-alterego", "-tla", "syfy", "-krave", "bbc", "-fov", "[vr56]", "rmteam", "-lazy", "[rarbg", "-skgtv", "-donna",
+              "-nada", "amzn", "-qoq", "-={sparrow}=", "10bit", "aac", "5.1", "[MPup]", "-sdi", "-yfn", "6ch", "-turbo", "-igm", "giuseppetnt",  "-strife",
+              "-w4f", "hdrip", "-speranzah", "dlmux", "-crooks", "-aaf", "crazy4tv.com", "-yfn", "-batv", "[eztv]", "-snd", ".internal", "-doesntsuck",
+              "-nby", "[moviezplanet.in]", "-ffn", "-klingon", ".proper", "-uav", "-psa", "2ch", "-qman", "[utr]", "-rnc", "-orenji", "-megusta", "-deflate",
+              ".convert", "giuseppetnt", "-sneaky", "-convoy", "-plutonium", "dd5.1", '-avs', "[cttv]", "[cap.109]", "[subtitles included]", "[ethd]", "h264",
+              "-fum", "-rarbg", "-jah", "-rtn", "-jitb", ".0.", "-bs", "-avs", "webrip", "aac2", "-btw", ".web", "[srigga]", "counter.co", "www.scenetime.com",
+              "[utr]", "-qman", "[ www.day.com ]", "[no-rar]", "-momentum", "(eng sub)", "-kings", "temporada", "[publichd]", "www.Torrenting.com",
+              "www.torrenting.com", "www.torrenting.me", "www.ing.com", "www.com", "www.SceneTime.com", "X265", "720p", "1080p", "web-dl", "downloaded",
+              "HEVC", "torrenting", "torrent", "[rarbg]", "hdtv", "pseudo", "265", "x264", "h.264", "ettv", "\[prime\]", "[brassetv]", "-dimension",
+              "-killers", "-sva", "-tbs", "-brisk", "-morose", "-ntb", "-ntb", "-fleet", "[]", '()', '{}', "[ ]", "( )", "{ }", "www", "glodls",
+              "[Mulvacoded]", "[Mulvacoded", "complete", "[mulvacoded", "-got", "dd+", "-trollhd", "day.com ]", "thebiscuitman]", ".ita", ".eng",
+              ".mux", "[www.ourrelease.org]", "www.ourrelease.org]", "ourrelease.org]", "[i_c", "dd51", "bluury", "~{king}", "~{king",
+              "[cap", "couch.com]", "[n1c]", "[n1c", "-sfm", "[tgx", "-300mb"]
+
+char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
+
+
+def ensure_file_extension(name):
+    renamed_name = name
+    if renamed_name[len(renamed_name)-3:] == 'mkv' and not renamed_name[len(renamed_name)-4] == '.':
+        renamed_name = renamed_name.replace("mkv", ".mkv")
+    if renamed_name[len(renamed_name)-3:] == 'mp4' and not renamed_name[len(renamed_name)-4] == '.':
+        renamed_name = renamed_name.replace("mp4", ".mp4")
+    return renamed_name
+
+
+def replace_words(name):
+    renamed_name = name
+    for el in strip_list:
+        el = el.lower()
+        while el in renamed_name.lower():
+            renamed_name = renamed_name.lower().replace(el, '')
+    return renamed_name
+
+
+def replace_chars(name):
+    renamed_name = name.replace('..', '.').replace(
+        '  ', ' ').replace(".-.", ".").replace(".+.", ".")
+    while renamed_name[0] in char_excl:
+        renamed_name = renamed_name[1:]
+    while renamed_name[len(renamed_name)-1] in char_excl:
+        renamed_name = renamed_name[0:len(renamed_name)-1]
+    return renamed_name
+
+
+def rename(path):
+    for root, dirs, files in os.walk(path, topdown=True):
+        for name in files:
+            path_name = os.path.join(root, name)
+            if ".txt" in path_name:
+                continue
+            if '.part' in path_name:
+                continue
+
+            renamed_name = name
+            renamed_name = replace_words(renamed_name)
+            renamed_name = replace_chars(renamed_name)
+            renamed_name = ensure_file_extension(renamed_name)
+            if renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
+                try:
+                    print("moving file", path_name, " to ",
+                          os.path.join(root, renamed_name))
+                    os.rename(path_name, os.path.join(root, renamed_name))
+                except Exception as e:
+                    print("failed moving file", path_name)
+                    print(e)
+
+    for root, dirs, files in os.walk(path, topdown=True):
+        for name in dirs:
+            path_name = os.path.join(root, name)
+
+            if ".txt" in path_name:
+                continue
+            if '.part' in path_name:
+                continue
+
+            if not os.path.isdir(path_name):
+                continue
+
+            inner_files = os.listdir(path_name)
+
+            skip_dir = False
+            for inner_file in inner_files:
+                if '.part' in inner_file:
+                    skip_dir = True
+                if skip_dir:
+                    continue
+
+            renamed_name = name
+            renamed_name = replace_words(renamed_name)
+            renamed_name = replace_chars(renamed_name)
+
+            if renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
+                try:
+                    print("moving dir", path_name, " to ",
+                          os.path.join(root, renamed_name))
+                    os.rename(path_name, os.path.join(root, renamed_name))
+                except Exception as e:
+                    print("failed moving", path_name)
+                    print(e)
+
+
+
