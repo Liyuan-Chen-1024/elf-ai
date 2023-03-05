@@ -38,7 +38,7 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "[utr]", "-qman", "[ www.day.com ]", "[no-rar]", "-momentum", "(eng sub)", "-kings", "temporada", "[publichd]", "www.Torrenting.com",
               "www.torrenting.com", "www.torrenting.me", "www.ing.com", "www.com", "www.SceneTime.com", "x265", "X265", "720p", "1080p", "2160p", "web-dl", "downloaded",
               "HEVC", "torrenting", "torrent", "[rarbg]", "hdtv", "pseudo", "265", ".0264", "x264", "h.264", "ettv", "\[prime\]", "[brassetv]", "-dimension", "-robots",
-              "-killers", "-sva", "-tbs", "-brisk", "-morose", "-ntb", "-ntb", "-fleet", "[]", '()', '{}', "[ ]", "( )", "{ }", "www", "glodls", ".hdr.", "-bae",
+              "-killers", "-sva", "-tbs", "-brisk", "-morose", "-ntb", "-ntb", "-fleet", "-[]", "[]", '-()', '()', '{}', "[ ]", "( )", "{ }", "www", "glodls", ".hdr.", "-bae",
               "[Mulvacoded]", "[Mulvacoded", "complete", "[mulvacoded", "-got", "dd+", "-trollhd", "day.com ]", "thebiscuitman]", ".ita", ".eng", "-linkle",
               ".mux", "[www.ourrelease.org]", "www.ourrelease.org]", "ourrelease.org]", "[i_c", "dd51", "bluury", "~{king}", "~{king", "2160p.h", "web 2.0", "- ime",
               "[cap", "couch.com]", "[n1c]", "[n1c", "-sfm", "[tgx", "-300mb", "-smurf", "-wiki", ".hmax", "- web", "-roccat", "-MeGust", "-ion10", "-ctrlhd",
@@ -50,7 +50,7 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "-blutonium", "8bit", "s95 joy", "rippx", "riphlgp-bl", "burntodisc", "( web", "-doosh", "2-doosh", " - ", "multi-sh0w", "-sh0w", "(.web", "(.yogi", 
               "-met", "crazzyboy", ".stan.", ".ainz", "an0mal1", "rzerox", ".nf.", "-stb", "375mb", "350mb", "-coo7", "-t6d", "e-subs", "multisub", "[.io]",
               'COMANDOTORRENTS', 'p-cmrg', "-greenblade", ".anoxmous", ".tigole", "Featurettes", "-truffle", "-daa", "-teneighty", "dts-jyk", "-jyk", ".idx", "..joy",
-              "(.silence", ".7.1.", "yts.mx", "-hazmatt", ".ch."]
+              "(.silence", "[7.1]", ".7.1", "yts.mx", "-hazmatt", ".ch.", ".ch", "[4k]", "[4k", "-rovers"]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
@@ -78,7 +78,7 @@ def replace_words(name):
 def replace_chars(name):
     renamed_name = name.replace('..', '.').replace("'s", "s").replace(
         '  ', ' ').replace(".-.", ".").replace(".+.", ".").replace(" ", ".")
-    while renamed_name[0] in char_excl:
+    while len(renamed_name) > 0 and renamed_name[0] in char_excl:
         renamed_name = renamed_name[1:]
     while renamed_name[len(renamed_name)-1] in char_excl:
         renamed_name = renamed_name[0:len(renamed_name)-1]
