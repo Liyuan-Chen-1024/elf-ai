@@ -18,5 +18,7 @@ class MediaFileAdmin(admin.ModelAdmin):
     def gb_size(self, obj):
         return round(obj.st_size / 1024**3, 2)
 
-admin.site.register(MediaFile, MediaFileAdmin)
+    gb_size.admin_order_field = 'st_size'
+    gb_size.short_description = 'GB Size' 
 
+admin.site.register(MediaFile, MediaFileAdmin)
