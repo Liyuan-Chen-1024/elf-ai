@@ -46,7 +46,8 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "-starz", "-afi", "-dexterous", "-failed", "-ligate", "-amcon", "-ntg", "-mrn", "[SEV]", "-worldmkv", "psyz", " -eccentricone", "-skedaddle", 
               "- goki", "[taoe]", "2.0 phun", "-spamtv", "-tommy", "-nyh", "-tepes", "web qman", "web e 2.0", "-esc", "vyndros", "-ghosts", "-tdr", "p264", " multi w",
               "-peculate", "-videohole", "-oldseasons", "web dl", "dsnyp e", "2160p joy", "-plzproper", "-walt", "-dimepiece", "-b2b", "-walmart", "-dvsux", 
-              "e--", "e-+", "e++", "-syncopy", "-ctrlhd", "web -t", "-cryptic", "-playweb", ".2-.", "-insidious", "-inspirit", "-tvslices", "-clockwork", ]
+              "e--", "e-+", "e++", "-syncopy", "-ctrlhd", "web -t", "-cryptic", "-playweb", ".2-.", "-insidious", "-inspirit", "-tvslices", "-clockwork", ".dcuripp",
+              "-blutonium", "8bit", "s95 joy", "rippx", "riphlgp-bl", ]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
@@ -68,26 +69,19 @@ def replace_words(name):
         el = el.lower()
         while el in renamed_name.lower():
             renamed_name = renamed_name.lower().replace(el, '')
-    return renamed_name.lower()
+    return renamed_name
 
 
 def replace_chars(name):
-    renamed_name = name.replace('..', '.').replace(
-        '  ', ' ').replace(".-.", ".").replace(".+.", ".")
+    renamed_name = name.replace('..', '.').replace("'s", "s").replace(
+        '  ', ' ').replace(".-.", ".").replace(".+.", ".").replace(" ", ".")
     while renamed_name[0] in char_excl:
         renamed_name = renamed_name[1:]
     while renamed_name[len(renamed_name)-1] in char_excl:
         renamed_name = renamed_name[0:len(renamed_name)-1]
     return renamed_name
 
-def remove_surrounding_quotes(name):
-    quotes = ["'", '"']
-    for q in quotes:
-        if name[0] == q and name[len(name)-1] == q:
-            return name[1:len(name)-1]
-    return name 
-
-def rename(path):
+def rename_files(path):
     for root, dirs, files in os.walk(path, topdown=True):
         for name in files:
             path_name = os.path.join(root, name)
@@ -96,10 +90,9 @@ def rename(path):
             if '.part' in path_name:
                 continue
 
-            renamed_name = name
+            renamed_name = name.lower()
             renamed_name = replace_words(renamed_name)
             renamed_name = replace_chars(renamed_name)
-            renamed_name = remove_surrounding_quotes(renamed_name)
             renamed_name = ensure_file_extension(renamed_name)
             if renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
                 try:
@@ -110,6 +103,7 @@ def rename(path):
                     print("failed moving file", path_name)
                     print(e)
 
+def rename_dirs(path):
     for root, dirs, files in os.walk(path, topdown=True):
         for name in dirs:
             path_name = os.path.join(root, name)
@@ -131,10 +125,9 @@ def rename(path):
                 if skip_dir:
                     continue
 
-            renamed_name = name
+            renamed_name = name.lower()
             renamed_name = replace_words(renamed_name)
             renamed_name = replace_chars(renamed_name)
-            renamed_name = remove_surrounding_quotes(renamed_name)
 
             if renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
                 try:
@@ -144,3 +137,8 @@ def rename(path):
                 except Exception as e:
                     print("failed moving", path_name)
                     print(e)
+
+
+def rename(path):
+    rename_dirs(path)
+    rename_files(path)
