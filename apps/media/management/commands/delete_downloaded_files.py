@@ -16,9 +16,9 @@ class Command(BaseCommand):
             execute(os.path.join(storage, 'tvshows'))
 
 file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", 
-                             "mp3", ".url", ".txt", ".png", ".srt"]
+                             "mp3", ".url", ".txt", ".png"]
 
-unwanted_dir_names = ["subs", "screens"]
+unwanted_dir_names = ["screenshots", "screens"]
 
 def delete_unwanted_files(path):
     for root, dirs, files in os.walk(path, topdown=True):
