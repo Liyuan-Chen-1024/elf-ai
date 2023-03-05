@@ -44,10 +44,11 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "[cap", "couch.com]", "[n1c]", "[n1c", "-sfm", "[tgx", "-300mb", "-smurf", "-wiki", ".hmax", "- web", "-roccat", "-MeGust", "-ion10", "-ctrlhd",
               "ita eng spa subs", "( )", "byme7alh", ".atmos", "-nixon", "-afg", "tv2nite", "/screens", "- AMZN", "Web-DL", "-ftp", "-sdcc", "-hillary", "-darkflix",
               "-starz", "-afi", "-dexterous", "-failed", "-ligate", "-amcon", "-ntg", "-mrn", "[SEV]", "-worldmkv", "psyz", " -eccentricone", "-skedaddle", 
-              "- goki", "[taoe]", "2.0 phun", "-spamtv", "-tommy", "-nyh", "-tepes", "web qman", "web e 2.0", "-esc", "vyndros", "-ghosts", "-tdr", "p264", " multi w",
+              "e goki", "- goki", "[taoe]", "2.0 phun", "-spamtv", "-tommy", "-nyh", "-tepes", "web qman", "web e 2.0", "-esc", "vyndros", "-ghosts", "-tdr", "p264", " multi w",
               "-peculate", "-videohole", "-oldseasons", "web dl", "dsnyp e", "2160p joy", "-plzproper", "-walt", "-dimepiece", "-b2b", "-walmart", "-dvsux", 
               "e--", "e-+", "e++", "-syncopy", "-ctrlhd", "web -t", "-cryptic", "-playweb", ".2-.", "-insidious", "-inspirit", "-tvslices", "-clockwork", ".dcuripp",
-              "-blutonium", "8bit", "s95 joy", "rippx", "riphlgp-bl", ]
+              "-blutonium", "8bit", "s95 joy", "rippx", "riphlgp-bl", "burntodisc", "( web", "-doosh", "2-doosh", " - ", "multi-sh0w", "-sh0w", "(.web", "(.yogi", 
+              "-met", "crazzyboy", ".stan.", ".ainz"]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
