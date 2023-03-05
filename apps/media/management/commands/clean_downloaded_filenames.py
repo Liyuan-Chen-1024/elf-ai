@@ -134,7 +134,7 @@ def rename_dirs(path):
             renamed_name = replace_words(renamed_name)
             renamed_name = replace_chars(renamed_name)
 
-            if renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
+            if len(renamed_name) > 4 and renamed_name != name and renamed_name[len(renamed_name)-2] != '~':
                 try:
                     print("moving dir", path_name, " to ",
                           os.path.join(root, renamed_name))
