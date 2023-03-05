@@ -18,14 +18,14 @@ class MediaFile(models.Model):
     path = models.TextField()
     dirname = models.TextField(null=True, blank=True)
     ext = models.CharField(null=True, blank=True, max_length=20)
-    st_mode = models.IntegerField(null=True, blank=True)
-    st_uid=models.IntegerField(null=True, blank=True)
-    st_gid=models.IntegerField(null=True, blank=True)
-    st_size=models.IntegerField(null=True, blank=True)
-    st_atime=models.IntegerField(null=True, blank=True)
-    st_mtime=models.IntegerField(null=True, blank=True)
-    st_ctime=models.IntegerField(null=True, blank=True)
-    last_read_from_disk = models.IntegerField(null=True, blank=True)
+    st_mode = models.BigIntegerField(null=True, blank=True)
+    st_uid=models.BigIntegerField(null=True, blank=True)
+    st_gid=models.BigIntegerField(null=True, blank=True)
+    st_size=models.BigIntegerField(null=True, blank=True)
+    st_atime=models.BigIntegerField(null=True, blank=True)
+    st_mtime=models.BigIntegerField(null=True, blank=True)
+    st_ctime=models.BigIntegerField(null=True, blank=True)
+    last_read_from_disk = models.BigIntegerField(null=True, blank=True)
     
     @staticmethod
     def create_or_update_from_path(path):
