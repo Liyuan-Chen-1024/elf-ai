@@ -14,8 +14,7 @@ class Command(BaseCommand):
         for storage in settings.STORAGE:
             execute(os.path.join(storage, 'tvshows'))
 
-file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", "mp3", ".url", ".txt"]
-
+file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", "mp3", ".url", ".txt", ".png"]
 
 def delete_unwanted_files(path):
     for root, dirs, files in os.walk(path, topdown=True):

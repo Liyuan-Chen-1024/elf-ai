@@ -36,7 +36,7 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               ".convert", "giuseppetnt", "-sneaky", "-convoy", "-plutonium", "dd5.1", '-avs', "[cttv]", "[cap.109]", "[subtitles included]", "[ethd]", "h264",
               "-fum", "-rarbg", "-jah", "-rtn", "-jitb", ".0.", "-bs", "-avs", "webrip", "aac2", "-btw", ".web", "[srigga]", "counter.co", "www.scenetime.com",
               "[utr]", "-qman", "[ www.day.com ]", "[no-rar]", "-momentum", "(eng sub)", "-kings", "temporada", "[publichd]", "www.Torrenting.com",
-              "www.torrenting.com", "www.torrenting.me", "www.ing.com", "www.com", "www.SceneTime.com", "x265", "X265", "720p", "1080p", "web-dl", "downloaded",
+              "www.torrenting.com", "www.torrenting.me", "www.ing.com", "www.com", "www.SceneTime.com", "x265", "X265", "720p", "1080p", "2160p", "web-dl", "downloaded",
               "HEVC", "torrenting", "torrent", "[rarbg]", "hdtv", "pseudo", "265", ".0264", "x264", "h.264", "ettv", "\[prime\]", "[brassetv]", "-dimension", "-robots",
               "-killers", "-sva", "-tbs", "-brisk", "-morose", "-ntb", "-ntb", "-fleet", "[]", '()', '{}', "[ ]", "( )", "{ }", "www", "glodls", ".hdr.", "-bae",
               "[Mulvacoded]", "[Mulvacoded", "complete", "[mulvacoded", "-got", "dd+", "-trollhd", "day.com ]", "thebiscuitman]", ".ita", ".eng", "-linkle",
@@ -46,7 +46,7 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "-starz", "-afi", "-dexterous", "-failed", "-ligate", "-amcon", "-ntg", "-mrn", "[SEV]", "-worldmkv", "psyz", " -eccentricone", "-skedaddle", 
               "- goki", "[taoe]", "2.0 phun", "-spamtv", "-tommy", "-nyh", "-tepes", "web qman", "web e 2.0", "-esc", "vyndros", "-ghosts", "-tdr", "p264", " multi w",
               "-peculate", "-videohole", "-oldseasons", "web dl", "dsnyp e", "2160p joy", "-plzproper", "-walt", "-dimepiece", "-b2b", "-walmart", "-dvsux", 
-              "e--", "e-+", "e++", "-syncopy", "-ctrlhd", "web -t", "-cryptic", "-playweb", ]
+              "e--", "e-+", "e++", "-syncopy", "-ctrlhd", "web -t", "-cryptic", "-playweb", ".2-.", "-insidious", "-inspirit", "-tvslices", "-clockwork", ]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
