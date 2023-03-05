@@ -18,7 +18,7 @@ class Command(BaseCommand):
 file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", 
                              "mp3", ".url", ".txt", ".png", ".sfv"]
 
-unwanted_dir_names = ["screenshots", "screens"]
+unwanted_dir_names = ["screenshots", "screens", "samples", "extras"]
 
 def delete_unwanted_files(path):
     for root, dirs, files in os.walk(path, topdown=True):
