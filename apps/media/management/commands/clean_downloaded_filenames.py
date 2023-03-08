@@ -51,8 +51,10 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "-met", "crazzyboy", ".stan.", ".ainz", "an0mal1", "rzerox", ".nf.", "-stb", "375mb", "350mb", "-coo7", "-t6d", "e-subs", "multisub", "[.io]",
               'COMANDOTORRENTS', 'p-cmrg', "-greenblade", ".anoxmous", ".tigole", "Featurettes", "-truffle", "-daa", "-teneighty", "dts-jyk", "-jyk", ".idx", "..joy",
               "(.silence", "[7.1]", ".7.1", "yts.mx", "-hazmatt", ".ch.", ".ch", "[4k]", "[4k", "-rovers", "usabit.com", "en-sub", "rissy.teigen", ".4k.",
-              "iprip", "2-dri", "bdrip", "dts-hd", "yify", "subidn_crew", "bitita", "-nahom", "dvdrip", "xvid", "-lena", "(2015/", "yts.lt", "-legi0n", "etrg", 
-              "truehd", "1920x792", "1920x1080", "1920x802", "1920x798", "1920x800", "animatix", "-kg.", ".ma."]
+              "iprip", "2-dri", "bdrip", "dts-hd", "yify", "subidn_crew", "bitita", "-nahom", "dvdrip", "xvid", "-lena", "yts.lt", "-legi0n", "etrg", 
+              "truehd", "1920x792", "1920x1080", "1920x802", "1920x798", "1920x800", "animatix", "-kg.", ".ma.", "(1999", "(2000", "(2001", "(2002", 
+              "(2003", "(2004", "(2005", "(2006", "(2007", "(2008", "(2009", "(2010", "(2011", "(2012", "(2013","(2014", "(2015", 
+              "(2016", "(2017", "(2018", "(2019", "(2020", "(2021", "(2022", "(2023", "(2024", "(2025", "(2026", "(2027", "(2028"]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
