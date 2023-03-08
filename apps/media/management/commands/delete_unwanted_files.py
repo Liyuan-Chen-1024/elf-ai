@@ -15,8 +15,8 @@ class Command(BaseCommand):
         for storage in settings.STORAGE:
             execute(storage)
 
-file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", 
-                             "mp3", ".url", ".txt", ".png", ".sfv"]
+file_extensions_to_delete = [".exe", ".rar", ".nfo", ".jpg", ".jpeg", '.xml', '.sqlite',
+                             "mp3", ".url", ".txt", ".png", ".sfv", '.gif', '.ico']
 
 unwanted_dir_names = ["screenshots", "screens", "samples", "extras"]
 

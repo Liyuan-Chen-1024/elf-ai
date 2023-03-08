@@ -51,19 +51,18 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "-met", "crazzyboy", ".stan.", ".ainz", "an0mal1", "rzerox", ".nf.", "-stb", "375mb", "350mb", "-coo7", "-t6d", "e-subs", "multisub", "[.io]",
               'COMANDOTORRENTS', 'p-cmrg', "-greenblade", ".anoxmous", ".tigole", "Featurettes", "-truffle", "-daa", "-teneighty", "dts-jyk", "-jyk", ".idx", "..joy",
               "(.silence", "[7.1]", ".7.1", "yts.mx", "-hazmatt", ".ch.", ".ch", "[4k]", "[4k", "-rovers", "usabit.com", "en-sub", "rissy.teigen", ".4k.",
-              "iprip", "2-dri", "bdrip", "dts-hd", "yify", "subidn_crew", "bitita", "-nahom", "dvdrip", "xvid", "-lena", "(2015/", "yts.lt"]
+              "iprip", "2-dri", "bdrip", "dts-hd", "yify", "subidn_crew", "bitita", "-nahom", "dvdrip", "xvid", "-lena", "(2015/", "yts.lt", "-legi0n", "etrg", 
+              "truehd", "1920x792", "1920x1080", "1920x802", "1920x798", "1920x800", "animatix", "-kg.", ".ma."]
 
 char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
 
 
 def ensure_file_extension(name):
+    extensions = ['mkv', 'avi', 'mp4',' nfo', 'srt']
     renamed_name = name
-    if renamed_name[len(renamed_name)-3:] == 'mkv' and not renamed_name[len(renamed_name)-4] == '.':
-        renamed_name = renamed_name.replace("mkv", ".mkv")
-    if renamed_name[len(renamed_name)-3:] == 'mp4' and not renamed_name[len(renamed_name)-4] == '.':
-        renamed_name = renamed_name.replace("mp4", ".mp4")
-    if renamed_name[len(renamed_name)-3:] == 'nfo' and not renamed_name[len(renamed_name)-4] == '.':
-        renamed_name = renamed_name.replace("nfo", ".nfo")
+    for ext in extensions:
+        if renamed_name[len(renamed_name)-3:] == ext and not renamed_name[len(renamed_name)-4] == '.':
+            renamed_name = renamed_name.replace(ext, ".{0}".format(ext))
     return renamed_name
 
 
