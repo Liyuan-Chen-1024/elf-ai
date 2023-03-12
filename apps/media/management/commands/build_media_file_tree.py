@@ -18,3 +18,7 @@ class Command(BaseCommand):
                 for name in files:
                     path_name = os.path.join(root, name)
                     MediaFile.create_or_update_from_path(path_name)
+        
+        for file in MediaFile.objects.all():
+            if not file.exists_on_disk():
+                file.delete()
