@@ -20,7 +20,7 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "-jebaited", "-casstudio", "-stigma", "-sigma", "-align", "-oath", "-btx", "-webtube", "-soaplove", "com -", "glhf", "-kompost", "comandos.com",
               "[web]", "[dual", "dual.", "andos.com", "acesse ]", "org  ", "org - ", "multi web", "-cielos", "final internal", "internal web", " h ", "-hybris",
               "-max", "maximersk", "-trump", "-xpoz", "(nitro)", "Tomas&minami", "www.Speed.cd", "-memento", "-metcon", "-rapta", "speed.cd", ".WEB", "WEB.",
-              "[rarbg]", "reenc", "-deejayahmed", "ReEnc", "-DeeJayAhmed", "-river", "esubs", "-vlad", "-visum", "-mzabi", "-cravers", "-dl", "-cookiemonster",
+              "[rarbg]", "reenc", "-deejayahmed", "ReEnc", "-DeeJayAhmed", "-river", "esub", "esubs", "-vlad", "-visum", "-mzabi", "-cravers", "-dl", "-cookiemonster",
               "repack", "hulu", "-cravers", "-gungrave", "-dhd", "[MPup]", "[MPup", "-webif", "-showscen", "dtv", "dd2", "-etrg", "bf1", "-it00nz", "-organic",
               "[exyu-subs]", "couch.net", "[769mb]", "4g", "769mb", "-eng", "-evo", ".dd", "-crimson", "-justiso", "swsub",  "-novarip", "-luci", ".h.", "-btn", "-bamboozle",
               "[1337x]", "[1337x", "[sn]", "[sn", "-tulio", "-yfn", "-dl", "-bamboozle",  "pcness", "-MeGusta", "[exyu-subs", "-sorny", "-yfn", "-ajp69", "-gungrave",
@@ -53,9 +53,13 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "(.silence", "[7.1]", ".7.1", "yts.mx", "-hazmatt", ".ch.", ".ch", "[4k]", "[4k", "-rovers", "usabit.com", "en-sub", "rissy.teigen", ".4k.",
               "iprip", "2-dri", "bdrip", "dts-hd", "yify", "subidn_crew", "bitita", "-nahom", "dvdrip", "xvid", "-lena", "yts.lt", "-legi0n", "etrg", 
               "truehd", "1920x792", "1920x1080", "1920x802", "1920x798", "1920x800", "animatix", "-kg.", ".ma.", "-ika",  ".[.hdr", "multi.", "uhd.", "-ddr",
-              "wman-lord", "hdr", "c4k", "-aoc", "uhd", ".udun", "HEVC", "-CMRG", "HMAX", "Atmos", "WEB-DL", "DDP5.1", ".p.", "atvpp", "nfripp", "hd4u", "9.cz"]
+              "wman-lord", "hdr", "c4k", "-aoc", "uhd", ".udun", "HEVC", "-CMRG", "HMAX", "Atmos", "WEB-DL", "DDP5.1", ".p.", "atvpp", "nfripp", "hd4u", "9.cz", 
+              "hindi", "-lishlian", "multi-subs", "-mp4", ".mp4.", "highcode", "dts", "1920x1036", "-mrcs", "mkvcage", ".hc.", "moviesbyrizzo", "divx", 
+              "[mw]", "hindi.2.0english", "[mw", "(-)", ".audio.", ".nvenc", "-girays", ".french.", "1920x1040", "uniongang", ".d.", "-fgt", "20x816.", ".c.",
+              "2audio", "-sparks", ".20.", ".[7.1", "playnow-", ".-1.", ".ee.", ".bg.", ".ltt.", ".br.", ".vfq.", ".vff.", ".t0m.", ".s.", "mp4cc", "-galaxyrg", 
+              "1400mb", ".norwegian", "f21.", ".720.", ".public.", ".(2020", ]
 
-char_excl = ['.', ',', ':', ';', ' ', '-', '[', ']', '(', ')', '{', '}', '+']
+char_excl = ['.', ',', ':', ';', '-', '[', ']', '(', ')', '{', '}', '+']
 
 
 def ensure_file_extension(name):
