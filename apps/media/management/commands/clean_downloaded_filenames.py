@@ -57,7 +57,9 @@ strip_list = ["eztv", "[.re]", "eztv.re", ".rip", ".ripp", "-gossip", "-ggez", "
               "hindi", "-lishlian", "multi-subs", "-mp4", ".mp4.", "highcode", "dts", "1920x1036", "-mrcs", "mkvcage", ".hc.", "moviesbyrizzo", "divx", 
               "[mw]", "hindi.2.0english", "[mw", "(-)", ".audio.", ".nvenc", "-girays", ".french.", "1920x1040", "uniongang", ".d.", "-fgt", "20x816.", ".c.",
               "2audio", "-sparks", ".20.", ".[7.1", "playnow-", ".-1.", ".ee.", ".bg.", ".ltt.", ".br.", ".vfq.", ".vff.", ".t0m.", ".s.", "mp4cc", "-galaxyrg", 
-              "1400mb", ".norwegian", "f21.", ".720.", ".public.", ".(2020", ]
+              "1400mb", ".norwegian", "f21.", ".720.", ".public.", ".(2020", "dxvame", "1920x816", "1920x804", "1920x1038", "20x1040", ".-bl.", "maxp", ".dv.10",
+              "dr10plusp", "-sparks", "800mb", "-nezu", "cbgbcbgb", "720r", "720", "900mb", "unrated3li", "unrated", "theatrical", "kingdomrelease", "cinefile",
+              "iextv", "2.1.8.gb", "oswedish", "-kg", "vffvo", "2e.", "hotpena", "-shitbox", "mgb.", "3li.", "resourcergbydusty", "ebp." ]
 
 char_excl = ['.', ',', ':', ';', '-', '[', ']', '(', ')', '{', '}', '+']
 
