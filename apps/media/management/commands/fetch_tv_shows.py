@@ -7,7 +7,9 @@ class Command(BaseCommand):
     help = 'Closes the specified poll for voting'
 
     def handle(self, *args, **options):
+        print("Starting")
         for tvshow in TVShow.objects.all():
+            print(tvshow)
             try:
                 tvshow.download_all_available_episodes_starting_at_current_episode()
             except ShowNotFoundException:
