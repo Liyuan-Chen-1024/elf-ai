@@ -12,7 +12,7 @@ import random
 import time
 LOGGING_CONF = os.path.join(settings.BASE_DIR, "logging.ini")
 logging.config.fileConfig(LOGGING_CONF)
-log = logging.getLogger("jarvis_fetcher")
+log = logging.getLogger("applog")
 
 class MediaFile(models.Model):
     path = models.TextField()
@@ -134,7 +134,7 @@ class TVShow(models.Model):
 
         if not magnets:
             return None
-    
+
         if '2160p' in magnets and magnets['2160p']:
             return magnets['2160p']
         if "1080p" in magnets and magnets["1080p"]:
@@ -156,7 +156,11 @@ class TVShow(models.Model):
             pass
         
         magnet = self.fetch_best_magnet_for_current_episode()
+
         if not magnet:
+            log.info("Will skip {0}, cant find magnet for current episode: {1}:{2}".format(
+                self.full_name, self.current_season, self.current_episode
+            ))
             return False
         
         download_dir = get_tv_folder(self.keep)
@@ -165,7 +169,6 @@ class TVShow(models.Model):
             magnet,
             download_dir=download_dir
         )
-        
     
     def get_next_episode(self):
         try:
@@ -192,6 +195,9 @@ class TVShow(models.Model):
         
         if not self.active:
             log.info("Skipping {0}, marked as inactive".format(self.full_name))
+
+        if not self.current_episode_released():
+            log.info("Skipping {0}, current episode not released".format(self.full_name))
 
         if not self.downloaded_current_episode:
             if self.download_current_episode():

@@ -1,3 +1,0 @@
-# m h  dom mon dow   command
-*/1 * * * * python /app/manage.py fetch_tv_shows --settings=core.settings_prod
-*/9 * * * * python /app/manage.py manage_tx_queue --settings=core.settings_prod
