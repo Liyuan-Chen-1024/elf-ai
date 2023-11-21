@@ -1,8 +1,11 @@
-class ShowNotFoundException(Exception):
+class EpguidesException(Exception):
     pass
 
-class EpisodeNotFoundException(Exception):
+class ShowNotFoundException(EpguidesException):
     pass
 
-class SeasonNotFoundException(Exception):
+class EpisodeNotFoundException(EpguidesException):
+    pass
+
+class SeasonNotFoundException(EpguidesException):
     pass
