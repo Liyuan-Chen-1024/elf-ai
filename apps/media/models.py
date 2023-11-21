@@ -4,7 +4,7 @@ from django.utils import timezone
 
 import logging
 from django.conf import settings
-from apps.media.utils.exceptions import EpisodeNotFoundException, ShowNotFoundException
+from apps.media.utils.exceptions import EpisodeNotFoundException, ShowNotFoundException, SeasonNotFoundException
 from apps.media.utils.fetcher import potato_api_request, epguides_api_request
 from apps.media.utils.files import get_tv_folder
 from apps.media.utils.tx import TXWrapper
@@ -145,9 +145,17 @@ class TVShow(models.Model):
         return None
 
     def current_episode_released(self):
-        return epguides_api_request(
-            'show/{0}/released/'.format(self.key_season_episode)
-        )['status']
+        try:
+            return epguides_api_request(
+                'show/{0}/released/'.format(self.key_season_episode)
+            )['status']
+        except SeasonNotFoundException:
+            pass
+        except EpisodeNotFoundException:
+            pass
+        except ShowNotFoundException:
+            pass
+        return False
     
     def download_current_episode(self):
         if not self.current_episode_released():
