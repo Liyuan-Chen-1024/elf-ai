@@ -1,12 +1,11 @@
-import random
-import datetime
-from transmission_rpc import Client
 from django.conf import settings
+from transmission_rpc import Client
+
 
 class TXWrapper:
 
     @classmethod
-    def add(cls, url, download_dir='/data'):
+    def add(cls, url, download_dir="/data"):
         client = Client(host=settings.TX_HOST)
         return client.add_torrent(torrent=url, download_dir=download_dir)
 
@@ -15,25 +14,25 @@ class TXWrapper:
         client = Client(host=settings.TX_HOST)
         torrents = client.get_torrents(
             arguments=[
-                'id',
-                'activityDate',
-                'addedDate',
-                'isFinished',
-                'name',
-                'rateDownload',
-                'status',
-                'secondsDownloading'
+                "id",
+                "activityDate",
+                "addedDate",
+                "isFinished",
+                "name",
+                "rateDownload",
+                "status",
+                "secondsDownloading",
             ]
         )
 
         def is_finished(torrent):
-            return torrent.status == 'seeding' or torrent.isFinished
+            return torrent.status == "seeding" or torrent.isFinished
 
         def is_downloading(torrent):
-            return torrent.status == 'downloading'
+            return torrent.status == "downloading"
 
         def is_paused(torrent):
-            return torrent.status == 'stopped'
+            return torrent.status == "stopped"
 
         def is_slow(torrent):
             downloadRates = map(lambda x: x.rateDownload, torrents)
@@ -43,7 +42,9 @@ class TXWrapper:
                 avg_download_rate = avg_download_rate / 1024
             else:
                 avg_download_rate = 0
-            return torrent.rateDownload < 150 and torrent.rateDownload <= (avg_download_rate / 2)
+            return torrent.rateDownload < 150 and torrent.rateDownload <= (
+                avg_download_rate / 2
+            )
 
         def remove_finished_torrents():
             ids = list(map(lambda x: x.id, filter(is_finished, torrents)))

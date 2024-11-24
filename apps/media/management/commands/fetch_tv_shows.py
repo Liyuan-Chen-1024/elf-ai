@@ -1,11 +1,10 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from apps.media.models import TVShow
 from apps.media.utils.exceptions import ShowNotFoundException
 
-class Command(BaseCommand):
-    help = 'Closes the specified poll for voting'
 
+class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Starting")
         for tvshow in TVShow.objects.all():

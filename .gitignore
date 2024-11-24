@@ -7,4 +7,5 @@ node_modules
 info.log
 error.log
 static/
-applog.log
+applog*
+.vscode-server

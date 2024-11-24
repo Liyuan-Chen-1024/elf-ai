@@ -1,11 +1,12 @@
-from django.core.management.base import BaseCommand, CommandError
-from django.contrib.auth.models import User
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
 from apps.media.models import TVShow
 
 
 class Command(BaseCommand):
-    help = 'Closes the specified poll for voting'
+    help = "Closes the specified poll for voting"
 
     def create_admin(self):
         u = User.objects.get_or_create(username="admin")[0]
@@ -18,7 +19,7 @@ class Command(BaseCommand):
         shows = [
             ("sharktank", "Shark Tank"),
             ("glee", "Glee"),
-            ("howimetyourmother", "How I met your mother")
+            ("howimetyourmother", "How I met your mother"),
         ]
         for [show, full_name] in shows:
             show = TVShow.objects.get_or_create(epguide_name=show)[0]

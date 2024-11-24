@@ -1,21 +1,21 @@
-import requests
 import re
 import time
 
-from django.core.management.base import BaseCommand, CommandError
+import requests
+from django.core.management.base import BaseCommand
 
-from apps.media.utils.tx import TXWrapper
 
 class Command(BaseCommand):
-    help = 'Closes the specified poll for voting'
+    help = "Closes the specified poll for voting"
 
     def handle(self, *args, **options):
-        current_content = requests.get('http://epguides.com/menu/current.shtml')
+        current_content = requests.get("http://epguides.com/menu/current.shtml")
 
-        epguide_keys = re.findall(b'href="..\/([\w+]*)\/\"\>', current_content.content)
+        epguide_keys = re.findall(b'href="..\/([\w+]*)\/"\>', current_content.content)
 
         for key in epguide_keys:
-            url = 'http://epguides.frecar.no/show/{0}'.format(key.decode("utf-8").lower())
+            url = "http://epguides.frecar.no/show/{0}".format(
+                key.decode("utf-8").lower()
+            )
             requests.get(url)
             time.sleep(5)
-
