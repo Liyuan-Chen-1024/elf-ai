@@ -1,5 +1,3 @@
-version: '3.12-rc-buster'
-
 services:
   jarvis:
     command: >
