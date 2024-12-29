@@ -135,7 +135,7 @@ class TVShow(models.Model):
                 self.first_release_date = response["episode"]["release_date"]
 
     def fetch_best_magnet_for_current_episode(self):
-        search_engine = "https://www.limetorrents.lol"
+        search_engine = "https://limetorrent.net"
         search_prefixes = ["2160p", "1080p", "720p"]
 
         current_episode = self.fetch_current_episode()
