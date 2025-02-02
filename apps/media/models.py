@@ -268,25 +268,16 @@ class TVShow(models.Model):
                 self.download_all_available_episodes_starting_at_current_episode()
 
     def get_status(self):
-        if self.current_season < self.last_release_season or (
-            self.current_season == self.last_release_season
-            and self.current_episode < self.last_release_episode
+        if (
+            self.next_release_date == self.last_release_date
+        ) and self.next_release_date < datetime.date.today():
+            return "Finished", "gray"
+
+        elif self.current_season < self.last_release_season or (
+            self.current_episode < self.last_release_episode
         ):
             return "Behind", "red"
-        elif self.next_release_date and self.next_release_date <= datetime.date.today():
-            return "Expired", "gray"
-        elif self.downloaded_current_episode:
-            return "Up to date", "green"
-        elif (
-            self.current_season == self.last_release_season
-            and self.current_episode
-            in {self.last_release_episode, self.last_release_episode + 1}
-        ):
-            return "Up to date", "green"
-        elif (
-            self.current_season == self.last_release_season + 1
-            and self.current_episode == 1
-        ):
-            return "Up to date", "green"
-        else:
+        elif not self.downloaded_current_episode:
             return "Behind", "red"
+
+        return "Up to date", "green"
