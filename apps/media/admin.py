@@ -17,30 +17,15 @@ class StatusFilter(SimpleListFilter):
             ("up_to_date", "Up to date"),
             ("behind", "Behind"),
             ("expired", "Expired"),
-            ("unknown", "Unknown"),
         )
 
     def queryset(self, request, queryset):
         if self.value() == "up_to_date":
-            return queryset.filter(
-                current_season=models.F("last_release_season"),
-                current_episode=models.F("last_release_episode"),
-            )
+            return [obj.id for obj in queryset if obj.get_status()[0] == "Up to date"]
         if self.value() == "behind":
-            return queryset.filter(
-                models.Q(current_season__lt=models.F("last_release_season"))
-                | models.Q(current_episode__lt=models.F("last_release_episode"))
-            )
+            return [obj.id for obj in queryset if obj.get_status()[0] == "Behind"]
         if self.value() == "expired":
-            return queryset.filter(next_release_date__lte=datetime.date.today())
-        if self.value() == "unknown":
-            return queryset.exclude(
-                models.Q(current_season=models.F("last_release_season"))
-                & models.Q(current_episode=models.F("last_release_episode"))
-                | models.Q(current_season__lt=models.F("last_release_season"))
-                | models.Q(current_episode__lt=models.F("last_release_episode"))
-                | models.Q(next_release_date__lte=datetime.date.today())
-            )
+            return [obj.id for obj in queryset if obj.get_status()[0] == "Expired"]
 
 
 class TVShowAdmin(admin.ModelAdmin):
