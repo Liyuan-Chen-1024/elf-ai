@@ -272,7 +272,11 @@ class TVShow(models.Model):
             self.next_release_date == self.last_release_date
         ) and self.next_release_date < datetime.date.today():
             return "Finished", "gray"
-
+        elif (
+            self.current_season > self.last_release_season
+            and self.next_release_date > datetime.date.today()
+        ):
+            return "Up to date", "green"
         elif self.current_season < self.last_release_season or (
             self.current_episode < self.last_release_episode
         ):
