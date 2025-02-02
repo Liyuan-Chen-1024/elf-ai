@@ -135,10 +135,11 @@ class TVShow(models.Model):
                 self.first_release_date = response["episode"]["release_date"]
 
     def fetch_best_magnet_for_current_episode(self):
-        search_engine = "https://limetorrent.net"
+        search_engine = "https://limetorrents.lol"
         search_prefixes = ["2160p", "1080p", "720p"]
 
         current_episode = self.fetch_current_episode()
+
         if not current_episode:
             return None
 
@@ -154,6 +155,7 @@ class TVShow(models.Model):
             )
             url = f"{search_engine}/search/all/{search_term}/seeds/1"
             content = self.get_content(url)
+
             soup = BeautifulSoup(content, "lxml")
 
             tables = soup.find_all("table")
@@ -212,12 +214,16 @@ class TVShow(models.Model):
             return False
 
         magnet = self.fetch_best_magnet_for_current_episode()
+
         if not magnet:
             log.info(
                 f"Will skip {self.full_name}, can't find magnet for current episode: {self.current_season}:{self.current_episode}"
             )
             return False
 
+        log.info(
+            f"Downloading {self.full_name}, episode: {self.current_season}:{self.current_episode}"
+        )
         download_dir = get_tv_folder(self.keep)
         return TXWrapper.add(magnet, download_dir=download_dir)
 
