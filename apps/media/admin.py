@@ -1,31 +1,8 @@
-import datetime
-
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
-from django.db import models
 from django.utils.safestring import mark_safe
 
 from .models import MediaFile, TVShow
-
-
-class StatusFilter(SimpleListFilter):
-    title = "status"
-    parameter_name = "status"
-
-    def lookups(self, request, model_admin):
-        return (
-            ("up_to_date", "Up to date"),
-            ("behind", "Behind"),
-            ("expired", "Expired"),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == "up_to_date":
-            return [obj.id for obj in queryset if obj.get_status()[0] == "Up to date"]
-        if self.value() == "behind":
-            return [obj.id for obj in queryset if obj.get_status()[0] == "Behind"]
-        if self.value() == "expired":
-            return [obj.id for obj in queryset if obj.get_status()[0] == "Expired"]
 
 
 class TVShowAdmin(admin.ModelAdmin):
@@ -42,7 +19,8 @@ class TVShowAdmin(admin.ModelAdmin):
         "datetime_added",
     )
     search_fields = ["epguide_name", "full_name"]
-    list_filter = ("active", "keep", StatusFilter)
+    list_filter = ("active", "keep")
+    ordering = ["-next_release_date", "full_name"]
 
     def status_display(self, obj):
         status, color = obj.get_status()
