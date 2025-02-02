@@ -124,8 +124,6 @@ class TVShow(models.Model):
         next_episode = self.get_next_episode()
         if next_episode:
             self.next_release_date = next_episode["release_date"]
-        else:
-            self.next_release_date = self.last_release_date
 
     def update_first_episode_data(self):
         if not self.first_release_date:
