@@ -268,7 +268,7 @@ class TVShow(models.Model):
                 self.download_all_available_episodes_starting_at_current_episode()
 
     def get_status(self):
-        if self.last_release_date <= datetime.date.today():
+        if self.next_release_date <= datetime.date.today():
             return "Expired", "gray"
         elif self.downloaded_current_episode:
             return "Up to date", "green"
