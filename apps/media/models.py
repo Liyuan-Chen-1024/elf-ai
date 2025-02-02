@@ -244,8 +244,7 @@ class TVShow(models.Model):
             return False
 
     def download_all_available_episodes_starting_at_current_episode(self):
-        if bool(random.getrandbits(1)):
-            self.update_last_next_and_first_episodes_data()
+        self.update_last_next_and_first_episodes_data()
 
         if not self.active:
             log.info(f"Skipping {self.full_name}, marked as inactive")
