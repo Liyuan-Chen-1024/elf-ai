@@ -277,7 +277,10 @@ class TVShow(models.Model):
             self.current_episode < self.last_release_episode
         ):
             return "Behind", "red"
-        elif not self.downloaded_current_episode:
+        elif (
+            self.current_episode == self.last_release_episode
+            and self.current_season == self.last_release_season
+        ) and not self.downloaded_current_episode:
             return "Behind", "red"
 
         return "Up to date", "green"
