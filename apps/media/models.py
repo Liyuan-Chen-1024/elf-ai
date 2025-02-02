@@ -122,6 +122,7 @@ class TVShow(models.Model):
 
     def update_next_episode_data(self):
         next_episode = self.get_next_episode()
+        print(next_episode)
         if next_episode:
             self.next_release_date = next_episode["release_date"]
 
@@ -230,7 +231,7 @@ class TVShow(models.Model):
 
     def get_next_episode(self):
         try:
-            response = epguides_api_request(f"show/{self.key_season_episode}/next/")
+            response = epguides_api_request(f"show/{self.epguide_name}/next/")
             return response.get("episode") if response else None
         except EpguidesException:
             return None
