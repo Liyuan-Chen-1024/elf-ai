@@ -232,7 +232,7 @@ class TVShow(models.Model):
 
     def get_next_episode(self):
         try:
-            response = epguides_api_request(f"show/{self.epguide_name}/next/")
+            response = epguides_api_request(f"show/{self.key_season_episode}/next/")
             return response.get("episode") if response else None
         except EpguidesException:
             return None
@@ -270,7 +270,7 @@ class TVShow(models.Model):
                 self.download_all_available_episodes_starting_at_current_episode()
 
     def get_status(self):
-        if self.next_release_date <= datetime.date.today():
+        if self.last_release_date <= datetime.date.today():
             return "Expired", "gray"
         elif self.downloaded_current_episode:
             return "Up to date", "green"

@@ -20,7 +20,7 @@ class TVShowAdmin(admin.ModelAdmin):
     )
     search_fields = ["epguide_name", "full_name"]
     list_filter = ("active", "keep")
-    ordering = ["-next_release_date", "full_name"]
+    ordering = ["-last_release_date", "full_name"]
 
     def status_display(self, obj):
         status, color = obj.get_status()
