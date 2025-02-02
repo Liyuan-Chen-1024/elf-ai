@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import random
@@ -266,3 +267,19 @@ class TVShow(models.Model):
                 self.downloaded_current_episode = False
                 self.save()
                 self.download_all_available_episodes_starting_at_current_episode()
+
+    def get_status(self):
+        if self.next_release_date <= datetime.date.today():
+            return "Expired", "gray"
+        elif (
+            self.current_season == self.last_release_season
+            and self.current_episode == self.last_release_episode
+        ):
+            return "Up to date", "green"
+        elif (
+            self.current_season < self.last_release_season
+            or self.current_episode < self.last_release_episode
+        ):
+            return "Behind", "red"
+        else:
+            return "Unknown", "yellow"
