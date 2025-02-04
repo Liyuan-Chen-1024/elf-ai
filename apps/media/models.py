@@ -137,7 +137,7 @@ class TVShow(models.Model):
 
     def fetch_best_magnet_for_current_episode(self):
         search_engine = "https://limetorrents.lol"
-        search_prefixes = ["2160p", "1080p", "720p"]
+        search_prefixes = ["2160p", "1080p", "720p", ""]
 
         current_episode = self.fetch_current_episode()
 
