@@ -60,9 +60,14 @@ class MediaFile(models.Model):
                 renamed_name, ext = os.path.splitext(self.get_filename())
                 renamed_name = extract_title_and_season_episode(renamed_name)
                 renamed_name = renamed_name + ext
+                self.renamed_from = self.path
 
-                self.renamed_from = os.path.join(self.dirname, renamed_name)
-                os.rename(self.path, os.path.join(self.dirname, renamed_name))
+                new_path = os.path.join(self.dirname, renamed_name)
+
+                print(self.path, new_path)
+
+                os.rename(self.path, new_path)
+                self.path = new_path
                 self.save()
 
     def update_file_stats(self, stats):
