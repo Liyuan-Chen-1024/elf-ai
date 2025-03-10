@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
 
 def rename(path):
-    rename_dirs(path)
+    # rename_dirs(path)
     rename_files(path)
 
 
