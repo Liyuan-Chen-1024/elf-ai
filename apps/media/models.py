@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from django.db import models
 from django.utils import timezone
 
+from apps.media.utils.ai import extract_title_and_season_episode
 from apps.media.utils.fetcher import epguides_api_request
 from apps.media.utils.files import get_tv_folder
 from apps.media.utils.tx import TXWrapper
@@ -31,6 +32,7 @@ class MediaFile(models.Model):
     last_read_from_disk = models.BigIntegerField(null=True, blank=True)
     keep = models.BooleanField(default=False)
     is_movie = models.BooleanField(default=False)
+    renamed_from = models.TextField("")
 
     @staticmethod
     def create_or_update_from_path(path):
@@ -48,6 +50,22 @@ class MediaFile(models.Model):
             media_file.save()
         else:
             media_file.delete()
+
+    def get_filename(self):
+        return os.path.basename(self.path)
+
+    def rename_to_improved_file_pathname(self):
+        if self.exists_on_disk() and not self.renamed_from
+            if not self.is_movie: 
+                renamed_name, ext = os.path.splitext(self.get_filename())
+                renamed_name = extract_title_and_season_episode(renamed_name)
+                renamed_name = renamed_name + ext
+
+                self.renamed_from = os.path.join(self.dirname, renamed_name)
+                # os.rename(path_name, os.path.join(root, renamed_name))
+                print(self.renamed_from)
+                self.save()
+
 
     def update_file_stats(self, stats):
         self.st_ctime = stats.st_ctime
