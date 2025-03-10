@@ -33,7 +33,15 @@ admin.site.register(TVShow, TVShowAdmin)
 
 
 class MediaFileAdmin(admin.ModelAdmin):
-    list_display = ("path", "ext", "category", "keep", "gb_size")
+    list_display = (
+        "path",
+        "renamed_from",
+        "ext",
+        "renamed_from",
+        "category",
+        "keep",
+        "gb_size",
+    )
     search_fields = ["path"]
     list_filter = ("ext", "keep", "is_movie")
 
