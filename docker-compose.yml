@@ -1,31 +1,65 @@
+version: '3.8'
+
 services:
+  nordlynx:
+    container_name: nordlynx
+    restart: "unless-stopped"
+    image: ghcr.io/bubuntux/nordlynx
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PRIVATE_KEY=4I1Yvh/tDZP5kJDNls5SM2ODxLEn7jevo1fUUqLYP2M=
+      - NET_LOCAL=192.168.1.0/24
+      - PERSISTENT_KEEP_ALIVE=1
+      - TZ=UTC
+    ports:
+      - 3306:3306
+      - 6379:6379
+      - 6479:6479
+      - 3001:3001
+      - 3002:3002
+      - 3003:3003
+      - 8978:8978
+      - 9922:22
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=1
+    networks:
+      - nordlynx_network
+
   jarvis:
     command: >
       sh -c "cron && 
              python3 manage.py collectstatic --noinput &&
              python3 manage.py migrate
-             tail -f /dev/null" 
+             tail -f /dev/null"
     build:
       context: .
       args:
         - ENABLE_CRON=1
     ports:
       - 8000:8000
-      - 9922:22
     volumes:
       - ./:/app
       - ./.vscode-server:/root/.vscode-server
-      - ~/docker_volumes/deployservice/:/deployservice
-    links: 
-      - tx
-      - redis
+      - ~/docker_volumes/apps/web/:/apps/web
+    networks:
+      - nordlynx_network
+    depends_on:
+      - nordlynx
+
   redis:
-    command: bash -c "redis-server --save 10 1 --requirepass 8hd8293hd92"
-    image: redis
-    ports:
-      - 6379:6379
+    container_name: redis
+    restart: unless-stopped
+    image: redis:latest
+    command: redis-server --requirepass 5s6dfsd7 --save 60 10 --loglevel warning
     volumes:
-      - ~/docker_volumes/redis-data:/data
+      - ~/docker_volumes/redis:/data
+    networks:
+      - nordlynx_network
+    depends_on:
+      - nordlynx
+
   tx:
     cap_add:
       - NET_ADMIN
@@ -48,3 +82,22 @@ services:
       - '9091:9091'
       - '9117:9117'
     image: haugene/transmission-openvpn
+    networks:
+      - nordlynx_network
+
+  mysql:
+    container_name: mysql
+    restart: unless-stopped
+    image: mysql:lts
+    environment:
+      MYSQL_ROOT_PASSWORD: 'fhs8fhsd9f8'
+    volumes:
+      - ~/docker_volumes/mysql-data:/var/lib/mysql
+    networks:
+      - nordlynx_network
+    depends_on:
+      - nordlynx
+
+networks:
+  nordlynx_network:
+    driver: bridge

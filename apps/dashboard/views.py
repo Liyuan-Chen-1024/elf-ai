@@ -15,7 +15,7 @@ from rest_framework.decorators import (
 def deploy_service(request, service):
     # required_secret = "f2hf9hf9oh8f9o023fdoi"
 
-    queue_file = os.path.expanduser("/deployservice/queue")
+    queue_file = os.path.expanduser("/apps/web/queue")
 
     current_queue = {}
     current_queue[service] = int(time.time())

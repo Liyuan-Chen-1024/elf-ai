@@ -1,20 +1,14 @@
 import logging
-import logging.config
-import os
 
 import requests
-from django.conf import settings
 
-from apps.media.utils.exceptions import (
+from core.exceptions import (
     EpisodeNotFoundException,
     SeasonNotFoundException,
     ShowNotFoundException,
 )
 
-# Configure logging
-LOGGING_CONF = os.path.join(settings.BASE_DIR, "logging.ini")
-logging.config.fileConfig(LOGGING_CONF)
-log = logging.getLogger("jarvis_fetcher")
+logger = logging.getLogger(__name__)
 
 
 def epguides_api_request(path):
@@ -22,7 +16,7 @@ def epguides_api_request(path):
 
 
 def parse_json_from_url(url):
-    log.info("Reading data from: %s" % url)
+    logger.log.info("Reading data from: %s" % url)
     response = requests.get(url)
 
     if response.status_code == 200:

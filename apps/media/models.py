@@ -1,24 +1,20 @@
 import datetime
 import logging
 import os
-import random
 import re
 import time
 
 import requests
 from bs4 import BeautifulSoup
-from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-from apps.media.utils.exceptions import EpguidesException
 from apps.media.utils.fetcher import epguides_api_request
 from apps.media.utils.files import get_tv_folder
 from apps.media.utils.tx import TXWrapper
+from core.exceptions import EpguidesException
 
-LOGGING_CONF = os.path.join(settings.BASE_DIR, "logging.ini")
-logging.config.fileConfig(LOGGING_CONF)
-log = logging.getLogger("applog")
+logger = logging.getLogger(__name__)
 
 
 class MediaFile(models.Model):
@@ -217,12 +213,12 @@ class TVShow(models.Model):
         magnet = self.fetch_best_magnet_for_current_episode()
 
         if not magnet:
-            log.info(
+            logger.info(
                 f"Will skip {self.full_name}, can't find magnet for current episode: {self.current_season}:{self.current_episode}"
             )
             return False
 
-        log.info(
+        logger.info(
             f"Downloading {self.full_name}, episode: {self.current_season}:{self.current_episode}"
         )
         download_dir = get_tv_folder(self.keep)
@@ -247,11 +243,11 @@ class TVShow(models.Model):
         self.update_last_next_and_first_episodes_data()
 
         if not self.active:
-            log.info(f"Skipping {self.full_name}, marked as inactive")
+            logger.info(f"Skipping {self.full_name}, marked as inactive")
             return
 
         if not self.current_episode_released():
-            log.info(f"Skipping {self.full_name}, current episode not released")
+            logger.info(f"Skipping {self.full_name}, current episode not released")
             return
 
         if not self.downloaded_current_episode and self.download_current_episode():

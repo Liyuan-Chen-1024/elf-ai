@@ -23,9 +23,10 @@ ignore =
     DJ01,
     DJ08,
     C901,
-    E712
+    E712,
+    W605
 enable-extensions = G
-application-import-names = myapp
+application-import-names = apps
 show-source = True
 count = True
 format = pylint

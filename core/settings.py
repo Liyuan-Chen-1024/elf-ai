@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import logging
 import os
 from pathlib import Path
 
@@ -40,7 +41,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "apps.media",
     "apps.dashboard",
-    "apps.plex",
 ]
 
 MIDDLEWARE = [
@@ -144,3 +144,44 @@ TX_HOST = "tx"
 STORAGE = [
     "/Users/frecar/Downloads/",
 ]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "applog_format": {
+            "format": "%(asctime)s-[%(levelname)-8s]:%(message)s",
+        },
+        "console_format": {
+            "format": "%(asctime)s-%(filename)s%(lineno)d[%(levelname)s]:%(message)s",
+        },
+    },
+    "handlers": {
+        "rotateFileHandler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "applog_format",
+            "filename": os.path.join(BASE_DIR, "applog.log"),
+            "mode": "a",
+            "maxBytes": 10000,
+            "backupCount": 9,
+        },
+        "rotateConsoleHandler": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "console_format",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "loggers": {
+        "root": {
+            "level": "DEBUG",
+            "handlers": ["rotateFileHandler", "rotateConsoleHandler"],
+        },
+        "simple_example": {
+            "level": "DEBUG",
+            "handlers": ["rotateFileHandler"],
+            "propagate": False,
+        },
+    },
+}

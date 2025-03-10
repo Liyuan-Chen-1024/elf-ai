@@ -2,7 +2,6 @@
 db.sqlite3
 .vscode
 __pycache__
-mydatabase
 node_modules
 info.log
 error.log
