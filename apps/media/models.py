@@ -32,7 +32,7 @@ class MediaFile(models.Model):
     last_read_from_disk = models.BigIntegerField(null=True, blank=True)
     keep = models.BooleanField(default=False)
     is_movie = models.BooleanField(default=False)
-    renamed_from = models.TextField("")
+    renamed_from = models.TextField("", default="")
 
     @staticmethod
     def create_or_update_from_path(path):
