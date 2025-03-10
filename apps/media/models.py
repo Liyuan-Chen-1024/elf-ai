@@ -62,8 +62,7 @@ class MediaFile(models.Model):
                 renamed_name = renamed_name + ext
 
                 self.renamed_from = os.path.join(self.dirname, renamed_name)
-                # os.rename(path_name, os.path.join(root, renamed_name))
-                print(self.renamed_from)
+                os.rename(self.path, os.path.join(self.dirname, renamed_name))
                 self.save()
 
     def update_file_stats(self, stats):
