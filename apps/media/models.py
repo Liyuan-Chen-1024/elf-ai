@@ -55,8 +55,8 @@ class MediaFile(models.Model):
         return os.path.basename(self.path)
 
     def rename_to_improved_file_pathname(self):
-        if self.exists_on_disk() and not self.renamed_from
-            if not self.is_movie: 
+        if self.exists_on_disk() and not self.renamed_from:
+            if not self.is_movie:
                 renamed_name, ext = os.path.splitext(self.get_filename())
                 renamed_name = extract_title_and_season_episode(renamed_name)
                 renamed_name = renamed_name + ext
@@ -65,7 +65,6 @@ class MediaFile(models.Model):
                 # os.rename(path_name, os.path.join(root, renamed_name))
                 print(self.renamed_from)
                 self.save()
-
 
     def update_file_stats(self, stats):
         self.st_ctime = stats.st_ctime
