@@ -5,38 +5,7 @@ import shutil
 
 from django.conf import settings
 
-VIDEO_FILE_EXTENSIONS = {
-    ".mp4",
-    ".mkv",
-    ".avi",
-    ".mov",
-    ".wmv",
-    ".flv",
-    ".webm",
-    ".vob",
-    ".ogv",
-    ".ogg",
-    ".drc",
-    ".mng",
-    ".mts",
-    ".m2ts",
-    ".ts",
-    ".m4v",
-    ".3gp",
-    ".3g2",
-    ".nsv",
-}
-
 UNWANTED_DIR_NAMES = {"screenshots", "screens", "samples", "extras"}
-
-
-def delete_non_video_files(path):
-    for root, _, files in os.walk(path, topdown=True):
-        for name in files:
-            path_name = os.path.join(root, name)
-            if not any(path_name.endswith(ext) for ext in VIDEO_FILE_EXTENSIONS):
-                logging.info(f"Deleting file: {path_name}")
-                os.remove(path_name)
 
 
 def delete_unwanted_directories(path):
