@@ -3,7 +3,11 @@ import logging
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from apps.media.utils.files import delete_empty_directories, delete_unwanted_directories
+from apps.media.utils.files import (
+    delete_empty_directories,
+    delete_small_video_files,
+    delete_unwanted_directories,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,5 +22,6 @@ class Command(BaseCommand):
             logger.info(f"Processing storage: {storage}")
             delete_unwanted_directories(storage)
             delete_empty_directories(storage)
+            delete_small_video_files(storage)
 
         logger.info("Finished deleting unwanted files and directories")
