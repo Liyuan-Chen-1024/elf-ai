@@ -37,7 +37,6 @@ class MediaFileAdmin(admin.ModelAdmin):
         "path",
         "renamed_from",
         "ext",
-        "renamed_from",
         "category",
         "keep",
         "gb_size",

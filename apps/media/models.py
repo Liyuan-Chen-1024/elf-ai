@@ -62,6 +62,9 @@ class MediaFile(models.Model):
             else:
                 renamed_name = extract_title_and_season_episode(renamed_name)
 
+            if len(renamed_name) < 6:
+                return
+
             renamed_name = renamed_name + ext
             self.renamed_from = self.path
 
