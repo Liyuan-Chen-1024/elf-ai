@@ -3,7 +3,7 @@
 This module provides middleware for handling API versioning through:
 - URL versioning (/api/v1/)
 - Header versioning (X-API-Version)
-- Accept header versioning (Accept: application/vnd.jarvis.v1+json)
+- Accept header versioning (Accept: application/vnd.elfai.v1+json)
 - Version deprecation warnings
 """
 from datetime import datetime
@@ -122,9 +122,9 @@ class APIVersionMiddleware:
             
         # Check Accept header
         accept = request.headers.get('Accept', '')
-        if 'application/vnd.jarvis.' in accept:
+        if 'application/vnd.elfai.' in accept:
             for version in API_VERSIONS:
-                if f'vnd.jarvis.{version}+json' in accept:
+                if f'vnd.elfai.{version}+json' in accept:
                     return version, 'accept'
                     
         # Use default version
@@ -159,3 +159,21 @@ class APIVersionMiddleware:
         )
         
         return None 
+
+    def _get_accept_version(self, request: HttpRequest) -> str:
+        """
+        Get API version from Accept header.
+        
+        Example:
+            Accept: application/vnd.elfai.v1+json
+        
+        Returns:
+            String with the version or None if not found/invalid
+        """
+        accept = request.META.get('HTTP_ACCEPT', '')
+        
+        # Check if the Accept header contains our vendor-specific type
+        if 'application/vnd.elfai.' in accept:
+            # Extract the version from the Accept header
+            if f'vnd.elfai.{version}+json' in accept:
+                return version 

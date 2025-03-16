@@ -3,10 +3,10 @@ set -e
 
 # Get environment from args
 ENV=${1:-prod}
-BASE_URL=${2:-"https://api.jarvis-media.com"}
+BASE_URL=${2:-"https://api.elfai-media.com"}
 
 if [ "$ENV" = "staging" ]; then
-  BASE_URL="https://api-staging.jarvis-media.com"
+  BASE_URL="https://api-staging.elfai-media.com"
 fi
 
 echo "Running smoke tests against $BASE_URL..."

@@ -1,4 +1,4 @@
-# Makefile for Jarvis Media Platform
+# Makefile for elfai Media Platform
 
 # Configuration
 .PHONY: help setup dev test deploy clean down
@@ -95,7 +95,7 @@ shell-api: check-running ## Docker: Open API shell
 	$(DOCKER_COMPOSE) exec api python manage.py shell
 
 shell-db: check-running ## Docker: Open database shell
-	$(DOCKER_COMPOSE) exec db mysql -u jarvis -pjarvis jarvis
+	$(DOCKER_COMPOSE) exec db mysql -u elfai -pelfai elfai
 
 shell-web: check-running ## Docker: Open web shell
 	$(DOCKER_COMPOSE) exec web sh
@@ -217,7 +217,7 @@ db-makemigrations: check-running ## Docker: Create database migrations
 db-backup: check-running ## Docker: Backup database
 	@echo "Creating database backup..."
 	@mkdir -p backups
-	@$(DOCKER_COMPOSE) exec -T db mysqldump -u jarvis -pjarvis jarvis > backups/$(shell date +%Y%m%d_%H%M%S).sql || { echo "$(RED)Database backup failed$(RESET)"; exit 1; }
+	@$(DOCKER_COMPOSE) exec -T db mysqldump -u elfai -pelfai elfai > backups/$(shell date +%Y%m%d_%H%M%S).sql || { echo "$(RED)Database backup failed$(RESET)"; exit 1; }
 	@echo "✨ Backup created in backups/"
 
 db-restore: check-running ## Docker: Restore database from backup
@@ -230,11 +230,11 @@ db-restore: check-running ## Docker: Restore database from backup
 		exit 1; \
 	fi
 	@echo "Restoring database from $(FILE)..."
-	@$(DOCKER_COMPOSE) exec -T db mysql -u jarvis -pjarvis jarvis < $(FILE) || { echo "$(RED)Database restore failed$(RESET)"; exit 1; }
+	@$(DOCKER_COMPOSE) exec -T db mysql -u elfai -pelfai elfai < $(FILE) || { echo "$(RED)Database restore failed$(RESET)"; exit 1; }
 	@echo "✨ Database restored successfully!"
 
 db-shell: check-running ## Docker: Open database shell
-	$(DOCKER_COMPOSE) exec db mysql -u jarvis -pjarvis jarvis
+	$(DOCKER_COMPOSE) exec db mysql -u elfai -pelfai elfai
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Performance (Docker)

@@ -9,10 +9,10 @@ on:
 
 env:
   AWS_REGION: us-west-2
-  ECR_REPOSITORY: jarvis-media
-  ECS_CLUSTER: jarvis-media
-  ECS_SERVICE: jarvis-media-api
-  ECS_TASK_DEFINITION: jarvis-media-api
+  ECR_REPOSITORY: elfai-media
+  ECS_CLUSTER: elfai-media
+  ECS_SERVICE: elfai-media-api
+  ECS_TASK_DEFINITION: elfai-media-api
 
 jobs:
   deploy-staging:
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: production
-      url: https://api.jarvis-media.com
+      url: https://api.elfai-media.com
     
     steps:
     - uses: actions/checkout@v3

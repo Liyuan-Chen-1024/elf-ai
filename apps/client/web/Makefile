@@ -9,7 +9,7 @@ dev:
 
 # Build for production
 build:
-	docker build --target production -t jarvis-web:latest .
+	docker build --target production -t elfai-web:latest .
 
 # Clean up
 clean:

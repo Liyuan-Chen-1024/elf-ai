@@ -72,7 +72,7 @@ class MediaSettings(BaseSettings):
     )
     
     class Config:
-        env_prefix = "JARVIS_"
+        env_prefix = "ELFAI_"
         case_sensitive = True
         
     @validator("*", pre=True)

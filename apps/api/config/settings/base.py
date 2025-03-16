@@ -98,7 +98,7 @@ WSGI_APPLICATION: str = 'config.wsgi.application'
 
 # Database
 DATABASES: Dict[str, Dict[str, Any]] = {
-    'default': env.db('DATABASE_URL', default='postgres://postgres:postgres@localhost:5432/jarvis'),
+    'default': env.db('DATABASE_URL', default='postgres://postgres:postgres@localhost:5432/elfai'),
 }
 
 # Cache
@@ -170,18 +170,13 @@ REST_FRAMEWORK: Dict[str, Any] = {
 
 # Spectacular settings
 SPECTACULAR_SETTINGS: Dict[str, Any] = {
-    'TITLE': 'Jarvis API',
-    'DESCRIPTION': 'Your personal media assistant',
+    'TITLE': 'Elf AI API',
+    'DESCRIPTION': 'API documentation',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
-        'persistAuthorization': True,
-        'displayOperationId': True,
     },
-    'SWAGGER_UI_DIST': 'SIDECAR',
-    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
-    'REDOC_DIST': 'SIDECAR',
 }
 
 # CORS settings
@@ -195,13 +190,16 @@ X_FRAME_OPTIONS: str = 'DENY'
 SECURE_REFERRER_POLICY: str = 'same-origin'
 
 # Email settings
-EMAIL_BACKEND: str = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND: str = env(
+    'DJANGO_EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend'
+)
 EMAIL_HOST: str = env('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT: int = env.int('EMAIL_PORT', default=587)
 EMAIL_USE_TLS: bool = True
 EMAIL_HOST_USER: str = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD: str = env('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL: str = env('DEFAULT_FROM_EMAIL', default='noreply@jarvis.frecar.no')
+DEFAULT_FROM_EMAIL: str = env('DEFAULT_FROM_EMAIL', default='noreply@elfai.frecar.no')
 
 # Logging
 LOGGING: Dict[str, Any] = {

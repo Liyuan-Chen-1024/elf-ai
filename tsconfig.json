@@ -17,7 +17,7 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@jarvis/*": ["packages/*/src"]
+      "@elfai/*": ["packages/*/src"]
     }
   },
   "exclude": ["node_modules"]

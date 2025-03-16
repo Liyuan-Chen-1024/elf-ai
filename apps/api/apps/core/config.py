@@ -52,7 +52,7 @@ class CoreSettings(BaseSettings):
     
     class Config:
         """Pydantic config."""
-        env_prefix = 'JARVIS_'  # Environment variables prefix
+        env_prefix = 'ELFAI_'  # Environment variables prefix
         case_sensitive = False
 
 

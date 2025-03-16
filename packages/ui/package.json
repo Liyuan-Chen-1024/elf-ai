@@ -1,5 +1,5 @@
 {
-    "name": "@jarvis/ui",
+    "name": "@elfai/ui",
     "version": "1.0.0",
     "private": true,
     "main": "./dist/index.js",
@@ -24,7 +24,8 @@
         "react-dom": "^18.0.0"
     },
     "dependencies": {
-        "@jarvis/types": "workspace:*"
+        "@elfai/types": "workspace:*",
+        "@elfai/types": "workspace:*"
     },
     "devDependencies": {
         "@emotion/react": "^11.0.0",

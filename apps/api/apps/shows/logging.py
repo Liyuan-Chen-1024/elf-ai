@@ -9,7 +9,7 @@ import structlog
 def configure_logging(
     log_level: str = "INFO",
     log_dir: Path = Path("logs"),
-    app_name: str = "jarvis-media"
+    app_name: str = "elfai"
 ) -> None:
     """
     Configure logging for the application with both file and console output.
@@ -17,7 +17,7 @@ def configure_logging(
     Args:
         log_level: Logging level (default: INFO)
         log_dir: Directory to store log files (default: logs)
-        app_name: Application name for log files (default: jarvis-media)
+        app_name: Application name for log files (default: elfai)
     """
     # Create log directory if it doesn't exist
     log_dir.mkdir(parents=True, exist_ok=True)

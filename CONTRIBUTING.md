@@ -1,6 +1,6 @@
-# Contributing to Jarvis Media Platform
+# Contributing to elfai Media Platform
 
-Thank you for your interest in contributing to Jarvis Media Platform! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to elfai Media Platform! This document provides guidelines and instructions for contributing.
 
 ## 📋 Table of Contents
 
@@ -21,8 +21,8 @@ This project follows a Code of Conduct that all contributors are expected to adh
 1. Fork the repository
 2. Clone your fork:
    ```bash
-   git clone https://github.com/your-username/jarvis-media.git
-   cd jarvis-media
+   git clone https://github.com/your-username/elfai-media.git
+   cd elfai-media
    ```
 3. Set up development environment:
    ```bash
@@ -61,7 +61,7 @@ This project follows a Code of Conduct that all contributors are expected to adh
 
 1. Update your branch with latest main:
    ```bash
-   git remote add upstream https://github.com/original/jarvis-media.git
+   git remote add upstream https://github.com/original/elfai-media.git
    git fetch upstream
    git rebase upstream/main
    ```
@@ -129,7 +129,7 @@ This project follows a Code of Conduct that all contributors are expected to adh
 ## 🏗 Project Structure
 
 ```
-jarvis-media/
+elfai-media/
 ├── apps/                # Applications
 │   ├── api/            # Django Backend
 │   └── web/            # React Frontend

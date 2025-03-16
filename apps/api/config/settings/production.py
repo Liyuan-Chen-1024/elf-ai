@@ -6,7 +6,7 @@ from .base import *  # noqa
 
 # Production settings
 DEBUG: bool = False
-ALLOWED_HOSTS: List[str] = env.list('DJANGO_ALLOWED_HOSTS', default=['jarvis.frecar.no'])
+ALLOWED_HOSTS: List[str] = env.list('DJANGO_ALLOWED_HOSTS', default=['elfai.frecar.no'])
 
 # Security settings
 SECURE_SSL_REDIRECT: bool = True
@@ -18,13 +18,13 @@ CSRF_COOKIE_SECURE: bool = True
 SECURE_PROXY_SSL_HEADER: Tuple[str, str] = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS: List[str] = env.list('CSRF_TRUSTED_ORIGINS', default=['https://jarvis.frecar.no'])
+CSRF_TRUSTED_ORIGINS: List[str] = env.list('CSRF_TRUSTED_ORIGINS', default=['https://elfai.frecar.no'])
 
 # Database - use environment settings
 DATABASES: Dict[str, Dict[str, Any]] = {
     'default': env.db(
         'DATABASE_URL',
-        default='mysql://jarvis:jarvis@localhost:3306/jarvis'
+        default='mysql://elfai:elfai@localhost:3306/elfai'
     )
 }
 
@@ -45,7 +45,7 @@ MEDIA_ROOT: Path = env.path('MEDIA_ROOT', default=BASE_DIR / 'media')
 # Logging - use file handler in production
 LOGGING['handlers']['file'] = {  # noqa
     'class': 'logging.handlers.RotatingFileHandler',
-    'filename': '/var/log/jarvis/app.log',
+    'filename': '/var/log/elfai/app.log',
     'maxBytes': 1024 * 1024 * 10,  # 10 MB
     'backupCount': 5,
     'formatter': 'json',
@@ -59,7 +59,7 @@ EMAIL_PORT = env.int('EMAIL_PORT', default=587)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@jarvis.frecar.no')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@elfai.frecar.no')
 
 # Storage paths
 STORAGE_PATHS: List[str] = env.list('STORAGE_PATHS', default=['/nstore1/', '/nstore2/', '/nstore3/'])

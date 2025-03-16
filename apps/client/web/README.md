@@ -1,6 +1,6 @@
-# Jarvis Media Frontend
+# elfai Media Frontend
 
-This is the frontend application for Jarvis Media, built with React, TypeScript, and Material-UI.
+This is the frontend application for elfai Media, built with React, TypeScript, and Material-UI.
 
 ## Features
 

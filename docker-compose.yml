@@ -6,7 +6,7 @@ services:
       target: development
     restart: unless-stopped
     networks:
-      - jarvis-network
+      - elfai-network
     ports:
       - "8000:8000"
     command: python manage.py runserver 0.0.0.0:8000
@@ -18,7 +18,7 @@ services:
       - PYTHONPATH=/app
       - DJANGO_SETTINGS_MODULE=config.settings.development
       - DJANGO_ENV=development
-      - DATABASE_URL=mysql://jarvis:jarvis@db:3306/jarvis
+      - DATABASE_URL=mysql://elfai:elfai@db:3306/elfai
       - REDIS_URL=redis://redis:6379/0
       - DJANGO_SECRET_KEY=dev-secret-key
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
@@ -35,7 +35,7 @@ services:
       target: development
     restart: unless-stopped
     networks:
-      - jarvis-network
+      - elfai-network
     ports:
       - "3000:3000"
     volumes:
@@ -52,13 +52,13 @@ services:
     image: mysql:8.0
     restart: unless-stopped
     networks:
-      - jarvis-network
+      - elfai-network
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_DATABASE=jarvis
-      - MYSQL_USER=jarvis
-      - MYSQL_PASSWORD=jarvis
+      - MYSQL_DATABASE=elfai
+      - MYSQL_USER=elfai
+      - MYSQL_PASSWORD=elfai
       - MYSQL_ROOT_PASSWORD=root
     command: --default-authentication-plugin=mysql_native_password
     volumes:
@@ -73,7 +73,7 @@ services:
     image: redis:7.0
     restart: unless-stopped
     networks:
-      - jarvis-network
+      - elfai-network
     ports:
       - "6379:6379"
     volumes:
@@ -91,5 +91,5 @@ volumes:
 
 
 networks:
-  jarvis-network:
+  elfai-network:
     driver: bridge

@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "jarvis-media"
-version = "0.1.0"
-description = "Media management system for automated TV show and movie downloads"
+name = "elfai"
+version = "1.0.0"
+description = "Elf AI API"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
 packages = [{include = "apps"}, {include = "config"}]
 license = "MIT"
-homepage = "https://github.com/yourusername/jarvis-media"
-repository = "https://github.com/yourusername/jarvis-media"
+homepage = "https://github.com/yourusername/elfai"
+repository = "https://github.com/yourusername/elfai"
 keywords = ["media", "automation", "django", "transmission"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -88,7 +88,7 @@ myst-parser = "^2.0.0"
 debugpy = "^1.8.0"
 
 [tool.poetry.scripts]
-jarvis = "cli:main"
+elfai = "cli:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

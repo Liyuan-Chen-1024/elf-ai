@@ -1,5 +1,5 @@
 {
-    "name": "Jarvis Development",
+    "name": "elfai Development",
     "dockerComposeFile": ["../docker-compose.yml", "../docker-compose.debug.yml"],
     "service": "web",
     "workspaceFolder": "/app",

@@ -1,4 +1,4 @@
-# Jarvis Media Platform
+# elfai Media Platform
 
 Modern media management platform built with Django, React, and TypeScript.
 
@@ -6,8 +6,8 @@ Modern media management platform built with Django, React, and TypeScript.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/jarvis-media.git
-cd jarvis-media
+git clone https://github.com/your-org/elfai-media.git
+cd elfai-media
 
 # Initial setup (only needed once)
 make setup
@@ -24,7 +24,7 @@ Visit:
 ## 🏗 Project Structure
 
 ```
-jarvis-media/
+elfai-media/
 └── apps/
     ├── api/            # Django Backend
     │   ├── apps/      # Django applications

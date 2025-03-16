@@ -1,3 +1,3 @@
-# Jarvis API
+# elfai API
 
-Django-based API for the Jarvis media management system. 
+Django-based API for the elfai media management system. 

@@ -13,9 +13,9 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_DATABASE: jarvis
-          MYSQL_USER: jarvis
-          MYSQL_PASSWORD: jarvis
+          MYSQL_DATABASE: elfai
+          MYSQL_USER: elfai
+          MYSQL_PASSWORD: elfai
           MYSQL_ROOT_PASSWORD: root
         ports:
           - 3306:3306
@@ -59,7 +59,7 @@ jobs:
         run: pytest
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
-          DATABASE_URL: mysql://jarvis:jarvis@localhost:3306/jarvis
+          DATABASE_URL: mysql://elfai:elfai@localhost:3306/elfai
           REDIS_URL: redis://localhost:6379/0
         
       - name: Run linting
@@ -94,8 +94,8 @@ jobs:
           context: ./apps/api
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/jarvis-media-api:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/jarvis-media-api:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/elfai-media-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/elfai-media-api:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
@@ -105,8 +105,8 @@ jobs:
           context: ./apps/client/web
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/jarvis-media-web:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/jarvis-media-web:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/elfai-media-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/elfai-media-web:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
