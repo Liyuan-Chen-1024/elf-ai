@@ -1,6 +1,5 @@
 """API views for shows app."""
 
-
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response

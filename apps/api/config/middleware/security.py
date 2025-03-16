@@ -74,9 +74,9 @@ class SecurityHeadersMiddleware:
 
         # Add HSTS header in production
         if not settings.DEBUG:
-            security_headers[
-                "Strict-Transport-Security"
-            ] = "max-age=31536000; includeSubDomains; preload"
+            security_headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
 
         # Add headers to response
         for header, value in security_headers.items():
