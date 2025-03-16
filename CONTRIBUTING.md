@@ -185,4 +185,4 @@ elfai-media/
 
 ## 🙏 Thank You
 
-Your contributions make this project better for everyone. Thank you for being part of our community! 
+Your contributions make this project better for everyone. Thank you for being part of our community!

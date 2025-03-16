@@ -1,7 +1,7 @@
 # Agent Tools System for Elf AI
 
-This module provides a comprehensive framework for integrating external tools and services 
-with the Elf AI chat system. It allows the AI to identify when a user request requires a 
+This module provides a comprehensive framework for integrating external tools and services
+with the Elf AI chat system. It allows the AI to identify when a user request requires a
 specific tool and execute the appropriate action.
 
 ## Architecture
@@ -63,11 +63,11 @@ from apps.agent.tools.registry import register_tool
 @register_tool
 class MyTool(BaseTool):
     """Tool documentation."""
-    
+
     name = "my_tool"
     description = "Description of what the tool does"
     category = "my_category"
-    
+
     parameters = [
         ToolParameter(
             name="param1",
@@ -76,7 +76,7 @@ class MyTool(BaseTool):
             required=True,
         ),
     ]
-    
+
     async def execute(self, **kwargs) -> ToolResult:
         # Implementation goes here
         return ToolResult(success=True, data={"result": "value"})
@@ -94,7 +94,7 @@ To improve the detection of your new tool, update the parser patterns in `parser
 
 The agent tools system is integrated with the chat module through the `AgentService`.
 When a user sends a message, the chat module calls `agent_service.handle_chat_query()`
-to determine if the query can be handled by a tool. If so, the tool is executed and 
+to determine if the query can be handled by a tool. If so, the tool is executed and
 the result is formatted and returned to the user.
 
 ## Running Tests
@@ -103,4 +103,4 @@ Tests for the agent tools system can be run with:
 
 ```bash
 python manage.py test apps.agent
-``` 
+```

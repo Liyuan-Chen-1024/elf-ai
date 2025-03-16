@@ -4,28 +4,37 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='TVShow',
+            name="TVShow",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('epguide_name', models.CharField(max_length=250)),
-                ('full_name', models.CharField(max_length=250)),
-                ('current_season', models.IntegerField()),
-                ('current_episode', models.IntegerField()),
-                ('active', models.BooleanField(default=False)),
-                ('keep', models.BooleanField(default=False)),
-                ('datetime_edited', models.DateTimeField()),
-                ('datetime_added', models.DateTimeField()),
-                ('downloaded_current_episode', models.BooleanField()),
-                ('episode_lookup_type', models.CharField(default='number', max_length=255)),
-                ('first_release_date', models.DateTimeField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("epguide_name", models.CharField(max_length=250)),
+                ("full_name", models.CharField(max_length=250)),
+                ("current_season", models.IntegerField()),
+                ("current_episode", models.IntegerField()),
+                ("active", models.BooleanField(default=False)),
+                ("keep", models.BooleanField(default=False)),
+                ("datetime_edited", models.DateTimeField()),
+                ("datetime_added", models.DateTimeField()),
+                ("downloaded_current_episode", models.BooleanField()),
+                (
+                    "episode_lookup_type",
+                    models.CharField(default="number", max_length=255),
+                ),
+                ("first_release_date", models.DateTimeField()),
             ],
         ),
     ]

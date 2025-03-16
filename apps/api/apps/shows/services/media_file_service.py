@@ -1,27 +1,27 @@
 """Service layer for media file operations."""
-import os
-from pathlib import Path
-from typing import Optional, List, Any, Dict, Set, Union
 
+import os
+from typing import Optional, Set
+
+
+from apps.core.logging import get_logger
 from apps.core.services import BaseService
 from apps.shows.models import MediaFile
 from apps.shows.utils.ai import extract_movie_title, extract_title_and_season_episode
-from apps.shows.utils.files import get_tv_folder, list_all_possible_folders
-from apps.core.logging import get_logger
-from django.conf import settings
+from apps.shows.utils.files import list_all_possible_folders
 
 logger = get_logger(__name__)
 
 
 class MediaFileService(BaseService):
     """Service for managing media file operations."""
-    
+
     def create_or_update_from_path(self, path: str) -> Optional[MediaFile]:
         """Create or update a MediaFile from a path.
-        
+
         Args:
             path: File path to process
-            
+
         Returns:
             MediaFile instance if successful, None otherwise
         """
@@ -45,14 +45,14 @@ class MediaFileService(BaseService):
         except Exception as e:
             logger.error(f"Error processing file {path}: {str(e)}")
             return None
-    
+
     def rename_dirname_if_sub_folders(self, media_file: MediaFile, name: str) -> str:
         """Rename directory if it's in a subfolder.
-        
+
         Args:
             media_file: MediaFile instance
             name: New directory name
-            
+
         Returns:
             Updated dirname
         """
@@ -61,24 +61,23 @@ class MediaFileService(BaseService):
             for folder in possible_folders:
                 if media_file.dirname.startswith(folder):
                     working_dir = (
-                        media_file.dirname[len(folder):].strip(os.sep).split(os.sep)[0]
+                        media_file.dirname[len(folder) :].strip(os.sep).split(os.sep)[0]
                     )
                     os.rename(
-                        os.path.join(folder, working_dir),
-                        os.path.join(folder, name)
+                        os.path.join(folder, working_dir), os.path.join(folder, name)
                     )
                     media_file.dirname = os.path.join(folder, name)
                     media_file.save()
                     break
 
         return media_file.dirname
-    
+
     def rename_to_improved_pathname(self, media_file: MediaFile) -> bool:
         """Rename file to improved pathname.
-        
+
         Args:
             media_file: MediaFile instance
-            
+
         Returns:
             True if renamed successfully, False otherwise
         """
@@ -103,18 +102,18 @@ class MediaFileService(BaseService):
                 media_file.path = new_path
                 media_file.save()
                 return True
-                
+
             return False
         except Exception as e:
             logger.error(f"Error renaming {media_file.path}: {str(e)}")
             return False
-    
+
     def remove_from_disk(self, media_file: MediaFile) -> bool:
         """Remove file from disk.
-        
+
         Args:
             media_file: MediaFile instance
-            
+
         Returns:
             True if removed successfully, False otherwise
         """
@@ -131,7 +130,7 @@ class MediaFileService(BaseService):
     def scan_media_files(self) -> None:
         """Scan all media files in configured directories."""
         scanned_paths: Set[str] = set()
-        
+
         for folder in list_all_possible_folders():
             if not os.path.exists(folder):
                 continue
@@ -184,4 +183,4 @@ class MediaFileService(BaseService):
             logger.info(f"Updated stats for file: {media_file.path}")
         except OSError as e:
             logger.error(f"Error updating stats for file {media_file.path}: {str(e)}")
-            media_file.delete() 
+            media_file.delete()

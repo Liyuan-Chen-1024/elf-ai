@@ -1,22 +1,18 @@
-import datetime
 import logging
 import os
-import re
 import time
-from typing import Optional, Dict, Any, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
-import requests
-from bs4 import BeautifulSoup
 from django.db import models
 from django.utils import timezone
-from django.conf import settings
 
-from apps.shows.utils.ai import extract_movie_title, extract_title_and_season_episode
-from apps.shows.utils.fetcher import epguides_api_request
-from apps.shows.utils.files import get_tv_folder, list_all_possible_folders
-from apps.shows.utils.tx import TXWrapper
+
 from apps.core.exceptions import EpguidesException
 from apps.core.models import BaseModel
+from apps.shows.utils.ai import extract_movie_title, extract_title_and_season_episode
+from apps.shows.utils.fetcher import epguides_api_request
+from apps.shows.utils.files import list_all_possible_folders
+
 from .enums import ShowStatus, StatusColor
 
 logger = logging.getLogger(__name__)
@@ -24,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class MediaFile(BaseModel):
     """Model for media files."""
-    
+
     path = models.CharField(max_length=255, unique=True)
     dirname = models.TextField(null=True, blank=True)
     ext = models.CharField(null=True, blank=True, max_length=20)
@@ -42,7 +38,7 @@ class MediaFile(BaseModel):
     created_at = models.DateTimeField(default=timezone.now)
 
     @classmethod
-    def create_or_update_from_path(cls, path: str) -> Optional['MediaFile']:
+    def create_or_update_from_path(cls, path: str) -> Optional["MediaFile"]:
         """Create or update a MediaFile from a path."""
         if not os.path.exists(path):
             return None
@@ -120,7 +116,22 @@ class MediaFile(BaseModel):
         self.ext = os.path.splitext(self.path)[1]
         self.keep = "/keep/" in self.path
         self.is_movie = "/movies/" in self.path
-        self.save(update_fields=["st_ctime", "st_mtime", "st_atime", "st_size", "st_gid", "st_uid", "st_mode", "dirname", "last_read_from_disk", "ext", "keep", "is_movie"])
+        self.save(
+            update_fields=[
+                "st_ctime",
+                "st_mtime",
+                "st_atime",
+                "st_size",
+                "st_gid",
+                "st_uid",
+                "st_mode",
+                "dirname",
+                "last_read_from_disk",
+                "ext",
+                "keep",
+                "is_movie",
+            ]
+        )
 
     def __str__(self) -> str:
         """String representation."""
@@ -141,7 +152,7 @@ class MediaFile(BaseModel):
 
 class TVShow(BaseModel):
     """Model for TV shows."""
-    
+
     epguide_name = models.CharField(max_length=250)
     full_name = models.CharField(max_length=250)
     current_season = models.IntegerField(default=1)
@@ -207,6 +218,7 @@ class TVShow(BaseModel):
     def get_service(self):
         """Get the TV show service instance."""
         from .services.tv_show_service import TVShowService
+
         return TVShowService()
 
     def download_current_episode(self) -> bool:
@@ -224,7 +236,9 @@ class TVShow(BaseModel):
     def next_episode_released(self) -> bool:
         """Check if next episode has been released."""
         try:
-            response = epguides_api_request(f"show/{self.key_season_episode()}/next/released/")
+            response = epguides_api_request(
+                f"show/{self.key_season_episode()}/next/released/"
+            )
             return bool(response.get("status")) if response else False
         except EpguidesException:
             return False
@@ -249,7 +263,9 @@ class TVShow(BaseModel):
             self.next_season = cast(int, next_episode.get("season"))
             self.next_episode = cast(int, next_episode.get("episode"))
             self.next_release_date = next_episode.get("release_date")
-            self.save(update_fields=["next_season", "next_episode", "next_release_date"])
+            self.save(
+                update_fields=["next_season", "next_episode", "next_release_date"]
+            )
 
     def update_last_episode(self) -> None:
         """Update last episode information."""
@@ -260,7 +276,13 @@ class TVShow(BaseModel):
                 self.last_release_season = cast(int, episode.get("season"))
                 self.last_release_episode = cast(int, episode.get("episode"))
                 self.last_release_date = episode.get("release_date")
-                self.save(update_fields=["last_release_season", "last_release_episode", "last_release_date"])
+                self.save(
+                    update_fields=[
+                        "last_release_season",
+                        "last_release_episode",
+                        "last_release_date",
+                    ]
+                )
         except EpguidesException:
             pass
 
@@ -280,18 +302,26 @@ class TVShow(BaseModel):
         if self.current_episode_released():
             self.downloaded_current_episode = True
             self.save(update_fields=["downloaded_current_episode"])
-            
+
             if self.next_episode_released():
                 self.current_season = self.next_season
                 self.current_episode = self.next_episode
                 self.downloaded_current_episode = False
-                self.save(update_fields=["current_season", "current_episode", "downloaded_current_episode"])
+                self.save(
+                    update_fields=[
+                        "current_season",
+                        "current_episode",
+                        "downloaded_current_episode",
+                    ]
+                )
                 self.download_all_available_episodes_starting_at_current_episode()
 
     def current_episode_released(self) -> bool:
         """Check if current episode has been released."""
         try:
-            response = epguides_api_request(f"show/{self.key_season_episode()}/released/")
+            response = epguides_api_request(
+                f"show/{self.key_season_episode()}/released/"
+            )
             return bool(response.get("status")) if response else False
         except EpguidesException:
             return False

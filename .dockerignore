@@ -45,4 +45,4 @@ yarn-error.log*
 .vercel
 
 # Database
-*.sqlite3 
+*.sqlite3

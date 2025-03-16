@@ -1,10 +1,11 @@
 import os
 import time
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+from django.test import TestCase
 
 import pytest
-from django.test import TestCase
 
 from apps.shows.models import MediaFile
 
@@ -36,9 +37,7 @@ class TestMediaFile(TestCase):
 
     def setUp(self):
         """Set up test environment."""
-        self.media_file = MediaFile.objects.create(
-            path="/test/path/file.mp4"
-        )
+        self.media_file = MediaFile.objects.create(path="/test/path/file.mp4")
 
     def test_str_representation(self):
         """Test string representation of MediaFile."""
@@ -53,7 +52,7 @@ class TestMediaFile(TestCase):
         """Test checking if file exists on disk."""
         mock_exists.return_value = True
         self.assertTrue(self.media_file.exists_on_disk())
-        
+
         mock_exists.return_value = False
         self.assertFalse(self.media_file.exists_on_disk())
 
@@ -63,11 +62,11 @@ class TestMediaFile(TestCase):
         """Test creating or updating MediaFile from path."""
         mock_exists.return_value = True
         mock_stat.return_value = mock_stat
-        
+
         # Test creating new file
         path = "/data/new.mp4"
         MediaFile.create_or_update_from_path(path)
-        
+
         media_file = MediaFile.objects.get(path=path)
         self.assertEqual(media_file.st_size, mock_stat.st_size)
         self.assertEqual(media_file.dirname, "/data")
@@ -91,16 +90,16 @@ class TestMediaFile(TestCase):
     def test_remove_from_disk(self, mock_remove):
         """Test removing file from disk."""
         self.media_file.remove_from_disk()
-        
+
         mock_remove.assert_called_once_with("/test/path/file.mp4")
         self.assertFalse(MediaFile.objects.filter(pk=self.media_file.pk).exists())
 
     def test_update_file_stats(self, mock_stat):
         """Test updating file stats."""
         current_time = time.time()
-        
+
         self.media_file.update_file_stats(mock_stat)
-        
+
         self.assertEqual(self.media_file.st_mode, mock_stat.st_mode)
         self.assertEqual(self.media_file.st_uid, mock_stat.st_uid)
         self.assertEqual(self.media_file.st_size, mock_stat.st_size)
@@ -111,7 +110,7 @@ class TestMediaFile(TestCase):
         self.media_file.path = "/data/keep/test.mp4"
         self.media_file.update_file_stats(mock_stat)
         self.assertTrue(self.media_file.keep)
-        
+
         self.media_file.path = "/test/path/file.mp4"
         self.media_file.update_file_stats(mock_stat)
         self.assertFalse(self.media_file.keep)
@@ -121,7 +120,7 @@ class TestMediaFile(TestCase):
         self.media_file.path = "/data/movies/test.mp4"
         self.media_file.update_file_stats(mock_stat)
         self.assertTrue(self.media_file.is_movie)
-        
+
         self.media_file.path = "/data/tv/test.mp4"
         self.media_file.update_file_stats(mock_stat)
-        self.assertFalse(self.media_file.is_movie) 
+        self.assertFalse(self.media_file.is_movie)

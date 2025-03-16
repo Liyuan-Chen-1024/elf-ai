@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('shows', '0008_mediafile_is_movie'),
+        ("shows", "0008_mediafile_is_movie"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mediafile',
-            name='renamed_from',
-            field=models.TextField(default='', verbose_name=''),
+            model_name="mediafile",
+            name="renamed_from",
+            field=models.TextField(default="", verbose_name=""),
         ),
     ]

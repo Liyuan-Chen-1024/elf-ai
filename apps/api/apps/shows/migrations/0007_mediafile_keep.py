@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('shows', '0006_alter_mediafile_last_read_from_disk_and_more'),
+        ("shows", "0006_alter_mediafile_last_read_from_disk_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mediafile',
-            name='keep',
+            model_name="mediafile",
+            name="keep",
             field=models.BooleanField(default=False),
         ),
     ]

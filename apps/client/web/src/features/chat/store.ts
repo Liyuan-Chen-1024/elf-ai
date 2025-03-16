@@ -47,7 +47,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const conversation = await chatApi.createConversation(title);
         set(state => ({
           conversations: [conversation, ...state.conversations],
-          currentConversation: conversation
+          currentConversation: conversation,
         }));
       } catch (error) {
         set({ error: 'Failed to create conversation' });
@@ -75,7 +75,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set(state => ({
           currentConversation: state.currentConversation
             ? { ...state.currentConversation, messages: [] }
-            : null
+            : null,
         }));
       } catch (error) {
         set({ error: 'Failed to clear conversation' });
@@ -90,9 +90,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         await chatApi.deleteConversation(id);
         set(state => ({
           conversations: state.conversations.filter(c => c.id !== id),
-          currentConversation: state.currentConversation?.id === id
-            ? null
-            : state.currentConversation
+          currentConversation:
+            state.currentConversation?.id === id ? null : state.currentConversation,
         }));
       } catch (error) {
         set({ error: 'Failed to delete conversation' });
@@ -112,9 +111,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
           currentConversation: state.currentConversation
             ? {
                 ...state.currentConversation,
-                messages: [...state.currentConversation.messages, message]
+                messages: [...state.currentConversation.messages, message],
               }
-            : null
+            : null,
         }));
       } catch (error) {
         set({ error: 'Failed to send message' });
@@ -130,10 +129,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       try {
         set({ error: null });
         const eventSource = chatApi.streamMessage(currentConversation.id, content);
-        
-        eventSource.onmessage = (event) => {
+
+        eventSource.onmessage = event => {
           const data = JSON.parse(event.data);
-          
+
           if (data.type === 'token') {
             set(state => {
               const currentConv = state.currentConversation;
@@ -141,7 +140,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
               const messages = [...currentConv.messages];
               const lastMessage = messages.find(m => m.id === data.messageId);
-              
+
               if (lastMessage) {
                 lastMessage.content += data.content;
               } else {
@@ -152,16 +151,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
                   is_edited: false,
-                  edited_at: null
+                  edited_at: null,
                 });
               }
 
               return {
                 currentConversation: {
                   ...currentConv,
-                  messages
+                  messages,
                 },
-                streamingMessageId: data.messageId
+                streamingMessageId: data.messageId,
               };
             });
           } else if (data.type === 'done') {
@@ -190,10 +189,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
           return {
             currentConversation: {
               ...currentConv,
-              messages: currentConv.messages.map(m =>
-                m.id === messageId ? updatedMessage : m
-              )
-            }
+              messages: currentConv.messages.map(m => (m.id === messageId ? updatedMessage : m)),
+            },
           };
         });
       } catch (error) {
@@ -214,8 +211,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
           return {
             currentConversation: {
               ...currentConv,
-              messages: currentConv.messages.filter(m => m.id !== messageId)
-            }
+              messages: currentConv.messages.filter(m => m.id !== messageId),
+            },
           };
         });
       } catch (error) {
@@ -225,6 +222,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     },
 
-    setError: (error: string | null) => set({ error })
-  }
-})); 
+    setError: (error: string | null) => set({ error }),
+  },
+}));

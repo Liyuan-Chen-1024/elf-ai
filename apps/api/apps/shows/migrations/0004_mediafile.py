@@ -4,27 +4,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('shows', '0003_alter_tvshow_current_episode_and_more'),
+        ("shows", "0003_alter_tvshow_current_episode_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MediaFile',
+            name="MediaFile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('path', models.TextField()),
-                ('dirname', models.TextField(blank=True, null=True)),
-                ('ext', models.CharField(blank=True, max_length=20, null=True)),
-                ('st_mode', models.IntegerField(blank=True, null=True)),
-                ('st_uid', models.IntegerField(blank=True, null=True)),
-                ('st_gid', models.IntegerField(blank=True, null=True)),
-                ('st_size', models.IntegerField(blank=True, null=True)),
-                ('st_atime', models.IntegerField(blank=True, null=True)),
-                ('st_mtime', models.IntegerField(blank=True, null=True)),
-                ('st_ctime', models.IntegerField(blank=True, null=True)),
-                ('last_read_from_disk', models.IntegerField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("path", models.TextField()),
+                ("dirname", models.TextField(blank=True, null=True)),
+                ("ext", models.CharField(blank=True, max_length=20, null=True)),
+                ("st_mode", models.IntegerField(blank=True, null=True)),
+                ("st_uid", models.IntegerField(blank=True, null=True)),
+                ("st_gid", models.IntegerField(blank=True, null=True)),
+                ("st_size", models.IntegerField(blank=True, null=True)),
+                ("st_atime", models.IntegerField(blank=True, null=True)),
+                ("st_mtime", models.IntegerField(blank=True, null=True)),
+                ("st_ctime", models.IntegerField(blank=True, null=True)),
+                ("last_read_from_disk", models.IntegerField()),
             ],
         ),
     ]

@@ -13,4 +13,4 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
-    command: npm run dev 
+    command: npm run dev

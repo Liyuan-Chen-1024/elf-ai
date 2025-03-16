@@ -1,4 +1,4 @@
 """Dashboard application package."""
 
 # Default app config for Django
-default_app_config = 'dashboard.DashboardConfig'
+default_app_config = "dashboard.DashboardConfig"

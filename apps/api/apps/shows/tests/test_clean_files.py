@@ -1,13 +1,12 @@
 """Tests for file cleaning utilities."""
-from unittest.mock import patch
 
 import os
 
 from django.conf import settings
 from django.test import TestCase
 
-from apps.shows.utils.files import list_all_possible_folders
 from apps.core.utils import set_django_settings
+from apps.shows.utils.files import list_all_possible_folders
 
 set_django_settings()
 
@@ -33,5 +32,3 @@ class UtilsFilesTestCase(TestCase):
         ]
         actual_folders = list_all_possible_folders()
         self.assertEqual(sorted(actual_folders), sorted(expected_folders))
-
-

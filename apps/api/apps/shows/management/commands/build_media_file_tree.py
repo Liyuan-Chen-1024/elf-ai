@@ -1,13 +1,12 @@
 """Command to build media file tree."""
+
 import os
-import time
-from pathlib import Path
-from typing import List, Optional
 
 from django.core.management.base import BaseCommand
 
 from apps.shows.models import MediaFile
 from apps.shows.utils.files import list_all_possible_folders
+
 
 class Command(BaseCommand):
     """Command to build media file tree."""

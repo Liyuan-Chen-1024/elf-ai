@@ -1,13 +1,12 @@
 from datetime import date, timedelta
 from unittest.mock import Mock, patch
 
-import pytest
 from django.test import TestCase
-from django.utils import timezone
 
+import pytest
+from core.exceptions import EpguidesException
 from media.models import TVShow
 from media.schemas import ShowStatus, StatusColor
-from core.exceptions import EpguidesException
 
 
 @pytest.fixture
@@ -19,8 +18,8 @@ def mock_epguides_response():
             "season": 1,
             "number": 1,
             "release_date": "2024-01-01",
-            "title": "Pilot"
-        }
+            "title": "Pilot",
+        },
     }
 
 
@@ -32,7 +31,7 @@ def sample_show():
         full_name="Test Show",
         current_season=1,
         current_episode=1,
-        active=True
+        active=True,
     )
 
 
@@ -46,7 +45,7 @@ class TestTVShow(TestCase):
             full_name="Test Show",
             current_season=1,
             current_episode=1,
-            active=True
+            active=True,
         )
 
     def test_str_representation(self):
@@ -62,9 +61,9 @@ class TestTVShow(TestCase):
         """Test fetching current episode successfully."""
         expected = {"season": 1, "number": 1}
         mock_request.return_value = {"episode": expected}
-        
+
         result = self.show.fetch_current_episode()
-        
+
         self.assertEqual(result, expected)
         mock_request.assert_called_once_with("show/test_show/1/1")
 
@@ -72,24 +71,20 @@ class TestTVShow(TestCase):
     def test_fetch_current_episode_failure(self, mock_request):
         """Test fetching current episode with API failure."""
         mock_request.return_value = None
-        
+
         result = self.show.fetch_current_episode()
-        
+
         self.assertIsNone(result)
 
     @patch("media.models.epguides_api_request")
     def test_update_last_episode_data(self, mock_request):
         """Test updating last episode data."""
         mock_request.return_value = {
-            "episode": {
-                "release_date": "2024-01-01",
-                "season": 2,
-                "number": 10
-            }
+            "episode": {"release_date": "2024-01-01", "season": 2, "number": 10}
         }
-        
+
         self.show.update_last_episode_data()
-        
+
         self.assertEqual(self.show.last_release_date, date(2024, 1, 1))
         self.assertEqual(self.show.last_release_season, 2)
         self.assertEqual(self.show.last_release_episode, 10)
@@ -99,9 +94,9 @@ class TestTVShow(TestCase):
         past_date = date.today() - timedelta(days=1)
         self.show.next_release_date = past_date
         self.show.last_release_date = past_date
-        
+
         status, color = self.show.get_status()
-        
+
         self.assertEqual(status, ShowStatus.FINISHED)
         self.assertEqual(color, StatusColor.GRAY)
 
@@ -111,9 +106,9 @@ class TestTVShow(TestCase):
         self.show.next_release_date = future_date
         self.show.last_release_season = 1
         self.show.current_season = 2
-        
+
         status, color = self.show.get_status()
-        
+
         self.assertEqual(status, ShowStatus.UP_TO_DATE)
         self.assertEqual(color, StatusColor.GREEN)
 
@@ -121,9 +116,9 @@ class TestTVShow(TestCase):
         """Test show status when behind."""
         self.show.last_release_season = 2
         self.show.current_season = 1
-        
+
         status, color = self.show.get_status()
-        
+
         self.assertEqual(status, ShowStatus.BEHIND)
         self.assertEqual(color, StatusColor.RED)
 
@@ -131,7 +126,7 @@ class TestTVShow(TestCase):
     def test_current_episode_released_true(self, mock_request):
         """Test checking if current episode is released."""
         mock_request.return_value = {"status": True}
-        
+
         self.assertTrue(self.show.current_episode_released())
         mock_request.assert_called_once_with("show/test_show/1/1/released/")
 
@@ -139,7 +134,7 @@ class TestTVShow(TestCase):
     def test_current_episode_released_api_error(self, mock_request):
         """Test handling API error when checking episode release."""
         mock_request.side_effect = EpguidesException("API Error")
-        
+
         self.assertFalse(self.show.current_episode_released())
 
     @patch("media.models.TXWrapper")
@@ -149,22 +144,26 @@ class TestTVShow(TestCase):
         # Setup
         mock_get_folder.return_value = "/data/tv"
         mock_tx.add.return_value = True
-        
-        with patch.object(TVShow, "current_episode_released", return_value=True), \
-             patch.object(TVShow, "fetch_best_magnet_for_current_episode", 
-                        return_value="magnet:test"):
-            
+
+        with (
+            patch.object(TVShow, "current_episode_released", return_value=True),
+            patch.object(
+                TVShow,
+                "fetch_best_magnet_for_current_episode",
+                return_value="magnet:test",
+            ),
+        ):
             result = self.show.download_current_episode()
-            
+
             self.assertTrue(result)
             mock_tx.add.assert_called_once_with("magnet:test", download_dir="/data/tv")
 
     def test_download_current_episode_already_downloaded(self):
         """Test skipping download for already downloaded episode."""
         self.show.downloaded_current_episode = True
-        
+
         result = self.show.download_current_episode()
-        
+
         self.assertFalse(result)
 
     @patch("media.models.requests.Session")
@@ -183,13 +182,15 @@ class TestTVShow(TestCase):
                 </tr>
             </table>
         """
-        mock_session.return_value.__enter__.return_value.get.return_value = mock_response
-        
+        mock_session.return_value.__enter__.return_value.get.return_value = (
+            mock_response
+        )
+
         with patch.object(TVShow, "fetch_magnet_link_lime") as mock_fetch:
             mock_fetch.side_effect = ["magnet:2160p", "magnet:1080p"]
-            
+
             magnet = self.show.fetch_best_magnet_for_current_episode()
-            
+
             self.assertEqual(magnet, "magnet:1080p")
 
     @patch("media.models.epguides_api_request")
@@ -200,12 +201,12 @@ class TestTVShow(TestCase):
             {"episode": {"season": 1, "number": 1}},  # Current episode
             {"status": True},  # Current episode released
             {"status": True},  # Next episode released
-            {"episode": {"season": 1, "number": 2}}  # Next episode
+            {"episode": {"season": 1, "number": 2}},  # Next episode
         ]
-        
+
         with patch.object(TVShow, "download_current_episode", return_value=True):
             self.show.download_all_available_episodes_starting_at_current_episode()
-            
+
             self.assertEqual(self.show.current_season, 1)
             self.assertEqual(self.show.current_episode, 2)
             self.assertFalse(self.show.downloaded_current_episode)
@@ -214,8 +215,8 @@ class TestTVShow(TestCase):
         """Test that inactive shows are skipped."""
         self.show.active = False
         self.show.save()
-        
+
         with patch.object(TVShow, "download_current_episode") as mock_download:
             self.show.download_all_available_episodes_starting_at_current_episode()
-            
-            mock_download.assert_not_called() 
+
+            mock_download.assert_not_called()

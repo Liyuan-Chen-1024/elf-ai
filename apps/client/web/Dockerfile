@@ -30,4 +30,4 @@ FROM base as production
 RUN npm ci --only=production --legacy-peer-deps
 COPY . .
 RUN npm run build
-CMD ["npm", "run", "preview"] 
+CMD ["npm", "run", "preview"]

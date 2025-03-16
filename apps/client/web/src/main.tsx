@@ -22,4 +22,4 @@ ReactDOM.createRoot(rootElement).render(
       <App />
     </QueryClientProvider>
   </React.StrictMode>
-); 
+);

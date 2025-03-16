@@ -1,6 +1,8 @@
 """Command to delete unwanted files."""
+
 import logging
 from typing import Any, Dict, Optional
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -8,7 +10,6 @@ from apps.shows.utils.files import (
     delete_empty_directories,
     delete_small_video_files,
     delete_unwanted_directories,
-    list_all_possible_folders,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ class Command(BaseCommand):
     def handle(self, *args: Any, **options: Dict[str, Any]) -> Optional[str]:
         """Execute the command."""
         self.stdout.write("Starting to delete unwanted files...")
-        
+
         dry_run = options["dry_run"]
         min_video_size = options["min_video_size"] * 1024 * 1024  # Convert MB to bytes
         specific_storage = options["storage"]
@@ -55,36 +56,27 @@ class Command(BaseCommand):
             logger.info("DRY RUN MODE - No files will be deleted")
 
         storage_paths = [specific_storage] if specific_storage else settings.STORAGE
-        
-        stats = {
-            "unwanted_dirs": 0,
-            "empty_dirs": 0,
-            "small_videos": 0,
-            "errors": 0
-        }
+
+        stats = {"unwanted_dirs": 0, "empty_dirs": 0, "small_videos": 0, "errors": 0}
 
         for storage in storage_paths:
             try:
                 logger.info(f"Processing storage: {storage}")
-                
+
                 # Delete unwanted directories
-                deleted_dirs = delete_unwanted_directories(
-                    storage, dry_run=dry_run
-                )
+                deleted_dirs = delete_unwanted_directories(storage, dry_run=dry_run)
                 stats["unwanted_dirs"] += deleted_dirs
-                
+
                 # Delete empty directories
-                deleted_empty = delete_empty_directories(
-                    storage, dry_run=dry_run
-                )
+                deleted_empty = delete_empty_directories(storage, dry_run=dry_run)
                 stats["empty_dirs"] += deleted_empty
-                
+
                 # Delete small video files
                 deleted_videos = delete_small_video_files(
                     storage, min_size=min_video_size, dry_run=dry_run
                 )
                 stats["small_videos"] += deleted_videos
-                
+
             except Exception as e:
                 logger.error(f"Error processing {storage}: {str(e)}")
                 stats["errors"] += 1

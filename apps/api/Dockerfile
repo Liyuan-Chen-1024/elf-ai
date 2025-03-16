@@ -4,7 +4,7 @@ FROM python:3.11-slim-buster as base
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    POETRY_VERSION=1.4.2 \
+    POETRY_VERSION=1.7.1 \
     POETRY_HOME="/opt/poetry" \
     POETRY_VIRTUALENVS_CREATE=false
 
@@ -27,16 +27,19 @@ ENV PATH="${POETRY_HOME}/bin:$PATH"
 WORKDIR /app
 
 # Copy project files
-COPY . .
+COPY pyproject.toml poetry.lock ./
 
 # Install dependencies
-RUN pip install mysqlclient transmissionrpc && poetry install --no-interaction --no-ansi
+RUN pip install mysqlclient transmissionrpc && poetry lock --no-update && poetry install --no-interaction --no-ansi
+
+# Copy the rest of the application
+COPY . .
 
 # Development stage
 FROM base as development
 
 # Install debugpy
-RUN pip install debugpy
+RUN pip install debugpy==1.8.0
 
 # Create entrypoint script
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
@@ -53,4 +56,4 @@ FROM base as production
 RUN python manage.py collectstatic --noinput
 
 # Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"] 
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]

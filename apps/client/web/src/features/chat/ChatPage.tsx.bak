@@ -65,13 +65,13 @@ export const ChatPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMatches, setSearchMatches] = useState<number[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
-  
+
   // Ref for message container to auto-scroll to bottom
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const messageRefs = useRef<{[key: number]: HTMLDivElement}>({});
-  
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -96,7 +96,7 @@ export const ChatPage: React.FC = () => {
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      
+
       // After scrolling, ensure focus goes back to input field
       setTimeout(() => {
         if (messageInputRef.current) {
@@ -140,10 +140,10 @@ export const ChatPage: React.FC = () => {
 
     try {
       setSendingMessage(true);
-      
+
       // Store user's message content before clearing the input
       const userContent = newMessage;
-      
+
       // Add user message to UI immediately with a temporary ID and flag
       const tempUserMessage: TypedMessage = {
         id: Date.now(), // Temporary ID
@@ -155,7 +155,7 @@ export const ChatPage: React.FC = () => {
         edited_at: null,
         isTemporary: true // Mark as temporary
       };
-      
+
       // Add a temporary thinking message from the assistant
       const tempAssistantMessage: TypedMessage = {
         id: Date.now() + 1, // Another temporary ID
@@ -168,13 +168,13 @@ export const ChatPage: React.FC = () => {
         status: 'thinking',
         isTemporary: true // Mark as temporary
       };
-      
+
       setMessages(prevMessages => [...prevMessages, tempUserMessage, tempAssistantMessage]);
       setNewMessage('');
-      
+
       // Focus back on the input field
       messageInputRef.current?.focus();
-      
+
       // Call the streaming API
       chatApi.streamMessagePost(selectedConversation.id, userContent, {
         onToken: (token, status) => {
@@ -184,7 +184,7 @@ export const ChatPage: React.FC = () => {
             const assistantMessageIndex = updatedMessages.findIndex(
               m => m.id === tempAssistantMessage.id && m.role === 'assistant'
             );
-            
+
             if (assistantMessageIndex !== -1) {
               // Update its content with the new token
               updatedMessages[assistantMessageIndex] = {
@@ -193,10 +193,10 @@ export const ChatPage: React.FC = () => {
                 status: 'streaming' // Use the streaming status while receiving tokens
               };
             }
-            
+
             return updatedMessages;
           });
-          
+
           // Scroll to the bottom as new content arrives
           scrollToBottom();
         },
@@ -204,24 +204,24 @@ export const ChatPage: React.FC = () => {
           // Mark the message as complete
           setMessages(prevMessages => {
             const updatedMessages = [...prevMessages];
-            
+
             // First find our temporary user message and make it permanent
             const userMessageIndex = updatedMessages.findIndex(
               m => m.isTemporary && m.role === 'user' && m.content === userContent
             );
-            
+
             if (userMessageIndex !== -1) {
               updatedMessages[userMessageIndex] = {
                 ...updatedMessages[userMessageIndex],
                 isTemporary: false // No longer temporary
               };
             }
-            
+
             // Then find the assistant message and mark as complete
             const assistantMessageIndex = updatedMessages.findIndex(
               m => m.id === tempAssistantMessage.id && m.role === 'assistant'
             );
-            
+
             if (assistantMessageIndex !== -1) {
               updatedMessages[assistantMessageIndex] = {
                 ...updatedMessages[assistantMessageIndex],
@@ -229,12 +229,12 @@ export const ChatPage: React.FC = () => {
                 isTemporary: false // No longer temporary
               };
             }
-            
+
             return updatedMessages;
           });
-          
+
           setSendingMessage(false);
-          
+
           // Focus back on the input field after a short delay
           setTimeout(() => {
             messageInputRef.current?.focus();
@@ -242,14 +242,14 @@ export const ChatPage: React.FC = () => {
         },
         onError: (error) => {
           console.error('Error in streaming:', error);
-          
+
           // Mark the message as error
           setMessages(prevMessages => {
             const updatedMessages = [...prevMessages];
             const assistantMessageIndex = updatedMessages.findIndex(
               m => m.id === tempAssistantMessage.id && m.role === 'assistant'
             );
-            
+
             if (assistantMessageIndex !== -1) {
               updatedMessages[assistantMessageIndex] = {
                 ...updatedMessages[assistantMessageIndex],
@@ -258,10 +258,10 @@ export const ChatPage: React.FC = () => {
                 isTemporary: false // No longer temporary
               };
             }
-            
+
             return updatedMessages;
           });
-          
+
           setSendingMessage(false);
         }
       });
@@ -273,7 +273,7 @@ export const ChatPage: React.FC = () => {
 
   const handleCreateEmptyConversation = async () => {
     if (loading) return; // Prevent multiple clicks while loading
-    
+
     try {
       setLoading(true);
       // Create a conversation with a default title (will be updated later)
@@ -290,22 +290,22 @@ export const ChatPage: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   const handleDeleteConversation = async () => {
     if (!selectedConversation) return;
-    
+
     try {
       await chatApi.deleteConversation(selectedConversation.id);
-      setConversations(prevConversations => 
+      setConversations(prevConversations =>
         prevConversations.filter(c => c.id !== selectedConversation.id)
       );
-      setSelectedConversation(conversations.length > 1 ? 
+      setSelectedConversation(conversations.length > 1 ?
         conversations.find(c => c.id !== selectedConversation.id) || null : null);
     } catch (error) {
       console.error('Error deleting conversation:', error);
     }
   };
-  
+
   const handleMessageMenuOpen = (event: React.MouseEvent<HTMLElement>, messageId: number) => {
     setMenuAnchorEl(event.currentTarget);
     setSelectedMessageId(messageId);
@@ -325,17 +325,17 @@ export const ChatPage: React.FC = () => {
     }
     handleMessageMenuClose();
   };
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
-  
+
   const formatDateFull = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString([], { 
-      year: 'numeric', 
-      month: 'short', 
+    return date.toLocaleDateString([], {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -349,7 +349,7 @@ export const ChatPage: React.FC = () => {
   // Function to handle keyboard shortcuts
   const handleKeyboardShortcuts = (e: KeyboardEvent) => {
     // Ctrl+Enter in text area is already handled by handleKeyDown
-    
+
     // Ctrl+F to open search
     if (e.ctrlKey && e.key === 'f') {
       e.preventDefault();
@@ -358,7 +358,7 @@ export const ChatPage: React.FC = () => {
         searchInputRef.current?.focus();
       }, 100);
     }
-    
+
     // Escape to close search if open, or clear input if not
     if (e.key === 'Escape') {
       if (searchOpen) {
@@ -393,19 +393,19 @@ Keyboard Shortcuts:
       setCurrentMatchIndex(-1);
       return;
     }
-    
+
     const query = searchQuery.toLowerCase();
     const matches: number[] = [];
-    
+
     messages.forEach((message, index) => {
       if (message.content.toLowerCase().includes(query)) {
         matches.push(index);
       }
     });
-    
+
     setSearchMatches(matches);
     setCurrentMatchIndex(matches.length > 0 ? 0 : -1);
-    
+
     // Scroll to first match
     if (matches.length > 0) {
       setTimeout(() => {
@@ -420,16 +420,16 @@ Keyboard Shortcuts:
   // Navigate to next/previous match
   const navigateMatches = (direction: 'next' | 'prev') => {
     if (searchMatches.length === 0) return;
-    
+
     let newIndex = currentMatchIndex;
     if (direction === 'next') {
       newIndex = (currentMatchIndex + 1) % searchMatches.length;
     } else {
       newIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
     }
-    
+
     setCurrentMatchIndex(newIndex);
-    
+
     // Scroll to the match
     const matchRef = messageRefs.current[searchMatches[newIndex]];
     if (matchRef) {
@@ -453,11 +453,11 @@ Keyboard Shortcuts:
   // Function to highlight search matches in message content
   const highlightMatches = (content: string) => {
     if (!searchQuery.trim()) return content;
-    
+
     const parts = content.split(new RegExp(`(${searchQuery})`, 'gi'));
-    return parts.map((part, i) => 
-      part.toLowerCase() === searchQuery.toLowerCase() 
-        ? <mark key={i} style={{ backgroundColor: '#FFFF00', padding: 0 }}>{part}</mark> 
+    return parts.map((part, i) =>
+      part.toLowerCase() === searchQuery.toLowerCase()
+        ? <mark key={i} style={{ backgroundColor: '#FFFF00', padding: 0 }}>{part}</mark>
         : part
     );
   };
@@ -478,16 +478,16 @@ Keyboard Shortcuts:
       {isMobile && (
     <Box
       sx={{
-            position: 'absolute', 
-            top: 12, 
-            left: 12, 
-            zIndex: 1100 
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            zIndex: 1100
           }}
         >
-          <IconButton 
-            onClick={toggleDrawer} 
+          <IconButton
+            onClick={toggleDrawer}
             color="primary"
-            sx={{ 
+            sx={{
               bgcolor: 'background.paper',
               boxShadow: 1,
               '&:hover': { bgcolor: 'background.paper' }
@@ -497,7 +497,7 @@ Keyboard Shortcuts:
           </IconButton>
         </Box>
       )}
-      
+
       {/* Sidebar with conversations */}
       <Drawer
         variant={isMobile ? 'temporary' : 'permanent'}
@@ -514,24 +514,24 @@ Keyboard Shortcuts:
           },
         }}
       >
-        <Box 
-          sx={{ 
-            width: 280, 
-            borderRight: '1px solid', 
+        <Box
+          sx={{
+            width: 280,
+            borderRight: '1px solid',
             borderColor: 'divider',
-            display: 'flex', 
+            display: 'flex',
             flexDirection: 'column',
             bgcolor: 'background.paper',
             height: '100%',
           }}
         >
           <Box sx={{ p: 2 }}>
-            <Button 
-              fullWidth 
-              variant="contained" 
+            <Button
+              fullWidth
+              variant="contained"
               startIcon={<AddIcon />}
               onClick={handleCreateEmptyConversation}
-              sx={{ 
+              sx={{
                 mb: 2,
                 py: 1.2,
                 borderRadius: 2,
@@ -545,7 +545,7 @@ Keyboard Shortcuts:
             >
               New Chat
             </Button>
-            
+
             <Fade in={showNewConversationInput}>
               <Box>
                 {showNewConversationInput && (
@@ -561,8 +561,8 @@ Keyboard Shortcuts:
                         InputProps={{
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton 
-                                edge="end" 
+                              <IconButton
+                                edge="end"
                                 type="submit"
                                 disabled={!newConversationTitle.trim()}
                               >
@@ -578,19 +578,19 @@ Keyboard Shortcuts:
               </Box>
             </Fade>
           </Box>
-          
+
           <Typography
-            variant="subtitle2" 
+            variant="subtitle2"
             sx={{
-              px: 2, 
-              py: 1, 
+              px: 2,
+              py: 1,
               color: 'text.secondary',
               fontWeight: 500,
             }}
           >
             Recent Chats
           </Typography>
-          
+
           <List
             sx={{
               width: '100%',
@@ -613,11 +613,11 @@ Keyboard Shortcuts:
             }}
           >
             {conversations.map((conversation) => (
-              <Zoom 
-                key={conversation.id} 
-                in={true} 
-                style={{ 
-                  transitionDelay: `${conversations.indexOf(conversation) * 50}ms` 
+              <Zoom
+                key={conversation.id}
+                in={true}
+                style={{
+                  transitionDelay: `${conversations.indexOf(conversation) * 50}ms`
                 }}
               >
                 <ListItemButton
@@ -656,8 +656,8 @@ Keyboard Shortcuts:
             ))}
             {conversations.length === 0 && !loading && (
               <ListItem sx={{ px: 2 }}>
-                <ListItemText 
-                  primary="No conversations yet" 
+                <ListItemText
+                  primary="No conversations yet"
                   primaryTypographyProps={{
                     color: 'text.secondary',
                     fontSize: 14,
@@ -675,19 +675,19 @@ Keyboard Shortcuts:
       </Drawer>
 
       {/* Main chat area */}
-      <Box sx={{ 
-        flex: 1, 
-        display: 'flex', 
-        flexDirection: 'column', 
+      <Box sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
         height: '100%',
         bgcolor: 'background.default',
         position: 'relative',
       }}>
         {selectedConversation ? (
           <>
-            <Box sx={{ 
-              p: 2, 
-              borderBottom: '1px solid', 
+            <Box sx={{
+              p: 2,
+              borderBottom: '1px solid',
               borderColor: 'divider',
               bgcolor: 'background.paper',
               display: 'flex',
@@ -708,8 +708,8 @@ Keyboard Shortcuts:
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Tooltip title="Search in conversation">
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     onClick={() => {
                       setSearchOpen(true);
                       setTimeout(() => {
@@ -721,10 +721,10 @@ Keyboard Shortcuts:
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Delete conversation">
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     onClick={handleDeleteConversation}
-                    sx={{ 
+                    sx={{
                       color: 'error.main',
                       '&:hover': { bgcolor: 'error.light' }
                     }}
@@ -736,11 +736,11 @@ Keyboard Shortcuts:
             </Box>
 
             <Collapse in={searchOpen}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                p: 1, 
-                borderBottom: '1px solid', 
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                p: 1,
+                borderBottom: '1px solid',
                 borderColor: 'divider',
                 backgroundColor: 'background.paper'
               }}>
@@ -766,22 +766,22 @@ Keyboard Shortcuts:
                               {currentMatchIndex + 1} of {searchMatches.length}
                             </Typography>
                           )}
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             disabled={searchMatches.length === 0}
                             onClick={() => navigateMatches('prev')}
                           >
                             <KeyboardArrowUpIcon fontSize="small" />
                           </IconButton>
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             disabled={searchMatches.length === 0}
                             onClick={() => navigateMatches('next')}
                           >
                             <KeyboardArrowDownIcon fontSize="small" />
                           </IconButton>
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => {
                               setSearchOpen(false);
                               setSearchQuery('');
@@ -808,7 +808,7 @@ Keyboard Shortcuts:
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 2,
-                    background: `linear-gradient(rgba(245, 249, 247, 0.9), rgba(245, 249, 247, 0.9)), 
+                    background: `linear-gradient(rgba(245, 249, 247, 0.9), rgba(245, 249, 247, 0.9)),
                                 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23A3C9B7' stroke-width='1'%3E%3Cpath d='M769 229L1037 260.9M927 880L731 737 520 660 309 538 40 599 295 764 126.5 879.5 40 599-197 493 102 382-31 229 126.5 79.5-69-63'/%3E%3Cpath d='M-31 229L237 261 390 382 603 493 308.5 537.5 101.5 381.5M370 905L295 764'/%3E%3Cpath d='M520 660L578 842 731 737 840 599 603 493 520 660 295 764 309 538 390 382 539 269 769 229 577.5 41.5 370 105 295 -36 126.5 79.5 237 261 102 382 40 599 -69 737 127 880'/%3E%3Cpath d='M520-140L578.5 42.5 731-63M603 493L539 269 237 261 370 105M902 382L539 269M390 382L102 382'/%3E%3Cpath d='M-222 42L126.5 79.5 370 105 539 269 577.5 41.5 927 80 769 229 902 382 603 493 731 737M295-36L577.5 41.5M578 842L295 764M40-201L127 80M102 382L-261 269'/%3E%3C/g%3E%3Cg fill='%23D5E3DC'%3E%3Ccircle cx='769' cy='229' r='5'/%3E%3Ccircle cx='539' cy='269' r='5'/%3E%3Ccircle cx='603' cy='493' r='5'/%3E%3Ccircle cx='731' cy='737' r='5'/%3E%3Ccircle cx='520' cy='660' r='5'/%3E%3Ccircle cx='309' cy='538' r='5'/%3E%3Ccircle cx='295' cy='764' r='5'/%3E%3Ccircle cx='40' cy='599' r='5'/%3E%3Ccircle cx='102' cy='382' r='5'/%3E%3Ccircle cx='127' cy='80' r='5'/%3E%3Ccircle cx='370' cy='105' r='5'/%3E%3Ccircle cx='578' cy='42' r='5'/%3E%3Ccircle cx='237' cy='261' r='5'/%3E%3Ccircle cx='390' cy='382' r='5'/%3E%3C/g%3E%3C/svg%3E")`,
                     backgroundAttachment: 'fixed',
                     backgroundSize: 'cover',
@@ -828,21 +828,21 @@ Keyboard Shortcuts:
                     }
                   }}
                 >
-                  <Box sx={{ 
-                    flex: 1, 
-                    overflow: 'auto', 
+                  <Box sx={{
+                    flex: 1,
+                    overflow: 'auto',
                     p: 3,
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 3,
                   }}>
                     {messages.map((message, index) => (
-                      <Fade 
-                        key={message.id} 
-                        in={true} 
+                      <Fade
+                        key={message.id}
+                        in={true}
                         timeout={300}
-                        style={{ 
-                          transitionDelay: `${index * 100}ms` 
+                        style={{
+                          transitionDelay: `${index * 100}ms`
                         }}
                       >
                         <Box
@@ -865,9 +865,9 @@ Keyboard Shortcuts:
                             {message.role === 'user' ? <PersonIcon /> : <ElfIcon />}
                           </Avatar>
                           <Box sx={{ flex: 1 }}>
-                            <Box sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
+                            <Box sx={{
+                              display: 'flex',
+                              alignItems: 'center',
                               mb: 0.5,
                               justifyContent: 'space-between'
                             }}>
@@ -876,8 +876,8 @@ Keyboard Shortcuts:
                                   {message.role === 'user' ? 'You' : 'Assistant'}
                               </Typography>
                                 <Tooltip title={formatDateFull(message.created_at)}>
-                                  <Typography 
-                                    variant="caption" 
+                                  <Typography
+                                    variant="caption"
                                     color="text.secondary"
                                     sx={{ ml: 1 }}
                                   >
@@ -904,7 +904,7 @@ Keyboard Shortcuts:
                               sx={{
                                 p: 2,
                                 mb: 2,
-                                backgroundColor: message.role === 'user' 
+                                backgroundColor: message.role === 'user'
                                   ? alpha(theme.palette.secondary.light, 0.15)
                                   : alpha(theme.palette.primary.light, 0.15),
                                 borderRadius: 3,
@@ -940,7 +940,7 @@ Keyboard Shortcuts:
                                   borderLeft: `10px solid ${alpha(theme.palette.secondary.light, 0.15)}`,
                                   borderBottom: '10px solid transparent'
                                 } : {},
-                                ...(searchMatches.length > 0 && 
+                                ...(searchMatches.length > 0 &&
                                    index === searchMatches[currentMatchIndex] && {
                                   boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
                                   transition: 'all 0.3s ease',
@@ -989,28 +989,28 @@ Keyboard Shortcuts:
                                 <Box sx={{ position: 'relative' }}>
                                   <MarkdownPreview
                                     source={
-                                      typeof message.content === 'string' && searchQuery.trim() 
+                                      typeof message.content === 'string' && searchQuery.trim()
                                         ? message.content.replace(
-                                            new RegExp(`(${searchQuery})`, 'gi'), 
+                                            new RegExp(`(${searchQuery})`, 'gi'),
                                             match => `**~~${match}~~**`
                                           )
                                         : message.content
                                     }
-                                    style={{ 
+                                    style={{
                                       background: 'transparent',
                                       fontFamily: 'inherit',
                                       fontSize: 'inherit',
                                       color: 'inherit'
                                     }}
                                   />
-                                  <Box 
-                                    sx={{ 
+                                  <Box
+                                    sx={{
                                       display: 'inline-flex',
                                       position: 'relative',
                                       ml: 1
                                     }}
                                   >
-                                    <Box sx={{ 
+                                    <Box sx={{
                                       height: '16px',
                                       width: '2px',
                                       backgroundColor: theme.palette.primary.main,
@@ -1026,14 +1026,14 @@ Keyboard Shortcuts:
                               ) : (
                                 <MarkdownPreview
                                   source={
-                                    typeof message.content === 'string' && searchQuery.trim() 
+                                    typeof message.content === 'string' && searchQuery.trim()
                                       ? message.content.replace(
-                                          new RegExp(`(${searchQuery})`, 'gi'), 
+                                          new RegExp(`(${searchQuery})`, 'gi'),
                                           match => `**~~${match}~~**`
                                         )
                                       : message.content
                                   }
-                                  style={{ 
+                                  style={{
                                     background: 'transparent',
                                     fontFamily: 'inherit',
                                     fontSize: 'inherit',
@@ -1046,10 +1046,10 @@ Keyboard Shortcuts:
                         </Box>
                       </Fade>
                     ))}
-                    
+
                     {messages.length === 0 && !loading && (
-                      <Box sx={{ 
-                        display: 'flex', 
+                      <Box sx={{
+                        display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1073,26 +1073,26 @@ Keyboard Shortcuts:
                         </Typography>
                       </Box>
                     )}
-                    
+
                     {loading && messages.length === 0 && (
-                      <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
+                      <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
                         alignItems: 'center',
-                        height: '100%' 
+                        height: '100%'
                       }}>
                         <CircularProgress />
                     </Box>
                     )}
-                    
+
                     <div ref={messagesEndRef} />
                   </Box>
                 </Box>
               </Box>
 
-            <Box sx={{ 
-              p: 2, 
-              borderTop: '1px solid', 
+            <Box sx={{
+              p: 2,
+              borderTop: '1px solid',
               borderColor: 'divider',
               bgcolor: 'background.paper',
               position: 'sticky',
@@ -1101,7 +1101,7 @@ Keyboard Shortcuts:
               boxShadow: '0 -2px 10px rgba(0,0,0,0.05)',
             }}>
               <form onSubmit={handleSendMessageStreaming}>
-                <Box 
+                <Box
           sx={{
             display: 'flex',
                     maxWidth: '850px',
@@ -1126,12 +1126,12 @@ Keyboard Shortcuts:
                           <IconButton
                             type="submit"
                             disabled={!newMessage.trim() || sendingMessage}
-                            sx={{ 
+                            sx={{
                               color: 'primary.main',
                               transition: 'all 0.2s',
-                              '&:hover': { 
+                              '&:hover': {
                                 transform: 'scale(1.1)',
-                                color: 'secondary.main' 
+                                color: 'secondary.main'
                               }
                             }}
                           >
@@ -1181,8 +1181,8 @@ Keyboard Shortcuts:
               Your magical AI assistant for meaningful conversations
             </Typography>
             {!loading && conversations.length === 0 && (
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 startIcon={<AddIcon />}
                 onClick={handleCreateEmptyConversation}
                 sx={{
@@ -1204,7 +1204,7 @@ Keyboard Shortcuts:
           </Box>
         )}
       </Box>
-      
+
       {/* Message menu */}
       <Menu
         anchorEl={menuAnchorEl}
@@ -1220,4 +1220,4 @@ Keyboard Shortcuts:
       </Menu>
     </Box>
   );
-}; 
+};

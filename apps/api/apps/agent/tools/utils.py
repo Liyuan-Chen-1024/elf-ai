@@ -5,9 +5,10 @@ This module provides common helper functions used by multiple tools.
 """
 
 import asyncio
-import aiohttp
-from typing import Any, Dict, List, Optional, Tuple, Union
 import logging
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ async def async_http_request(
 ) -> Tuple[int, Union[Dict[str, Any], str]]:
     """
     Make an asynchronous HTTP request.
-    
+
     Args:
         url: The URL to request
         method: HTTP method (GET, POST, etc.)
@@ -30,7 +31,7 @@ async def async_http_request(
         params: Optional query parameters
         json_data: Optional JSON body data
         timeout: Request timeout in seconds
-        
+
     Returns:
         Tuple of (status_code, response_data)
     """
@@ -45,21 +46,27 @@ async def async_http_request(
                     except:
                         data = await response.text()
             elif method == "POST":
-                async with session.post(url, headers=headers, params=params, json=json_data) as response:
+                async with session.post(
+                    url, headers=headers, params=params, json=json_data
+                ) as response:
                     status = response.status
                     try:
                         data = await response.json()
                     except:
                         data = await response.text()
             elif method == "PUT":
-                async with session.put(url, headers=headers, params=params, json=json_data) as response:
+                async with session.put(
+                    url, headers=headers, params=params, json=json_data
+                ) as response:
                     status = response.status
                     try:
                         data = await response.json()
                     except:
                         data = await response.text()
             elif method == "DELETE":
-                async with session.delete(url, headers=headers, params=params) as response:
+                async with session.delete(
+                    url, headers=headers, params=params
+                ) as response:
                     status = response.status
                     try:
                         data = await response.json()
@@ -67,7 +74,7 @@ async def async_http_request(
                         data = await response.text()
             else:
                 return 400, f"Unsupported HTTP method: {method}"
-                
+
             return status, data
     except asyncio.TimeoutError:
         logger.error(f"Request timeout for {url}")
@@ -80,11 +87,11 @@ async def async_http_request(
 def sanitize_params(params: Dict[str, Any], allowed_keys: List[str]) -> Dict[str, Any]:
     """
     Sanitize input parameters to only include allowed keys.
-    
+
     Args:
         params: Dictionary of parameters
         allowed_keys: List of allowed parameter keys
-        
+
     Returns:
         Sanitized parameters dictionary
     """
@@ -94,31 +101,31 @@ def sanitize_params(params: Dict[str, Any], allowed_keys: List[str]) -> Dict[str
 def format_exception(e: Exception) -> str:
     """
     Format an exception into a user-friendly error message.
-    
+
     Args:
         e: The exception to format
-        
+
     Returns:
         Formatted error message
     """
     error_type = type(e).__name__
     error_msg = str(e)
-    
+
     if not error_msg:
         return f"An error occurred: {error_type}"
-    
+
     return f"{error_type}: {error_msg}"
 
 
 def safe_get(data: Dict[str, Any], *keys: str, default: Any = None) -> Any:
     """
     Safely get a nested value from a dictionary.
-    
+
     Args:
         data: Dictionary to extract value from
         keys: Sequence of keys to navigate nested dictionaries
         default: Default value to return if keys not found
-        
+
     Returns:
         Extracted value or default
     """
@@ -127,4 +134,4 @@ def safe_get(data: Dict[str, Any], *keys: str, default: Any = None) -> Any:
         if not isinstance(current, dict) or key not in current:
             return default
         current = current[key]
-    return current 
+    return current

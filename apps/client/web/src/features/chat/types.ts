@@ -18,4 +18,4 @@ export interface Conversation {
   updated_at: string;
   message_count: number;
   messages?: Message[];
-} 
+}

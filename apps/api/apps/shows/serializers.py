@@ -1,12 +1,13 @@
-from typing import Any, Dict, List, Optional, Type, Union
 from rest_framework import serializers
 
 from apps.core.serializers import BaseModelSerializer
+
 from .models import MediaFile, TVShow
+
 
 class MediaFileSerializer(BaseModelSerializer):
     """Serializer for MediaFile model."""
-    
+
     class Meta:
         model = MediaFile
         fields = [
@@ -26,9 +27,10 @@ class MediaFileSerializer(BaseModelSerializer):
             raise serializers.ValidationError("Path cannot be empty")
         return value
 
+
 class TVShowSerializer(BaseModelSerializer):
     """Serializer for TVShow model."""
-    
+
     status = serializers.SerializerMethodField()
     status_color = serializers.SerializerMethodField()
 
@@ -80,5 +82,3 @@ class TVShowSerializer(BaseModelSerializer):
         if value < 1:
             raise serializers.ValidationError("Episode number must be greater than 0")
         return value
-
-

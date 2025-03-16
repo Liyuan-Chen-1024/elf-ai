@@ -7,7 +7,11 @@ const API_BASE_URL = 'http://localhost:8000/api/v1';
 axios.defaults.withCredentials = true;
 
 // Add retry logic with exponential backoff for rate limit errors
-const retryWithBackoff = async <T>(fn: () => Promise<T>, maxRetries = 3, initialDelay = 500): Promise<T> => {
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+  initialDelay = 500
+): Promise<T> => {
   let retries = 0;
   let delay = initialDelay;
 
@@ -37,7 +41,7 @@ const throttleRequest = async <T>(key: string, requestFn: () => Promise<T>): Pro
   if (pendingRequests.has(key)) {
     return pendingRequests.get(key) as Promise<T>;
   }
-  
+
   // Otherwise, create a new request and store the promise
   try {
     // Add retry logic with exponential backoff
@@ -113,20 +117,25 @@ class ChatApi {
   // Message methods
   async getMessages(conversationId: number): Promise<Message[]> {
     const response = await axios.get(`${API_BASE_URL}/chat/messages/`, {
-      params: { conversation_id: conversationId }
+      params: { conversation_id: conversationId },
     });
     console.log(`Fetched messages for conversation ${conversationId}:`, response.data);
     return response.data.results;
   }
 
   async getMessage(conversationId: number, messageId: number): Promise<Message> {
-    const response = await axios.get(`${API_BASE_URL}/chat/conversations/${conversationId}/messages/${messageId}/`);
+    const response = await axios.get(
+      `${API_BASE_URL}/chat/conversations/${conversationId}/messages/${messageId}/`
+    );
     return response.data;
   }
 
   async createMessage(conversationId: number, content: string): Promise<Message> {
     return throttleRequest(`send-message-${conversationId}`, async () => {
-      const response = await axios.post(`${API_BASE_URL}/chat/conversations/${conversationId}/send_message/`, { content });
+      const response = await axios.post(
+        `${API_BASE_URL}/chat/conversations/${conversationId}/send_message/`,
+        { content }
+      );
       // The API now returns both user_message and assistant_message
       // We return just the assistant message for backward compatibility
       if (response.data.assistant_message) {
@@ -138,7 +147,7 @@ class ChatApi {
 
   // Function to stream message
   streamMessage(
-    conversationId: number, 
+    conversationId: number,
     content: string,
     options: {
       onToken: (token: string, status: string, isFullUpdate?: boolean) => void;
@@ -146,39 +155,39 @@ class ChatApi {
       onError: (error: any) => void;
       signal?: AbortSignal;
     }
-  ): (() => void) {
+  ): () => void {
     const { onToken, onComplete, onError, signal } = options;
-    
+
     // POST the initial request without using EventSource
     const postMessageAndStream = async () => {
       try {
         // Try a different URL format to match the backend's expected structure
         // For DRF action endpoints, the URL format might need adjustment
         const url = `${API_BASE_URL}/chat/conversations/${conversationId}/send_message/`;
-        console.log("Streaming to URL:", url);
-        
+        console.log('Streaming to URL:', url);
+
         // First POST the message
         const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Token ${this.authToken}`,
-            'Accept': 'application/json', // Change Accept header to JSON instead of event-stream
+            Authorization: `Token ${this.authToken}`,
+            Accept: 'application/json', // Change Accept header to JSON instead of event-stream
           },
           body: JSON.stringify({ content }),
           signal: signal || null,
         });
-        
-        console.log("Stream response status:", response.status);
-        
+
+        console.log('Stream response status:', response.status);
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         // For now, parse the JSON response
         const data = await response.json();
-        console.log("Received response:", data);
-        
+        console.log('Received response:', data);
+
         // Simulate a streaming response from the regular endpoint
         if (data.assistant_message && data.assistant_message.content) {
           // Emit the content as if it were streamed
@@ -186,18 +195,17 @@ class ChatApi {
           // Signal completion
           onComplete();
         } else {
-          throw new Error("No response content received");
+          throw new Error('No response content received');
         }
-        
       } catch (error) {
         console.error('Error with streaming:', error);
         onError(error);
       }
     };
-    
+
     // Start the request
     postMessageAndStream();
-    
+
     // Return a cleanup function
     return () => {
       // The AbortController will handle cancellation
@@ -214,4 +222,4 @@ class ChatApi {
   }
 }
 
-export const chatApi = new ChatApi(); 
+export const chatApi = new ChatApi();

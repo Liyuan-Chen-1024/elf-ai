@@ -1,9 +1,11 @@
 """Tests for epguides utilities."""
+
 from unittest.mock import patch
 
 from django.test import TestCase
 
 from apps.shows.utils.epguides_utils import find_and_process_new_epguide_keys
+
 
 class TestEpguidesUtils(TestCase):
     """Test cases for epguides utilities."""

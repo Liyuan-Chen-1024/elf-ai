@@ -1,18 +1,18 @@
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import PersonIcon from '@mui/icons-material/Person';
 import {
-    AppBar,
-    Avatar,
-    Box,
-    Button,
-    Menu,
-    MenuItem,
-    Tab,
-    Tabs,
-    Toolbar,
-    Typography,
-    useMediaQuery,
-    useTheme
+  AppBar,
+  Avatar,
+  Box,
+  Button,
+  Menu,
+  MenuItem,
+  Tab,
+  Tabs,
+  Toolbar,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import React, { useState } from 'react';
 import { ElfLogoIcon } from '../../features/chat/ElfIcon';
@@ -24,12 +24,7 @@ interface HeaderProps {
   onTabChange: (tab: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ 
-  username, 
-  onLogout, 
-  activeTab, 
-  onTabChange 
-}) => {
+export const Header: React.FC<HeaderProps> = ({ username, onLogout, activeTab, onTabChange }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
@@ -59,13 +54,16 @@ export const Header: React.FC<HeaderProps> = ({
           <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
             <ElfLogoIcon sx={{ fontSize: 18 }} />
           </Avatar>
-          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem', display: { xs: 'none', sm: 'block' } }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 600, fontSize: '1.1rem', display: { xs: 'none', sm: 'block' } }}
+          >
             Elf AI
           </Typography>
         </Box>
 
         {/* Navigation tabs */}
-        <Tabs 
+        <Tabs
           value={activeTab}
           onChange={handleTabChange}
           indicatorColor="primary"
@@ -75,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Tab value="chat" label="Chat" />
           <Tab value="profile" label="Profile" />
         </Tabs>
-        
+
         {/* User info and logout */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {!isMobile && (
@@ -83,23 +81,21 @@ export const Header: React.FC<HeaderProps> = ({
               {username}
             </Typography>
           )}
-          
+
           <Button
             onClick={handleUserMenuOpen}
             color="inherit"
             size="small"
             endIcon={<ArrowDropDownIcon />}
             startIcon={
-              <Avatar 
-                sx={{ width: 24, height: 24, bgcolor: 'primary.light' }}
-              >
+              <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.light' }}>
                 <PersonIcon sx={{ fontSize: 16 }} />
               </Avatar>
             }
           >
             {isMobile ? '' : 'Account'}
           </Button>
-          
+
           <Menu
             anchorEl={userMenuAnchor}
             open={Boolean(userMenuAnchor)}
@@ -113,10 +109,12 @@ export const Header: React.FC<HeaderProps> = ({
               horizontal: 'right',
             }}
           >
-            <MenuItem onClick={() => {
-              handleUserMenuClose();
-              onTabChange('profile');
-            }}>
+            <MenuItem
+              onClick={() => {
+                handleUserMenuClose();
+                onTabChange('profile');
+              }}
+            >
               My Profile
             </MenuItem>
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
@@ -125,4 +123,4 @@ export const Header: React.FC<HeaderProps> = ({
       </Toolbar>
     </AppBar>
   );
-}; 
+};

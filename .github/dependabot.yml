@@ -99,4 +99,4 @@ updates:
       - "yourusername"
     commit-message:
       prefix: "docker"
-      include: "scope" 
+      include: "scope"

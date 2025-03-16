@@ -1,4 +1,5 @@
 """Django settings package."""
+
 import os
 
 # Load appropriate settings based on environment
@@ -9,4 +10,4 @@ if env == "production":
 elif env == "staging":
     from .staging import *  # noqa
 else:
-    from .development import *  # noqa 
+    from .development import *  # noqa

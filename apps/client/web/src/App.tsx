@@ -1,16 +1,16 @@
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {
-    Avatar,
-    Box,
-    Button,
-    Container,
-    Divider,
-    IconButton,
-    InputAdornment,
-    Paper,
-    TextField,
-    Typography
+  Avatar,
+  Box,
+  Button,
+  Container,
+  Divider,
+  IconButton,
+  InputAdornment,
+  Paper,
+  TextField,
+  Typography,
 } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
@@ -75,7 +75,9 @@ function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Container
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+        >
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
             <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
               <ElfLogoIcon sx={{ fontSize: 32 }} />
@@ -92,36 +94,42 @@ function App() {
       <CssBaseline />
       {isAuthenticated ? (
         <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <Header 
-            username={username || 'Admin'} 
-            onLogout={handleLogout} 
+          <Header
+            username={username || 'Admin'}
+            onLogout={handleLogout}
             activeTab={activeTab}
             onTabChange={handleTabChange}
           />
-          
+
           <Box sx={{ flex: 1, overflow: 'auto' }}>
             {activeTab === 'chat' && <ChatPage />}
-            {activeTab === 'profile' && <ProfilePage username={username || 'Admin'} email={(username || 'admin') + '@admin.com'} />}
+            {activeTab === 'profile' && (
+              <ProfilePage
+                username={username || 'Admin'}
+                email={(username || 'admin') + '@admin.com'}
+              />
+            )}
           </Box>
         </Box>
       ) : (
-        <Container 
-          maxWidth={false} 
-          sx={{ 
-            height: '100vh', 
-            display: 'flex', 
-            alignItems: 'center', 
+        <Container
+          maxWidth={false}
+          sx={{
+            height: '100vh',
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             bgcolor: 'background.default',
             p: 2,
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%232c7d54\' fill-opacity=\'0.05\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%232c7d54' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E\")",
           }}
         >
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              p: { xs: 3, sm: 4 }, 
-              width: '100%', 
+          <Paper
+            elevation={2}
+            sx={{
+              p: { xs: 3, sm: 4 },
+              width: '100%',
               maxWidth: 450,
               borderRadius: 3,
               boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
@@ -135,7 +143,7 @@ function App() {
                 right: 0,
                 height: '4px',
                 background: 'linear-gradient(90deg, #2C7D54 0%, #C9B037 100%)',
-              }
+              },
             }}
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
@@ -149,30 +157,30 @@ function App() {
                 Your magical AI assistant for meaningful conversations
               </Typography>
             </Box>
-            
+
             {error && (
-              <Typography 
-                color="error" 
-                sx={{ 
-                  mb: 2, 
-                  p: 1.5, 
-                  bgcolor: 'error.light', 
+              <Typography
+                color="error"
+                sx={{
+                  mb: 2,
+                  p: 1.5,
+                  bgcolor: 'error.light',
                   borderRadius: 1,
                   color: 'error.dark',
-                  fontSize: '0.875rem'
+                  fontSize: '0.875rem',
                 }}
               >
                 {error}
               </Typography>
             )}
-            
+
             <form onSubmit={handleLogin}>
               <TextField
                 label="Username"
                 fullWidth
                 margin="normal"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={e => setUsername(e.target.value)}
                 required
                 variant="outlined"
                 sx={{ mb: 2 }}
@@ -184,7 +192,7 @@ function App() {
                 fullWidth
                 margin="normal"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
                 InputProps={{
@@ -201,7 +209,7 @@ function App() {
                   ),
                 }}
               />
-              
+
               <Button
                 type="submit"
                 variant="contained"
@@ -211,13 +219,13 @@ function App() {
               >
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
-              
+
               <Divider sx={{ my: 3 }}>
                 <Typography variant="body2" color="text.secondary">
                   Demo Account
                 </Typography>
               </Divider>
-              
+
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Username: admin
@@ -234,4 +242,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

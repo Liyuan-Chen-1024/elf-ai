@@ -304,4 +304,4 @@ list-model-info: check-running ## Django Extensions: List all models and their f
 	$(DOCKER_COMPOSE) exec api python manage.py list_model_info
 
 down: ## Docker: Stop all containers
-	$(DOCKER_COMPOSE) down 
+	$(DOCKER_COMPOSE) down

@@ -61,12 +61,7 @@ export const ElfLogoIcon = (props: SvgIconProps) => {
         strokeWidth="0.5"
       />
       {/* Gold trim */}
-      <path
-        d="M7.5,8 L16.5,8 L16,12 L8,12 Z"
-        fill="#F0C537"
-        stroke="#D4A520"
-        strokeWidth="0.5"
-      />
+      <path d="M7.5,8 L16.5,8 L16,12 L8,12 Z" fill="#F0C537" stroke="#D4A520" strokeWidth="0.5" />
       {/* Ear points */}
       <path
         d="M7,11 L5,14 L7.5,13 Z M17,11 L19,14 L16.5,13 Z"
@@ -101,4 +96,4 @@ export const ElfLogoIcon = (props: SvgIconProps) => {
       />
     </SvgIcon>
   );
-}; 
+};

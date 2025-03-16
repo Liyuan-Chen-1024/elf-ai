@@ -1,19 +1,16 @@
 import logging.config
-import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import structlog
 
 
 def configure_logging(
-    log_level: str = "INFO",
-    log_dir: Path = Path("logs"),
-    app_name: str = "elfai"
+    log_level: str = "INFO", log_dir: Path = Path("logs"), app_name: str = "elfai"
 ) -> None:
     """
     Configure logging for the application with both file and console output.
-    
+
     Args:
         log_level: Logging level (default: INFO)
         log_dir: Directory to store log files (default: logs)
@@ -21,7 +18,7 @@ def configure_logging(
     """
     # Create log directory if it doesn't exist
     log_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Common processors for structlog
     processors = [
         structlog.stdlib.add_log_level,
@@ -30,7 +27,7 @@ def configure_logging(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ]
 
     # Logging configuration
@@ -87,10 +84,10 @@ def configure_logging(
 def get_logger(name: str) -> structlog.BoundLogger:
     """
     Get a logger instance with the given name.
-    
+
     Args:
         name: Logger name (typically __name__)
-        
+
     Returns:
         A structured logger instance
     """
@@ -99,4 +96,4 @@ def get_logger(name: str) -> structlog.BoundLogger:
 
 # Example usage in other modules:
 # from apps.media.logging import get_logger
-# logger = get_logger(__name__) 
+# logger = get_logger(__name__)

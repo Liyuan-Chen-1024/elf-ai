@@ -17,7 +17,7 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>(set => ({
   user: null,
   token: localStorage.getItem('token'),
   isAuthenticated: !!localStorage.getItem('token'),
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const mockToken = 'mock-jwt-token';
       localStorage.setItem('token', mockToken);
       set({ user: mockUser, token: mockToken, isAuthenticated: true, isLoading: false });
-      
+
       // Comment out the actual API call for now
       // const response = await axios.post('/api/auth/login/', { username, password });
       // const { token, user } = response.data;
@@ -55,4 +55,4 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('token');
     set({ user: null, token: null, isAuthenticated: false });
   },
-})); 
+}));

@@ -1,30 +1,31 @@
 """Utilities for epguides API."""
-from datetime import date, datetime
+
 import json
 import logging
 import re
 import time
-from typing import Dict, List, Optional, Tuple, Union, cast
+from datetime import date, datetime
+from typing import List, Optional, Tuple, Union, cast
 from urllib.parse import urljoin
 
-import requests
 from django.conf import settings
 from django.db import transaction
+
+import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from bs4 import BeautifulSoup
 
 from apps.core.exceptions import EpguidesException
-from apps.core.logging import get_logger
 from apps.shows.models import TVShow
-from ..types import EpisodeDict, JsonDict, DateStr
+
+from ..types import DateStr, EpisodeDict, JsonDict
 
 logger = logging.getLogger(__name__)
 
 
 def create_session_with_retries() -> requests.Session:
     """Create a requests session with retry strategy.
-    
+
     Returns:
         Session configured with retry strategy
     """
@@ -46,38 +47,38 @@ def process_epguide_key(
     delay: int = 5,
 ) -> Tuple[bool, Optional[str]]:
     """Process a single epguide key and return success status and error message.
-    
+
     Args:
         session: Requests session to use
         key: Epguide key to process
         delay: Delay between API requests in seconds
-        
+
     Returns:
         Tuple of (success, error_message)
     """
     try:
-        key_str = key.decode('utf-8').lower()
+        key_str = key.decode("utf-8").lower()
         url = urljoin(settings.EPGUIDES_API_URL, f"show/{key_str}")
-        
+
         response = session.get(url)
         response.raise_for_status()
-        
+
         # Create or update TVShow entry
         show_data = response.json()
-        if show_data and 'name' in show_data:
+        if show_data and "name" in show_data:
             TVShow.objects.get_or_create(
                 epguide_name=key_str,
                 defaults={
-                    'full_name': show_data['name'],
-                    'active': False  # New shows are inactive by default
-                }
+                    "full_name": show_data["name"],
+                    "active": False,  # New shows are inactive by default
+                },
             )
             logger.info(f"Successfully processed show: {key_str}")
             time.sleep(delay)  # Rate limiting
             return True, None
-        
+
         return False, f"Invalid show data format for {key_str}"
-    
+
     except requests.exceptions.RequestException as e:
         return False, f"Request failed for {key_str}: {str(e)}"
     except Exception as e:
@@ -86,10 +87,10 @@ def process_epguide_key(
 
 def find_and_process_new_epguide_keys(delay: int = 5) -> Tuple[int, int, List[str]]:
     """Find and process new epguide keys.
-    
+
     Args:
         delay: Delay between API requests in seconds
-    
+
     Returns:
         Tuple containing:
         - total_processed: Total number of shows processed
@@ -105,7 +106,7 @@ def find_and_process_new_epguide_keys(delay: int = 5) -> Tuple[int, int, List[st
         # Fetch the current shows list
         response = session.get(urljoin(settings.EPGUIDES_API_URL, "shows"))
         response.raise_for_status()
-        
+
         # Extract show keys using regex
         epguide_keys = re.findall(b'href="..\/([\w+]*)\/"\>', response.content)
         total_keys = len(epguide_keys)
@@ -116,7 +117,7 @@ def find_and_process_new_epguide_keys(delay: int = 5) -> Tuple[int, int, List[st
             for key in epguide_keys:
                 total_processed += 1
                 success, error = process_epguide_key(session, key, delay)
-                
+
                 if success:
                     successful_count += 1
                 elif error:
@@ -131,19 +132,19 @@ def find_and_process_new_epguide_keys(delay: int = 5) -> Tuple[int, int, List[st
         error_msg = f"Unexpected error: {str(e)}"
         errors.append(error_msg)
         logger.error(error_msg)
-    
+
     return total_processed, successful_count, errors
 
 
 def epguides_api_request(endpoint: str) -> Optional[JsonDict]:
     """Make a request to the epguides API.
-    
+
     Args:
         endpoint: API endpoint to request
-        
+
     Returns:
         JSON response if successful, None otherwise
-        
+
     Raises:
         EpguidesException: If request fails or response is invalid
     """
@@ -157,7 +158,9 @@ def epguides_api_request(endpoint: str) -> Optional[JsonDict]:
         raise EpguidesException(f"Error making request to epguides API: {str(e)}")
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON response from epguides API: {str(e)}")
-        raise EpguidesException(f"Error decoding JSON response from epguides API: {str(e)}")
+        raise EpguidesException(
+            f"Error decoding JSON response from epguides API: {str(e)}"
+        )
 
 
 def get_episode_info(
@@ -166,12 +169,12 @@ def get_episode_info(
     episode: Optional[int] = None,
 ) -> Optional[EpisodeDict]:
     """Get information about a specific episode.
-    
+
     Args:
         show_name: Name of the show
         season: Season number or special value ("first", "last", "next")
         episode: Episode number (not needed for special season values)
-        
+
     Returns:
         Episode information if found, None otherwise
     """
@@ -181,20 +184,22 @@ def get_episode_info(
             endpoint += f"/episode/{season}/{episode}/"
         else:
             endpoint += f"/{season}/"
-            
+
         response = epguides_api_request(endpoint)
-        return cast(Optional[EpisodeDict], response.get("episode") if response else None)
+        return cast(
+            Optional[EpisodeDict], response.get("episode") if response else None
+        )
     except EpguidesException:
         return None
 
 
 def get_show_status(show_name: str, episode: Optional[EpisodeDict] = None) -> bool:
     """Get the status of a show.
-    
+
     Args:
         show_name: Name of the show
         episode: Optional episode info to check status for
-        
+
     Returns:
         True if show/episode is available, False otherwise
     """
@@ -202,7 +207,7 @@ def get_show_status(show_name: str, episode: Optional[EpisodeDict] = None) -> bo
         endpoint = f"show/{show_name}/status/"
         if episode:
             endpoint = f"show/{show_name}/episode/{episode['season']}/{episode['episode']}/status/"
-            
+
         response = epguides_api_request(endpoint)
         return bool(response.get("status")) if response else False
     except EpguidesException:
@@ -211,10 +216,10 @@ def get_show_status(show_name: str, episode: Optional[EpisodeDict] = None) -> bo
 
 def get_show_info(show_name: str) -> Optional[JsonDict]:
     """Get information about a show.
-    
+
     Args:
         show_name: Name of the show
-        
+
     Returns:
         Show information if found, None otherwise
     """
@@ -231,34 +236,38 @@ def get_next_episode(
     episode: int,
 ) -> Optional[EpisodeDict]:
     """Get information about the next episode.
-    
+
     Args:
         show_name: Name of the show
         season: Current season number
         episode: Current episode number
-        
+
     Returns:
         Next episode information if found, None otherwise
     """
     try:
         response = epguides_api_request(f"show/{show_name}/next/{season}/{episode}/")
-        return cast(Optional[EpisodeDict], response.get("episode") if response else None)
+        return cast(
+            Optional[EpisodeDict], response.get("episode") if response else None
+        )
     except EpguidesException:
         return None
 
 
 def get_last_episode(show_name: str) -> Optional[EpisodeDict]:
     """Get information about the last episode.
-    
+
     Args:
         show_name: Name of the show
-        
+
     Returns:
         Last episode information if found, None otherwise
     """
     try:
         response = epguides_api_request(f"show/{show_name}/last/")
-        return cast(Optional[EpisodeDict], response.get("episode") if response else None)
+        return cast(
+            Optional[EpisodeDict], response.get("episode") if response else None
+        )
     except EpguidesException:
         return None
 
@@ -269,12 +278,12 @@ def get_magnets(
     episode: int,
 ) -> List[JsonDict]:
     """Get magnet links for a specific episode.
-    
+
     Args:
         show_name: Name of the show
         season: Season number
         episode: Episode number
-        
+
     Returns:
         List of magnet information dictionaries
     """
@@ -287,10 +296,10 @@ def get_magnets(
 
 def parse_release_date(date_str: Optional[DateStr]) -> Optional[date]:
     """Parse a release date string into a date object.
-    
+
     Args:
         date_str: Date string in YYYY-MM-DD format
-        
+
     Returns:
         Date object if parsing successful, None otherwise
     """

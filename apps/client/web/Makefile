@@ -36,4 +36,4 @@ help:
 	@echo "  make clean    - Clean up containers and node_modules"
 	@echo "  make install  - Install dependencies"
 	@echo "  make test     - Run tests"
-	@echo "  make format   - Format code" 
+	@echo "  make format   - Format code"

@@ -1,27 +1,29 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
-import re
 import logging
+import re
 from dataclasses import dataclass
+from typing import Optional
 
-from django.conf import settings
+
 import openai
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class EpisodeInfo:
     """Information about a TV show episode."""
-    
+
     show_name: str
     season: int
     episode: int
+
 
 def extract_title_and_season_episode(filename: str) -> Optional[EpisodeInfo]:
     """Extract show name, season, and episode from a filename."""
     # Common patterns for TV show filenames
     patterns = [
         r"(.+?)[\. _][Ss](\d{1,2})[Ee](\d{1,2})",  # Show.S01E01
-        r"(.+?)[\. _](\d{1,2})x(\d{1,2})",         # Show.1x01
+        r"(.+?)[\. _](\d{1,2})x(\d{1,2})",  # Show.1x01
         r"(.+?)[\. _][Ss]eason[\. _]?(\d{1,2})[\. _]?[Ee]pisode[\. _]?(\d{1,2})",  # Show.Season.1.Episode.01
     ]
 
@@ -36,13 +38,14 @@ def extract_title_and_season_episode(filename: str) -> Optional[EpisodeInfo]:
     # If no pattern matches, try AI extraction
     return extract_episode_info_with_ai(filename)
 
+
 def extract_movie_title(filename: str) -> Optional[str]:
     """Extract movie title from a filename."""
     # Common patterns for movie filenames
     patterns = [
         r"(.+?)[\. _]\(\d{4}\)",  # Movie (2023)
-        r"(.+?)[\. _]\d{4}",      # Movie 2023
-        r"(.+?)[\. _]\d{4}p",     # Movie 1080p
+        r"(.+?)[\. _]\d{4}",  # Movie 2023
+        r"(.+?)[\. _]\d{4}p",  # Movie 1080p
     ]
 
     for pattern in patterns:
@@ -52,6 +55,7 @@ def extract_movie_title(filename: str) -> Optional[str]:
 
     # If no pattern matches, try AI extraction
     return extract_movie_title_with_ai(filename)
+
 
 def extract_episode_info_with_ai(filename: str) -> Optional[EpisodeInfo]:
     """Extract episode information using AI."""
@@ -87,6 +91,7 @@ def extract_episode_info_with_ai(filename: str) -> Optional[EpisodeInfo]:
         logger.error(f"Error extracting episode info with AI: {str(e)}")
 
     return None
+
 
 def extract_movie_title_with_ai(filename: str) -> Optional[str]:
     """Extract movie title using AI."""

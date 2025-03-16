@@ -11,9 +11,9 @@ interface ThemeState {
 
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set) => ({
+    set => ({
       isDarkMode: false,
-      toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+      toggleDarkMode: () => set(state => ({ isDarkMode: !state.isDarkMode })),
     }),
     {
       name: 'theme-storage',
@@ -22,7 +22,7 @@ export const useThemeStore = create<ThemeState>()(
 );
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
 
   const theme = createTheme({
     palette: {
@@ -59,4 +59,4 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {children}
     </MuiThemeProvider>
   );
-}; 
+};

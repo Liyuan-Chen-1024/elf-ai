@@ -58,12 +58,16 @@ export const LoginPage: React.FC = () => {
           >
             Elf AI
           </Typography>
-          
+
           <Typography variant="h2" sx={{ fontSize: '1.5rem', mb: 3, color: 'text.secondary' }}>
             Welcome back to the enchanted realm
           </Typography>
 
-          {error && <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert>}
+          {error && (
+            <Alert severity="error" sx={{ width: '100%' }}>
+              {error}
+            </Alert>
+          )}
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
             <TextField
@@ -71,7 +75,7 @@ export const LoginPage: React.FC = () => {
               label="Username"
               variant="outlined"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={e => setUsername(e.target.value)}
               sx={{ mb: 2 }}
             />
             <TextField
@@ -80,7 +84,7 @@ export const LoginPage: React.FC = () => {
               type="password"
               variant="outlined"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               sx={{ mb: 3 }}
             />
             <Button
@@ -101,4 +105,4 @@ export const LoginPage: React.FC = () => {
       </Container>
     </Box>
   );
-}; 
+};

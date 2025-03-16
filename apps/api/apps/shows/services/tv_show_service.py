@@ -1,26 +1,30 @@
 """Service layer for TV show operations."""
+
+import re
 from datetime import date
-from typing import Optional, Tuple, List, Any, Dict, Union
-import re 
+from typing import List, Optional, Tuple
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
-from apps.shows.models import TVShow
-from apps.shows.typing import (
-    EpisodeDict,
-    ShowStatus,
-    StatusColor,
-    MagnetInfo,
-    VideoQuality
-)
-from apps.shows.utils.epguides import get_episode_info, get_show_status, make_api_request
-from apps.shows.utils.files import get_tv_folder
-from apps.shows.utils.torrent import TorrentClient
 from apps.core.exceptions import EpguidesException
 from apps.core.logging import get_logger
 from apps.core.services import BaseService
-from apps.shows.utils.transmission import TXWrapper
+from apps.shows.models import TVShow
+from apps.shows.typing import (
+    EpisodeDict,
+    MagnetInfo,
+    ShowStatus,
+    StatusColor,
+    VideoQuality,
+)
+from apps.shows.utils.epguides import (
+    get_episode_info,
+    get_show_status,
+    make_api_request,
+)
+from apps.shows.utils.files import get_tv_folder
+from apps.shows.utils.torrent import TorrentClient
 
 logger = get_logger(__name__)
 
@@ -35,68 +39,81 @@ class TVShowService(BaseService):
     def get_show_status(self, show: TVShow) -> Tuple[ShowStatus, StatusColor]:
         """Get the current status and color for a show."""
         today = date.today()
-        
-        if (show.next_release_date == show.last_release_date 
-            and show.next_release_date < today):
+
+        if (
+            show.next_release_date == show.last_release_date
+            and show.next_release_date < today
+        ):
             return "Finished", "gray"
-            
-        if (show.current_season > show.last_release_season 
-            and show.next_release_date > today):
+
+        if (
+            show.current_season > show.last_release_season
+            and show.next_release_date > today
+        ):
             return "Up to date", "green"
-            
-        if (show.current_season < show.last_release_season or 
-            show.current_episode < show.last_release_episode):
+
+        if (
+            show.current_season < show.last_release_season
+            or show.current_episode < show.last_release_episode
+        ):
             return "Behind", "red"
-            
-        if (show.current_episode == show.last_release_episode and
-            show.current_season == show.last_release_season and 
-            not show.downloaded_current_episode):
+
+        if (
+            show.current_episode == show.last_release_episode
+            and show.current_season == show.last_release_season
+            and not show.downloaded_current_episode
+        ):
             return "Behind", "red"
-            
+
         return "Up to date", "green"
 
-    def find_best_magnet(self, show: TVShow, episode: EpisodeDict) -> Optional[MagnetInfo]:
+    def find_best_magnet(
+        self, show: TVShow, episode: EpisodeDict
+    ) -> Optional[MagnetInfo]:
         """Find the best magnet link for a show episode."""
         search_engine = "https://limetorrents.lol"
         qualities: List[VideoQuality] = ["2160p", "1080p", "720p"]
-        
+
         episode_code = (
             f"S{show.current_season:02d}E{show.current_episode:02d}"
             if show.episode_lookup_type != "date"
             else episode["release_date"]
         )
-        
+
         best_magnet: Optional[MagnetInfo] = None
         max_seeds = 0
-        
+
         for quality in qualities:
             search_term = f"{quality}-{show.full_name.replace(' ', '-')}-{episode_code}"
             url = f"{search_engine}/search/all/{search_term}/seeds/1"
-            
+
             try:
                 with requests.Session() as session:
                     content = session.get(url, verify=True).text
                     soup = BeautifulSoup(content, "lxml")
-                    
-                    for row in soup.find_all("tr", {"bgcolor": re.compile("#F4F4F4|#FFFFFF")})[:5]:
-                        seeds = int(row.find("td", {"class": "tdseed"}).text.replace(",", ""))
+
+                    for row in soup.find_all(
+                        "tr", {"bgcolor": re.compile("#F4F4F4|#FFFFFF")}
+                    )[:5]:
+                        seeds = int(
+                            row.find("td", {"class": "tdseed"}).text.replace(",", "")
+                        )
                         if seeds > max_seeds:
                             magnet_url = self._extract_magnet_url(
-                                session, 
-                                search_engine + row.find_all("a")[1]["href"]
+                                session, search_engine + row.find_all("a")[1]["href"]
                             )
                             if magnet_url:
                                 best_magnet = MagnetInfo(
                                     url=magnet_url,
                                     name=search_term,
                                     seeds=seeds,
-                                    quality=quality
+                                    quality=quality,
                                 )
                                 max_seeds = seeds
             except Exception as e:
                 logger.warning(f"Error searching {quality} torrent: {str(e)}")
                 continue
-                
+
         return best_magnet
 
     def _extract_magnet_url(self, session: requests.Session, url: str) -> Optional[str]:
@@ -116,16 +133,18 @@ class TVShowService(BaseService):
         if not show.active:
             logger.info(f"Skipping {show.full_name}, marked as inactive")
             return False
-            
+
         try:
-            episode = get_episode_info(show.epguide_name, show.current_season, show.current_episode)
+            episode = get_episode_info(
+                show.epguide_name, show.current_season, show.current_episode
+            )
             if not episode or not get_show_status(show.epguide_name, episode):
                 logger.info(f"Skipping {show.full_name}, current episode not released")
                 return False
-                
+
             if show.downloaded_current_episode:
                 return False
-                
+
             magnet = self.find_best_magnet(show, episode)
             if not magnet:
                 logger.info(
@@ -133,15 +152,15 @@ class TVShowService(BaseService):
                     f"S{show.current_season:02d}E{show.current_episode:02d}"
                 )
                 return False
-                
+
             logger.info(
                 f"Downloading {show.full_name} "
                 f"S{show.current_season:02d}E{show.current_episode:02d}"
             )
-            
+
             download_dir = get_tv_folder(show.keep)
             return self.torrent_client.add_torrent(magnet.url, download_dir)
-            
+
         except EpguidesException as e:
             logger.error(f"Epguides error for {show.full_name}: {str(e)}")
             return False
@@ -158,20 +177,20 @@ class TVShowService(BaseService):
                 show.last_release_date = last_episode["release_date"]
                 show.last_release_season = last_episode["season"]
                 show.last_release_episode = last_episode["number"]
-            
+
             # Update next episode data
             next_episode = get_episode_info(show.epguide_name, "next")
             if next_episode:
                 show.next_release_date = next_episode["release_date"]
-            
+
             # Update first episode data if not set
             if not show.first_release_date:
                 first_episode = get_episode_info(show.epguide_name, "first")
                 if first_episode:
                     show.first_release_date = first_episode["release_date"]
-            
+
             show.save()
-            
+
         except EpguidesException as e:
             logger.error(f"Error updating metadata for {show.full_name}: {str(e)}")
         except Exception as e:
@@ -189,7 +208,9 @@ class TVShowService(BaseService):
             logger.info(f"Skipping {tv_show.full_name}, current episode not released")
             return
 
-        if not tv_show.downloaded_current_episode and self.download_current_episode(tv_show):
+        if not tv_show.downloaded_current_episode and self.download_current_episode(
+            tv_show
+        ):
             tv_show.downloaded_current_episode = True
             tv_show.save(update_fields=["downloaded_current_episode"])
 
@@ -199,7 +220,13 @@ class TVShowService(BaseService):
                 tv_show.current_season = next_episode["season"]
                 tv_show.current_episode = next_episode["episode"]
                 tv_show.downloaded_current_episode = False
-                tv_show.save(update_fields=["current_season", "current_episode", "downloaded_current_episode"])
+                tv_show.save(
+                    update_fields=[
+                        "current_season",
+                        "current_episode",
+                        "downloaded_current_episode",
+                    ]
+                )
                 self.download_all_available_episodes(tv_show)
 
     def _fetch_best_magnet_for_current_episode(self, tv_show: TVShow) -> Optional[str]:
@@ -212,4 +239,4 @@ class TVShowService(BaseService):
                 return response["magnets"][0]["magnet"]
         except EpguidesException:
             pass
-        return None 
+        return None

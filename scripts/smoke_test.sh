@@ -39,4 +39,4 @@ fi
 echo "Media API check passed"
 
 echo "All smoke tests passed!"
-exit 0 
+exit 0

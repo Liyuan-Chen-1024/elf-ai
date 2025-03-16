@@ -1,8 +1,10 @@
 """Custom health check backends."""
+
 import logging
 from typing import Optional
 
 from django.conf import settings
+
 from health_check.contrib.redis.backends import RedisHealthCheck as BaseRedisHealthCheck
 from redis import Redis
 from redis.exceptions import ConnectionError, RedisError
@@ -16,12 +18,12 @@ class RedisHealthCheck(BaseRedisHealthCheck):
     def __init__(self):
         """Initialize the health check."""
         super().__init__()
-        self.redis_url = getattr(settings, 'REDIS_URL', 'redis://redis:6379/0')
-        self.timeout = getattr(settings, 'HEALTH_CHECK', {}).get('REDIS_TIMEOUT', 2)
+        self.redis_url = getattr(settings, "REDIS_URL", "redis://redis:6379/0")
+        self.timeout = getattr(settings, "HEALTH_CHECK", {}).get("REDIS_TIMEOUT", 2)
 
     def get_redis_connection(self) -> Optional[Redis]:
         """Get Redis connection using our configuration.
-        
+
         Returns:
             Redis connection or None if connection fails
         """
@@ -31,7 +33,7 @@ class RedisHealthCheck(BaseRedisHealthCheck):
                 self.redis_url,
                 socket_connect_timeout=self.timeout,
                 socket_timeout=self.timeout,
-                decode_responses=True
+                decode_responses=True,
             )
         except Exception as e:
             logger.error(f"Failed to create Redis connection: {str(e)}")
@@ -41,7 +43,7 @@ class RedisHealthCheck(BaseRedisHealthCheck):
     def check_status(self) -> None:
         """Check Redis connection status."""
         redis = self.get_redis_connection()
-        
+
         if redis is None:
             return
 
@@ -66,4 +68,4 @@ class RedisHealthCheck(BaseRedisHealthCheck):
             try:
                 redis.close()
             except Exception as e:
-                logger.warning(f"Error closing Redis connection: {str(e)}") 
+                logger.warning(f"Error closing Redis connection: {str(e)}")

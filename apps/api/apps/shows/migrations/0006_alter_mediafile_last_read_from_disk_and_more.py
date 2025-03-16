@@ -4,50 +4,49 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('shows', '0005_alter_mediafile_last_read_from_disk'),
+        ("shows", "0005_alter_mediafile_last_read_from_disk"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='mediafile',
-            name='last_read_from_disk',
+            model_name="mediafile",
+            name="last_read_from_disk",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='mediafile',
-            name='st_atime',
+            model_name="mediafile",
+            name="st_atime",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='mediafile',
-            name='st_ctime',
+            model_name="mediafile",
+            name="st_ctime",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='mediafile',
-            name='st_gid',
+            model_name="mediafile",
+            name="st_gid",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='mediafile',
-            name='st_mode',
+            model_name="mediafile",
+            name="st_mode",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='mediafile',
-            name='st_mtime',
+            model_name="mediafile",
+            name="st_mtime",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='mediafile',
-            name='st_size',
+            model_name="mediafile",
+            name="st_size",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='mediafile',
-            name='st_uid',
+            model_name="mediafile",
+            name="st_uid",
             field=models.BigIntegerField(blank=True, null=True),
         ),
     ]

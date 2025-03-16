@@ -39,4 +39,3 @@ def deploy_service(request, service):
             queue.write("{0},{1}\n".format(item[0], item[1]))
 
     return HttpResponse("OK")
-

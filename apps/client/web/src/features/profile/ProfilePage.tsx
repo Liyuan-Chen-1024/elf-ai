@@ -1,15 +1,15 @@
 import PersonIcon from '@mui/icons-material/Person';
 import {
-    Avatar,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Divider,
-    Grid,
-    Paper,
-    TextField,
-    Typography,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  Grid,
+  Paper,
+  TextField,
+  Typography,
 } from '@mui/material';
 import React from 'react';
 
@@ -24,15 +24,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ username, email }) => 
       <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
         My Profile
       </Typography>
-      
+
       <Grid container spacing={3}>
         {/* User info card */}
         <Grid item xs={12} md={4}>
           <Card elevation={1}>
-            <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
-              <Avatar 
-                sx={{ width: 100, height: 100, bgcolor: 'primary.main', mb: 2 }}
-              >
+            <CardContent
+              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}
+            >
+              <Avatar sx={{ width: 100, height: 100, bgcolor: 'primary.main', mb: 2 }}>
                 <PersonIcon sx={{ fontSize: 60 }} />
               </Avatar>
               <Typography variant="h6">{username}</Typography>
@@ -45,7 +45,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ username, email }) => 
             </CardContent>
           </Card>
         </Grid>
-        
+
         {/* Profile details */}
         <Grid item xs={12} md={8}>
           <Paper elevation={1} sx={{ p: 3 }}>
@@ -53,59 +53,32 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ username, email }) => 
               Account Information
             </Typography>
             <Divider sx={{ mb: 3 }} />
-            
+
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <TextField
-                  label="Username"
-                  fullWidth
-                  value={username}
-                  disabled
-                  sx={{ mb: 2 }}
-                />
+                <TextField label="Username" fullWidth value={username} disabled sx={{ mb: 2 }} />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  label="Email"
-                  fullWidth
-                  value={email}
-                  disabled
-                  sx={{ mb: 2 }}
-                />
+                <TextField label="Email" fullWidth value={email} disabled sx={{ mb: 2 }} />
               </Grid>
-              
+
               <Grid item xs={12} sx={{ mt: 2 }}>
                 <Typography variant="h6" gutterBottom>
                   Change Password
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
               </Grid>
-              
+
               <Grid item xs={12}>
-                <TextField
-                  label="Current Password"
-                  type="password"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                />
+                <TextField label="Current Password" type="password" fullWidth sx={{ mb: 2 }} />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  label="New Password"
-                  type="password"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                />
+                <TextField label="New Password" type="password" fullWidth sx={{ mb: 2 }} />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  label="Confirm New Password"
-                  type="password"
-                  fullWidth
-                  sx={{ mb: 3 }}
-                />
+                <TextField label="Confirm New Password" type="password" fullWidth sx={{ mb: 3 }} />
               </Grid>
-              
+
               <Grid item xs={12}>
                 <Button variant="contained" color="primary">
                   Update Password
@@ -117,4 +90,4 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ username, email }) => 
       </Grid>
     </Box>
   );
-}; 
+};

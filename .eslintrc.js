@@ -8,6 +8,13 @@ module.exports = {
     'plugin:prettier/recommended',
   ],
   parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 2020,
+    sourceType: 'module',
+    ecmaFeatures: {
+      jsx: true,
+    },
+  },
   plugins: ['@typescript-eslint', 'react', 'react-hooks'],
   env: {
     browser: true,
@@ -33,4 +40,4 @@ module.exports = {
       },
     },
   ],
-}; 
+};

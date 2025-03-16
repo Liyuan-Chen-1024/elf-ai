@@ -2,8 +2,8 @@ import logging
 import os
 import random
 import shutil
-from typing import List, Optional, Set
 from pathlib import Path
+from typing import List, Optional, Set
 
 from django.conf import settings
 
@@ -18,7 +18,9 @@ def delete_unwanted_directories(path, dry_run=False):
         for name in dirs:
             path_name = os.path.join(root, name)
             if name in UNWANTED_DIR_NAMES:
-                logger.info(f"{'Would delete' if dry_run else 'Deleting'} directory: {path_name}")
+                logger.info(
+                    f"{'Would delete' if dry_run else 'Deleting'} directory: {path_name}"
+                )
                 if not dry_run:
                     shutil.rmtree(path_name)
                 deleted_count += 1
@@ -31,7 +33,9 @@ def delete_empty_directories(path, dry_run=False):
         for name in dirs:
             path_name = os.path.join(root, name)
             if not os.listdir(path_name):
-                logger.info(f"{'Would delete' if dry_run else 'Deleting'} empty directory: {path_name}")
+                logger.info(
+                    f"{'Would delete' if dry_run else 'Deleting'} empty directory: {path_name}"
+                )
                 if not dry_run:
                     os.rmdir(path_name)
                 deleted_count += 1
@@ -99,13 +103,13 @@ def get_file_extension(filename: str) -> str:
 
 def is_video_file(filename: str) -> bool:
     """Check if a file is a video file."""
-    video_extensions = {'.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.m4v'}
+    video_extensions = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".m4v"}
     return get_file_extension(filename) in video_extensions
 
 
 def is_subtitle_file(filename: str) -> bool:
     """Check if a file is a subtitle file."""
-    subtitle_extensions = {'.srt', '.sub', '.ass', '.ssa'}
+    subtitle_extensions = {".srt", ".sub", ".ass", ".ssa"}
     return get_file_extension(filename) in subtitle_extensions
 
 

@@ -4,35 +4,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('shows', '0001_initial'),
+        ("shows", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tvshow',
-            name='last_release_date',
+            model_name="tvshow",
+            name="last_release_date",
             field=models.DateField(null=True),
         ),
         migrations.AddField(
-            model_name='tvshow',
-            name='last_release_episode',
+            model_name="tvshow",
+            name="last_release_episode",
             field=models.IntegerField(null=True),
         ),
         migrations.AddField(
-            model_name='tvshow',
-            name='last_release_season',
+            model_name="tvshow",
+            name="last_release_season",
             field=models.IntegerField(null=True),
         ),
         migrations.AddField(
-            model_name='tvshow',
-            name='next_release_date',
+            model_name="tvshow",
+            name="next_release_date",
             field=models.DateField(null=True),
         ),
         migrations.AlterField(
-            model_name='tvshow',
-            name='first_release_date',
+            model_name="tvshow",
+            name="first_release_date",
             field=models.DateField(null=True),
         ),
     ]

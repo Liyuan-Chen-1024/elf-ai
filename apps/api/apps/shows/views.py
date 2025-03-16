@@ -1,12 +1,13 @@
-from typing import Any, Dict, List, Optional, Union, cast
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from typing import List
+
+from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 
 from .models import TVShow
 from .serializers import TVShowSerializer
@@ -17,10 +18,10 @@ from .types import JsonDict, ProcessingResult
 @require_http_methods(["GET"])
 def tvshows_list(request: HttpRequest) -> JsonResponse:
     """List all TV shows.
-    
+
     Args:
         request: The HTTP request object
-        
+
     Returns:
         JsonResponse containing list of TV shows
     """
@@ -43,21 +44,21 @@ def tvshows_list(request: HttpRequest) -> JsonResponse:
 @require_http_methods(["GET"])
 def tvshows_detail(request: HttpRequest, pk: int) -> JsonResponse:
     """Get details for a specific TV show.
-    
+
     Args:
         request: The HTTP request object
         pk: Primary key of the TV show
-        
+
     Returns:
         JsonResponse containing TV show details
-        
+
     Raises:
         Http404: If TV show is not found
     """
     show = get_object_or_404(TVShow, pk=pk)
     service = TVShowService()
     status_value, color = service.get_show_status(show)
-    
+
     data: JsonDict = {
         "id": show.id,
         "name": show.name,
@@ -75,20 +76,20 @@ def tvshows_detail(request: HttpRequest, pk: int) -> JsonResponse:
 @require_http_methods(["POST"])
 def tvshows_download_current_episode(request: HttpRequest, pk: int) -> JsonResponse:
     """Download the current episode for a TV show.
-    
+
     Args:
         request: The HTTP request object
         pk: Primary key of the TV show
-        
+
     Returns:
         JsonResponse containing download status
-        
+
     Raises:
         Http404: If TV show is not found
     """
     show = get_object_or_404(TVShow, pk=pk)
     service = TVShowService()
-    
+
     try:
         success = service.download_current_episode(show)
         result: ProcessingResult = {
@@ -109,13 +110,13 @@ def tvshows_download_current_episode(request: HttpRequest, pk: int) -> JsonRespo
 @api_view(["GET", "POST"])
 def tvshows_list_rest(request: DRFRequest) -> Response:
     """REST API endpoint for listing and creating TV shows.
-    
+
     Args:
         request: The DRF request object
-        
+
     Returns:
         Response containing list of TV shows or created TV show
-        
+
     Raises:
         ValidationError: If request data is invalid
     """
@@ -140,14 +141,14 @@ def tvshows_list_rest(request: DRFRequest) -> Response:
 @api_view(["GET", "PUT", "DELETE"])
 def tvshows_detail_rest(request: DRFRequest, pk: int) -> Response:
     """REST API endpoint for retrieving, updating, and deleting TV shows.
-    
+
     Args:
         request: The DRF request object
         pk: Primary key of the TV show
-        
+
     Returns:
         Response containing TV show details or operation status
-        
+
     Raises:
         Http404: If TV show is not found
         ValidationError: If request data is invalid
@@ -155,10 +156,7 @@ def tvshows_detail_rest(request: DRFRequest, pk: int) -> Response:
     try:
         tvshow = TVShow.objects.get(pk=pk)
     except TVShow.DoesNotExist:
-        return Response(
-            {"error": "TVShow not found"}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"error": "TVShow not found"}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == "GET":
         serializer = TVShowSerializer(tvshow)
@@ -180,8 +178,7 @@ def tvshows_detail_rest(request: DRFRequest, pk: int) -> Response:
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -190,24 +187,21 @@ def tvshows_detail_rest(request: DRFRequest, pk: int) -> Response:
 @api_view(["GET"])
 def tvshows_download_current_episode_rest(request: DRFRequest, pk: int) -> Response:
     """REST API endpoint for downloading current episode of a TV show.
-    
+
     Args:
         request: The DRF request object
         pk: Primary key of the TV show
-        
+
     Returns:
         Response containing download status
-        
+
     Raises:
         Http404: If TV show is not found
     """
     try:
         tvshow = TVShow.objects.get(pk=pk)
     except TVShow.DoesNotExist:
-        return Response(
-            {"error": "TVShow not found"}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"error": "TVShow not found"}, status=status.HTTP_404_NOT_FOUND)
 
     service = TVShowService()
     try:

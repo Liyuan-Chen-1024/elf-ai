@@ -1,4 +1,4 @@
-# elfai Media Platform
+# Elf AI
 
 Modern media management platform built with Django, React, and TypeScript.
 
@@ -24,7 +24,7 @@ Visit:
 ## 🏗 Project Structure
 
 ```
-elfai-media/
+elfai/
 └── apps/
     ├── api/            # Django Backend
     │   ├── apps/      # Django applications
@@ -38,6 +38,13 @@ elfai-media/
             ├── src/   # Source code
             └── public/ # Static files
 ```
+
+# Configuration Files
+Key configuration files are located in the root directory:
+- `.pre-commit-config.yaml`: Pre-commit hooks configuration
+- `.eslintrc.js`: ESLint configuration for TypeScript/JavaScript
+- `tsconfig.json`: TypeScript configuration
+- `.env.example`: Example environment variables
 
 ## 🛠 Development
 
@@ -199,7 +206,7 @@ make dev-debug
      ```bash
      # Backend logs
      docker compose logs -f api
-     
+
      # Frontend logs
      docker compose logs -f web
      ```
@@ -341,4 +348,4 @@ The platform includes several monitoring endpoints:
 
 ## 📄 License
 
-MIT License - see LICENSE for details 
+MIT License - see LICENSE for details

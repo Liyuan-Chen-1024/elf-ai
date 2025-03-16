@@ -1,7 +1,9 @@
 """Test fixtures and configuration."""
-import pytest
+
 from django.test import Client
 from rest_framework.test import APIClient
+
+import pytest
 
 
 @pytest.fixture
@@ -13,4 +15,4 @@ def client():
 @pytest.fixture
 def api_client():
     """Return a DRF API test client."""
-    return APIClient() 
+    return APIClient()

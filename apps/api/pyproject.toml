@@ -145,10 +145,10 @@ django_settings_module = "config.settings.base"
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py", "*_test.py"]
 addopts = """
-    --doctest-modules 
-    --cov=apps 
-    --cov-report=term-missing 
-    --cov-report=html 
+    --doctest-modules
+    --cov=apps
+    --cov-report=term-missing
+    --cov-report=html
     --strict-markers
     --strict-config
     --tb=short
@@ -196,4 +196,4 @@ skips = ["B311"]  # Standard pseudo-random generators are not suitable for secur
 
 [tool.vulture]
 exclude = ["migrations", "tests"]
-min_confidence = 80 
+min_confidence = 80
