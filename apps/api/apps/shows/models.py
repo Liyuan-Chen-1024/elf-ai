@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional, Tuple, cast
 from django.db import models
 from django.utils import timezone
 
-
 from apps.core.exceptions import EpguidesException
 from apps.core.models import BaseModel
 from apps.shows.utils.ai import extract_movie_title, extract_title_and_season_episode

@@ -3,7 +3,6 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-
 import openai
 
 logger = logging.getLogger(__name__)
