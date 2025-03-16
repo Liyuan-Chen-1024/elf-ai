@@ -6,8 +6,8 @@ Modern media management platform built with Django, React, and TypeScript.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/elfai-media.git
-cd elfai-media
+git clone https://github.com/your-org/elfai.git
+cd elfai
 
 # Initial setup (only needed once)
 make setup
