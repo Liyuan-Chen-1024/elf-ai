@@ -1,10 +1,75 @@
-.DS_Store
-db.sqlite3
-.vscode
-__pycache__
-node_modules
-info.log
-error.log
-static/
-applog*
+# Dependencies
+node_modules/
 .vscode-server
+.pnp
+.pnp.js
+.yarn/install-state.gz
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Build
+dist/
+build/
+*.egg-info/
+.eggs/
+.next/
+out/
+
+# Development
+.env
+.env.*
+!.env.example
+*.log
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.python-version
+.node-version
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Database
+*.sqlite3
+*.db
+
+# Turborepo
+.turbo
+
+# Vercel
+.vercel
+
+# Media files
+media/
+uploads/
+static/
+!static/.gitkeep
+
+# Cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.cache/

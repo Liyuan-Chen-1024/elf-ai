@@ -1,0 +1,32 @@
+services:
+  api:
+    command: >
+      sh -c "pip install debugpy pydantic-settings &&
+             python -m debugpy --listen 0.0.0.0:5678 manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+      - DEBUG=1
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      - db
+      - redis
+
+  web:
+    command: npm run dev
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./apps/client/web:/app
+      - /app/node_modules
+    depends_on:
+      - api

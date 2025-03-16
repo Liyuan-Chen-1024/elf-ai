@@ -1,0 +1,17 @@
+{
+    "name": "Jarvis Development",
+    "dockerComposeFile": ["../docker-compose.yml", "../docker-compose.debug.yml"],
+    "service": "web",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "ms-vscode.vscode-typescript-next"
+            ]
+        }
+    },
+    "remoteUser": "node",
+    "postCreateCommand": "npm install"
+} 

@@ -1,0 +1,102 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "python"
+    versioning-strategy:
+      increase-if-necessary: true
+
+  # Node.js dependencies for web app
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "javascript"
+    versioning-strategy:
+      increase-if-necessary: true
+
+  # Node.js dependencies for shared packages
+  - package-ecosystem: "npm"
+    directory: "/packages/types"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "javascript"
+    versioning-strategy:
+      increase-if-necessary: true
+
+  - package-ecosystem: "npm"
+    directory: "/packages/ui"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "javascript"
+    versioning-strategy:
+      increase-if-necessary: true
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/infrastructure/docker"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # Frontend dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "javascript"
+    reviewers:
+      - "yourusername"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # Docker images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "docker"
+    reviewers:
+      - "yourusername"
+    commit-message:
+      prefix: "docker"
+      include: "scope" 
