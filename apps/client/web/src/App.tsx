@@ -18,6 +18,8 @@ import React, { useEffect, useState } from 'react';
 import { chatApi } from './features/chat/api';
 import { ChatPage } from './features/chat/ChatPage';
 import { ElfLogoIcon } from './features/chat/ElfIcon';
+import { ProfilePage } from './features/profile/ProfilePage';
+import { Header } from './shared/components/Header';
 import { theme } from './theme';
 
 function App() {
@@ -28,6 +30,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat');
 
   useEffect(() => {
     // Check if we have a token in localStorage
@@ -64,6 +67,10 @@ function App() {
     setShowPassword(!showPassword);
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
   if (isCheckingAuth) {
     return (
       <ThemeProvider theme={theme}>
@@ -85,35 +92,16 @@ function App() {
       <CssBaseline />
       {isAuthenticated ? (
         <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ 
-            p: 1.5, 
-            borderBottom: '1px solid', 
-            borderColor: 'divider', 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            bgcolor: 'background.paper',
-            boxShadow: '0 0 10px rgba(0, 0, 0, 0.05)'
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                <ElfLogoIcon sx={{ fontSize: 18 }} />
-              </Avatar>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
-                Elf AI Assistant
-              </Typography>
-            </Box>
-            <Button 
-              onClick={handleLogout} 
-              variant="outlined" 
-              size="small"
-              sx={{ borderRadius: 2 }}
-            >
-              Logout
-            </Button>
-          </Box>
-          <Box sx={{ flex: 1, overflow: 'hidden' }}>
-            <ChatPage />
+          <Header 
+            username={username || 'Admin'} 
+            onLogout={handleLogout} 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+          
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
+            {activeTab === 'chat' && <ChatPage />}
+            {activeTab === 'profile' && <ProfilePage username={username || 'Admin'} email={(username || 'admin') + '@admin.com'} />}
           </Box>
         </Box>
       ) : (
