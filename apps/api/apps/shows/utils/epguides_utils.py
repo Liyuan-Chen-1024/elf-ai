@@ -108,7 +108,7 @@ def find_and_process_new_epguide_keys(delay: int = 5) -> Tuple[int, int, List[st
         response.raise_for_status()
 
         # Extract show keys using regex
-        epguide_keys = re.findall(b'href="..\/([\w+]*)\/"\>', response.content)
+        epguide_keys = re.findall(b'href="../([\w+]*)/">', response.content)
         total_keys = len(epguide_keys)
         logger.info(f"Found {total_keys} epguide keys")
 

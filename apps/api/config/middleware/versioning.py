@@ -172,14 +172,15 @@ class APIVersionMiddleware:
 
         Example:
             Accept: application/vnd.elfai.v1+json
-
-        Returns:
-            String with the version or None if not found/invalid
         """
         accept = request.META.get("HTTP_ACCEPT", "")
 
         # Check if the Accept header contains our vendor-specific type
         if "application/vnd.elfai." in accept:
             # Extract the version from the Accept header
-            if f"vnd.elfai.{version}+json" in accept:
+            import re
+
+            match = re.search(r"application/vnd\.elfai\.([^+]+)\+json", accept)
+            if match:
+                version = match.group(1)
                 return version

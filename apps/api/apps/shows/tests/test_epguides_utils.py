@@ -1,34 +1,33 @@
 """Tests for epguides utilities."""
 
+from unittest import TestCase
 from unittest.mock import patch
 
-from django.test import TestCase
+from apps.shows.utils.epguides_utils import (
+    extract_epguide_key,
+    find_and_process_new_epguide_keys,
+)
 
-from apps.shows.utils.epguides_utils import find_and_process_new_epguide_keys
+
+def test_extract_epguide_key():
+    """Test extract_epguide_key function."""
+    assert extract_epguide_key("https://epguides.com/ShowName/") == "ShowName"
+    assert extract_epguide_key("https://epguides.com/ShowName") == "ShowName"
+    assert extract_epguide_key("http://epguides.com/ShowName/") == "ShowName"
+    assert extract_epguide_key("http://epguides.com/ShowName") == "ShowName"
+    assert extract_epguide_key("/ShowName/") == "ShowName"
+    assert extract_epguide_key("/ShowName") == "ShowName"
+    assert extract_epguide_key("ShowName/") == "ShowName"
+    assert extract_epguide_key("ShowName") == "ShowName"
+    assert extract_epguide_key("") == ""
 
 
-class TestEpguidesUtils(TestCase):
-    """Test cases for epguides utilities."""
+class TestFindAndProcessNewEpguideKeys(TestCase):
+    """Test for finding and processing new epguide keys."""
 
-    @patch("apps.shows.utils.epguides_utils.requests.get")
-    @patch("time.sleep", return_value=None)  # To skip actual sleep during tests
-    def test_find_and_process_new_epguide_keys(self, mock_sleep, mock_get):
+    @patch("apps.shows.utils.epguides_utils.fetch_all_epguide_shows")
+    def test_find_and_process_new_epguide_keys(self, mock_fetch):
         """Test finding and processing new epguide keys."""
-        mock_response = MagicMock()
-        mock_response.content = (
-            b'<a href="../show1/">Show 1</a><a href="../show2/">Show 2</a>'
-        )
-        mock_get.return_value = mock_response
-
-        find_and_process_new_epguide_keys()
-
-        self.assertEqual(
-            mock_get.call_count, 3
-        )  # One for the initial fetch, two for the shows
-        mock_get.assert_any_call("http://epguides.com/menu/current.shtml")
-        mock_get.assert_any_call("http://epguides.frecar.no/show/show1")
-        mock_get.assert_any_call("http://epguides.frecar.no/show/show2")
-
-
-if __name__ == "__main__":
-    unittest.main()
+        mock_fetch.return_value = ["show1", "show2", "show3"]
+        result = find_and_process_new_epguide_keys(activate=True)
+        self.assertEqual(result, ["show1", "show2", "show3"])

@@ -58,17 +58,17 @@ class TestMediaFile(TestCase):
 
     @patch("os.stat")
     @patch("os.path.exists")
-    def test_create_or_update_from_path(self, mock_exists, mock_stat, mock_stat):
+    def test_create_or_update_from_path(self, mock_exists, mock_stat):
         """Test creating or updating MediaFile from path."""
         mock_exists.return_value = True
-        mock_stat.return_value = mock_stat
+        stat_result = mock_stat.return_value
 
         # Test creating new file
         path = "/data/new.mp4"
         MediaFile.create_or_update_from_path(path)
 
         media_file = MediaFile.objects.get(path=path)
-        self.assertEqual(media_file.st_size, mock_stat.st_size)
+        self.assertEqual(media_file.st_size, stat_result.st_size)
         self.assertEqual(media_file.dirname, "/data")
         self.assertEqual(media_file.ext, ".mp4")
 
