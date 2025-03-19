@@ -18,22 +18,29 @@ services:
       - PYTHONPATH=/app
       - DJANGO_SETTINGS_MODULE=config.settings.${APP_ENVIRONMENT}
       - DJANGO_ENV=${APP_ENVIRONMENT}
-      - DATABASE_URL=mysql://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}
-      - REDIS_URL=redis://redis:${REDIS_INTERNAL_PORT}/0
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
-      - DEBUG=${DEBUG}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - API_TITLE=${API_TITLE}
+      - API_DESCRIPTION=${API_DESCRIPTION}
+      - API_VERSION=${API_VERSION}
+      - DRF_PAGE_SIZE=${DRF_PAGE_SIZE}
+      - DRF_THROTTLE_ANON_RATE=${DRF_THROTTLE_ANON_RATE}
+      - DRF_THROTTLE_USER_RATE=${DRF_THROTTLE_USER_RATE}
+      - LANGUAGE_CODE=${LANGUAGE_CODE}
+      - TIME_ZONE=${TIME_ZONE}
+      - STATIC_URL=${STATIC_URL}
       - LLM_API_URL=${LLM_API_URL}
       - LLM_MODEL_NAME=${LLM_MODEL_NAME}
       - MEDIA_ROOT=${MEDIA_ROOT}
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
-
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
 
   db:
     image: mysql:8.0
@@ -41,7 +48,7 @@ services:
     networks:
       - elfai-network
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      - "${DB_PORT}:3306"
     environment:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}

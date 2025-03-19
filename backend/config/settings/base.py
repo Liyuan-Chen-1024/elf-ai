@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import environ
+import structlog
 
 env = environ.Env()
 
@@ -122,18 +123,18 @@ AUTH_PASSWORD_VALIDATORS: List[Dict[str, str]] = [
 ]
 
 # Internationalization
-LANGUAGE_CODE: str = "en-us"
-TIME_ZONE: str = "UTC"
+LANGUAGE_CODE: str = env("LANGUAGE_CODE", default="en-us")
+TIME_ZONE: str = env("TIME_ZONE", default="UTC")
 USE_I18N: bool = True
 USE_TZ: bool = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL: str = "static/"
+STATIC_URL: str = env("STATIC_URL", default="static/")
 STATIC_ROOT: Path = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE: str = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Media files
-MEDIA_URL: str = "media/"
+MEDIA_URL: str = env("MEDIA_URL", default="media/")
 MEDIA_ROOT: Path = BASE_DIR / "media"
 
 # Default primary key field type
@@ -150,7 +151,7 @@ REST_FRAMEWORK: Dict[str, Any] = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 100,
+    "PAGE_SIZE": env.int("DRF_PAGE_SIZE", default=100),
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
@@ -162,8 +163,8 @@ REST_FRAMEWORK: Dict[str, Any] = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/day",
-        "user": "1000/day",
+        "anon": env("DRF_THROTTLE_ANON_RATE", default="100/day"),
+        "user": env("DRF_THROTTLE_USER_RATE", default="1000/day"),
     },
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -179,9 +180,9 @@ REST_FRAMEWORK: Dict[str, Any] = {
 
 # Spectacular settings
 SPECTACULAR_SETTINGS: Dict[str, Any] = {
-    "TITLE": "Elf AI API",
-    "DESCRIPTION": "API documentation",
-    "VERSION": "1.0.0",
+    "TITLE": env("API_TITLE", default="Elf AI API"),
+    "DESCRIPTION": env("API_DESCRIPTION", default="API documentation"),
+    "VERSION": env("API_VERSION", default="1.0.0"),
     "SERVE_INCLUDE_SCHEMA": False,
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
@@ -209,53 +210,77 @@ EMAIL_HOST_USER: str = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD: str = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL: str = env("DEFAULT_FROM_EMAIL", default="noreply@elfai.frecar.no")
 
-# Logging
-LOGGING: Dict[str, Any] = {
+# Logging Configuration
+LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "json": {
-            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-            "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+        "plain": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.dev.ConsoleRenderer(colors=False),
+            "foreign_pre_chain": [
+                structlog.contextvars.merge_contextvars,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+                structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
+            ],
         },
     },
     "handlers": {
-        "console": {
+        "default": {
+            "level": env("DJANGO_LOG_LEVEL", default="INFO"),
             "class": "logging.StreamHandler",
-            "formatter": "json",
+            "formatter": "plain",
         },
     },
     "loggers": {
         "": {
-            "handlers": ["console"],
-            "level": "INFO",
+            "handlers": ["default"],
+            "level": env("DJANGO_LOG_LEVEL", default="INFO"),
+            "propagate": True,
         },
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.server": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
+        # Silence noisy loggers
+        "django.server": {"level": "WARNING"},
+        "django.security.DisallowedHost": {"level": "ERROR"},
     },
 }
 
-# Structlog
-STRUCTLOG: Dict[str, Any] = {
+# Structlog Configuration
+STRUCTLOG = {
     "processors": [
-        "structlog.contextvars.merge_contextvars",
-        "structlog.processors.add_log_level",
-        "structlog.processors.format_exc_info",
-        "structlog.processors.TimeStamper",
-        "structlog.processors.JSONRenderer",
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.ExceptionPrettyPrinter(),
+        # Filter out health check and static file requests
+        lambda logger, name, event_dict: None
+        if (
+            event_dict.get("path", "").startswith(
+                ("/static/", "/admin/", "/media/", "/admin/jsi18n/", "/health/")
+            )
+            or (
+                event_dict.get("event") in ["request_started", "request_finished"]
+                and not event_dict.get("status_code", 200) >= 400
+            )
+        )
+        else event_dict,
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
     ],
-    "logger_factory": "structlog.stdlib.LoggerFactory",
-    "wrapper_class": "structlog.stdlib.BoundLogger",
+    "logger_factory": structlog.stdlib.LoggerFactory(),
+    "wrapper_class": structlog.stdlib.BoundLogger,
     "cache_logger_on_first_use": True,
 }
+
+# Logging control flags
+DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
+DJANGO_LOG_REQUEST_BODY = env.bool("DJANGO_LOG_REQUEST_BODY", default=False)
+DJANGO_LOG_RESPONSE_BODY = env.bool("DJANGO_LOG_RESPONSE_BODY", default=False)
 
 # Health Check
 HEALTH_CHECK: Dict[str, Union[int, float]] = {

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .base import *  # noqa
+import structlog
 
 # Production settings
 DEBUG: bool = False
@@ -41,15 +42,85 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # Media files
 MEDIA_ROOT: Path = env.path("MEDIA_ROOT", default=BASE_DIR / "media")
 
-# Logging - use file handler in production
-LOGGING["handlers"]["file"] = {  # noqa
-    "class": "logging.handlers.RotatingFileHandler",
-    "filename": "/var/log/elfai/app.log",
-    "maxBytes": 1024 * 1024 * 10,  # 10 MB
-    "backupCount": 5,
-    "formatter": "json",
+# Production logging configuration
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.processors.JSONRenderer(),
+            "foreign_pre_chain": [
+                structlog.contextvars.merge_contextvars,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+                structlog.processors.TimeStamper(fmt="iso"),
+            ],
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "level": env("DJANGO_LOG_LEVEL", default="INFO"),
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": env("DJANGO_LOG_FILE", default="/var/log/elfai/app.log"),
+            "maxBytes": 1024 * 1024 * 10,  # 10 MB
+            "backupCount": 5,
+            "formatter": "json",
+            "level": env("DJANGO_LOG_LEVEL", default="INFO"),
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["console", "file"],
+            "level": env("DJANGO_LOG_LEVEL", default="INFO"),
+            "propagate": True,
+        },
+        # Silence noisy loggers in production
+        "django.server": {"level": "WARNING"},
+        "django.security.DisallowedHost": {"level": "ERROR"},
+    },
 }
-LOGGING["loggers"][""]["handlers"] = ["file", "console"]  # noqa
+
+# Production-specific structlog configuration
+STRUCTLOG = {
+    "processors": [
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        # Filter out health check and static file requests
+        lambda logger, name, event_dict: None
+        if (
+            event_dict.get("path", "").startswith(
+                ("/static/", "/admin/", "/media/", "/admin/jsi18n/", "/health/")
+            )
+            or (
+                event_dict.get("event") in ["request_started", "request_finished"]
+                and not event_dict.get("status_code", 200) >= 400
+            )
+        )
+        else event_dict,
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    "logger_factory": structlog.stdlib.LoggerFactory(),
+    "wrapper_class": structlog.stdlib.BoundLogger,
+    "cache_logger_on_first_use": True,
+}
+
+# Production log level - can be overridden by environment variable
+DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
+
+# Disable request/response body logging in production for security
+DJANGO_LOG_REQUEST_BODY = False
+DJANGO_LOG_RESPONSE_BODY = False
 
 # Email backend for production
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

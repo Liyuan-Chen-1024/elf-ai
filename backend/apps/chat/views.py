@@ -1,5 +1,5 @@
 import json
-import logging
+from apps.core.logging import get_logger
 from typing import Any, Dict
 
 from django.conf import settings
@@ -20,7 +20,7 @@ from .serializers import (
     MessageSerializer,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer

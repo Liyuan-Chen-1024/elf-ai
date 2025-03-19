@@ -6,14 +6,14 @@ without needing to know the implementation details.
 """
 
 import asyncio
-import logging
+from apps.core.logging import get_logger
 from typing import Any, Dict, List, Optional, Tuple
 
 from .llm_parser import LLMAgentParser
 from .tools import registry
 from .utils.formatter import ToolResultFormatter
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AgentService:

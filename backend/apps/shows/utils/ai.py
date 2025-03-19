@@ -1,11 +1,11 @@
-import logging
+from apps.core.logging import get_logger
 import re
 from dataclasses import dataclass
 from typing import Optional
 
 import openai
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

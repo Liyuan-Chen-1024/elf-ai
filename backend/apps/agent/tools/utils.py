@@ -5,12 +5,12 @@ This module provides common helper functions used by multiple tools.
 """
 
 import asyncio
-import logging
+from apps.core.logging import get_logger
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import aiohttp
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def async_http_request(

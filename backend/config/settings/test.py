@@ -1,6 +1,7 @@
 """Test settings for Django project."""
 
 from .base import *  # noqa
+import structlog
 
 # Environment
 APP_ENVIRONMENT = 'test'
@@ -16,6 +17,74 @@ DATABASES = {
         "NAME": ":memory:",
     }
 }
+
+# Test logging configuration - minimal and captured for assertions
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "plain": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.processors.JSONRenderer(),
+            "foreign_pre_chain": [
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+                structlog.processors.TimeStamper(fmt="iso"),
+            ],
+        },
+    },
+    "handlers": {
+        "test_handler": {
+            "level": "WARNING",
+            "class": "logging.StreamHandler",
+            "formatter": "plain",
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["test_handler"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        # Silence noisy loggers in tests
+        "django.server": {"level": "ERROR"},
+        "django.security.DisallowedHost": {"level": "ERROR"},
+        "django.request": {"level": "ERROR"},
+        "django.db.backends": {"level": "ERROR"},
+    },
+}
+
+# Test-specific structlog configuration - minimal for testing
+STRUCTLOG = {
+    "processors": [
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.format_exc_info,
+        # Filter out health check and static file requests
+        lambda logger, name, event_dict: None
+        if (
+            event_dict.get("path", "").startswith(
+                ("/static/", "/admin/", "/media/", "/admin/jsi18n/", "/health/")
+            )
+            or (
+                event_dict.get("event") in ["request_started", "request_finished"]
+                and not event_dict.get("status_code", 200) >= 400
+            )
+        )
+        else event_dict,
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    "logger_factory": structlog.stdlib.LoggerFactory(),
+    "wrapper_class": structlog.stdlib.BoundLogger,
+    "cache_logger_on_first_use": True,
+}
+
+# Set minimal logging for tests
+DJANGO_LOG_LEVEL = "WARNING"
+DJANGO_LOG_REQUEST_BODY = False
+DJANGO_LOG_RESPONSE_BODY = False
 
 # Use console email backend for tests
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

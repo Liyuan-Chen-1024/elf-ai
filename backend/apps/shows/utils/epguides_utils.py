@@ -1,7 +1,7 @@
 """Utilities for epguides API."""
 
 import json
-import logging
+from apps.core.logging import get_logger
 import re
 import time
 from datetime import date, datetime
@@ -20,7 +20,7 @@ from apps.shows.models import TVShow
 
 from ..types import DateStr, EpisodeDict, JsonDict
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def create_session_with_retries() -> requests.Session:

@@ -1,4 +1,4 @@
-import logging
+from apps.core.logging import get_logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -11,7 +11,7 @@ from tqdm import tqdm
 from apps.core.exceptions import ShowNotFoundException
 from apps.shows.models import TVShow
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

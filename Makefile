@@ -4,6 +4,7 @@
 dev:
 	@echo "Starting development environment..."
 	@cp .env.base .env
+	docker compose down --remove-orphans
 	docker compose up
 
 # Testing
@@ -24,7 +25,7 @@ lint:
 # Cleanup
 clean:
 	@echo "Cleaning up..."
-	docker compose down -v
+	docker compose down -v --remove-orphans
 	rm -f .env .env.tmp
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete

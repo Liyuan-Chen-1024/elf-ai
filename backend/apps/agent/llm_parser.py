@@ -6,7 +6,7 @@ and identify the most appropriate agent tools to handle them.
 """
 
 import json
-import logging
+from apps.core.logging import get_logger
 import re
 import traceback
 from typing import Any, Dict, List
@@ -18,7 +18,7 @@ import requests
 from .tools import registry
 from .tools.base import BaseTool, ToolParameterType
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class LLMAgentParser:

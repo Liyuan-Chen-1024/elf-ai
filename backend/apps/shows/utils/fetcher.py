@@ -1,4 +1,4 @@
-import logging
+from apps.core.logging import get_logger
 from typing import Any, Dict, Optional
 
 import requests
@@ -9,7 +9,7 @@ from apps.core.exceptions import (
     ShowNotFoundException,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def epguides_api_request(path: str) -> Optional[Dict[str, Any]]:

@@ -1,6 +1,7 @@
 """Development settings for Django project."""
 
 from typing import Any, Dict, List
+import structlog
 
 from .base import *  # noqa
 
@@ -87,78 +88,6 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa
     "user": "5000/day",  # Increased from 1000/day
 }
 
-# Logging configuration
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{asctime} [{levelname:8}] {message}",
-            "style": "{",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-    },
-    "loggers": {
-        "": {  # Root logger
-            "handlers": ["console"],
-            "level": "INFO",
-        },
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.server": {  # Server requests
-            "handlers": ["console"],
-            "level": "WARNING",  # Only log warnings and above for server requests
-            "propagate": False,
-        },
-        "django.utils.autoreload": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "apps.core.health_checks": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        "django.request": {  # Request/response logging
-            "handlers": ["console"],
-            "level": "WARNING",  # Only log warnings and above
-            "propagate": False,
-        },
-        "django.db.backends": {  # Database queries
-            "handlers": ["console"],
-            "level": "WARNING",  # Only log warnings and above
-            "propagate": False,
-        },
-        "django.security": {  # Security warnings
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "django.template": {  # Template rendering
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-    },
-}
-
-# Disable Django's default 404 logging
-LOGGING["loggers"]["django.middleware"] = {
-    "handlers": ["console"],
-    "level": "WARNING",
-    "propagate": False,
-}
-
 # Redis configuration
 REDIS_URL = "redis://redis:6379/0"
 
@@ -169,6 +98,59 @@ CACHES: Dict[str, Dict[str, str]] = {
         "LOCATION": REDIS_URL,
     }
 }
+
+# Development logging configuration
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "null": {
+            "class": "logging.NullHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["null"],
+            "level": "WARNING",
+        },
+    },
+}
+
+# Override global log level for development
+DJANGO_LOG_LEVEL = "WARNING"
+
+# Development-specific structlog configuration - inherits processors from base
+STRUCTLOG = {
+    "processors": [
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.add_logger_name,
+        structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        # Filter out noisy logs
+        lambda logger, name, event_dict: None
+        if (
+            event_dict.get("path", "").startswith(
+                ("/static/", "/admin/static/", "/media/", "/admin/jsi18n/", "/health/")
+            )
+            or (
+                event_dict.get("event") == "http_request_finished"
+                and event_dict.get("status_code", 200) < 400
+                and event_dict.get("duration_ms", 0) < 1000  # Only log slow requests
+            )
+        )
+        else event_dict,
+        structlog.processors.JSONRenderer(),
+    ],
+    "context_class": dict,
+    "logger_factory": structlog.stdlib.LoggerFactory(),
+    "wrapper_class": structlog.stdlib.BoundLogger,
+    "cache_logger_on_first_use": True,
+}
+
+# Only log request/response bodies in debug mode when explicitly enabled
+DJANGO_LOG_REQUEST_BODY = False
+DJANGO_LOG_RESPONSE_BODY = False
 
 # Health check configuration
 HEALTH_CHECK: Dict[str, Any] = {

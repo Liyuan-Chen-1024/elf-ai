@@ -1,6 +1,6 @@
 """Command to delete unwanted files."""
 
-import logging
+from apps.core.logging import get_logger
 from typing import Any, Dict, Optional
 
 from django.conf import settings
@@ -12,7 +12,7 @@ from apps.shows.utils.files import (
     delete_unwanted_directories,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class Command(BaseCommand):

@@ -1,4 +1,4 @@
-import logging
+from apps.core.logging import get_logger
 import os
 import random
 import shutil
@@ -9,7 +9,7 @@ from django.conf import settings
 
 UNWANTED_DIR_NAMES: Set[str] = {"screenshots", "screens", "samples", "extras"}
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def delete_unwanted_directories(path: str, dry_run: bool = False) -> int:
