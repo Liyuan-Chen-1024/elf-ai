@@ -1,4 +1,4 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ElfSpinner } from '../../components/ElfSpinner';
 import { User } from '../chat/types';
@@ -15,7 +15,7 @@ interface AuthContextType {
 }
 
 interface AuthProviderProps {
-  children: any;
+  children: React.ReactNode;
 }
 
 const defaultContext: AuthContextType = {
@@ -28,7 +28,7 @@ const defaultContext: AuthContextType = {
   logout: async () => {},
 };
 
-const AuthContext = createContext(defaultContext);
+const AuthContext = createContext<AuthContextType>(defaultContext);
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
@@ -40,51 +40,85 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     error: null as string | null,
   });
 
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      const email = localStorage.getItem('email');
+      
+      if (!token) {
+        setState(prev => ({
+          ...prev,
+          isInitializing: false,
+        }));
+        return;
+      }
+
+      try {
+        // Set up axios with the token
+        authApi.setAuthToken(token);
+        
+        // Try to get user profile
+        const userProfile = await authApi.getCurrentUser();
+        const userData: User = {
+          id: userProfile.id,
+          name: userProfile.username || userProfile.first_name || email || 'User',
+          email: email || '',
+          role: 'user',
+        };
+        
+        setState(prev => ({
+          ...prev,
+          user: userData,
+          isAuthenticated: true,
+          isInitializing: false,
+        }));
+      } catch (err) {
+        console.error('Failed to initialize auth:', err);
+        // Clear invalid token
+        localStorage.removeItem('token');
+        localStorage.removeItem('email');
+        authApi.clearAuthToken();
+        
+        setState(prev => ({
+          ...prev,
+          isInitializing: false,
+        }));
+        
+        navigate('/login');
+      }
+    };
+
+    initializeAuth();
+  }, [navigate]);
+
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       const response = await authApi.login(email, password);
       
-      // Save email to localStorage for persistence/fallback
+      // Save email for persistence
       localStorage.setItem('email', email);
       
-      // Try to get the full profile after login
-      try {
-        const userProfile = await authApi.getCurrentUser();
-        const userData: User = {
-          id: userProfile.id,
-          name: userProfile.username || userProfile.first_name || email,
-          email: email,
-          role: 'user',
-        };
-        setState(prev => ({
-          ...prev,
-          user: userData,
-          isAuthenticated: true,
-          isLoading: false,
-        }));
-      } catch (profileErr) {
-        // Fallback to basic user data if profile fetch fails
-        const mockUser: User = {
-          id: 1,
-          name: 'Test User',
-          email: email,
-          role: 'user',
-        };
-        setState(prev => ({
-          ...prev,
-          user: mockUser,
-          isAuthenticated: true,
-          isLoading: false,
-        }));
-      }
+      // Set up user data
+      const userData: User = {
+        id: response.user.id,
+        name: response.user.username || response.user.first_name || email,
+        email: email,
+        role: 'user',
+      };
       
-      localStorage.setItem('token', response.token);
+      setState(prev => ({
+        ...prev,
+        user: userData,
+        isAuthenticated: true,
+        isLoading: false,
+      }));
+      
       navigate('/chat');
     } catch (err) {
       setState(prev => ({
         ...prev,
-        error: 'Failed to login',
+        error: 'Failed to login. Please check your credentials.',
         isLoading: false,
       }));
       console.error('Login error:', err);
@@ -96,9 +130,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       await authApi.logout();
       
-      // Clear user data from localStorage
+      // Clear user data
       localStorage.removeItem('email');
       localStorage.removeItem('token');
+      authApi.clearAuthToken();
       
       setState(prev => ({
         ...prev,
@@ -106,6 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         isAuthenticated: false,
         isLoading: false,
       }));
+      
       navigate('/login');
     } catch (err) {
       setState(prev => ({
@@ -117,6 +153,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // Only show loading spinner during initialization
   if (state.isInitializing) {
     return <ElfSpinner message="Loading application..." />;
   }

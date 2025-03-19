@@ -14,6 +14,11 @@ services:
       - ./backend:/app
       - media-data:/app/media
       - ./.vscode-server:/root/.vscode-server
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - PYTHONPATH=/app
       - DJANGO_SETTINGS_MODULE=config.settings.${APP_ENVIRONMENT}
@@ -57,9 +62,14 @@ services:
       - ./frontend:/app
       - media-data:/app/media
       - ./.vscode-server:/root/.vscode-server
+      - frontend-node-modules:/app/node_modules
     environment:
       - NODE_ENV=${APP_ENVIRONMENT}
       - PORT=${FRONTEND_PORT}
+      - VITE_API_URL=http://localhost:${API_PORT}/api/v1
+      - VITE_WEBSOCKET_URL=ws://localhost:${API_PORT}/ws/
+    depends_on:
+      - backend
 
   db:
     image: mysql:8.0
@@ -105,6 +115,7 @@ volumes:
   mysql-data:
   redis-data:
   media-data:
+  frontend-node-modules:
 
 networks:
   elfai-network:

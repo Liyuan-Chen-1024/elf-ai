@@ -1,16 +1,58 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model, login
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 User = get_user_model()
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def login_view(request):
+    """
+    Login endpoint that accepts email/username and password, returns token and user data.
+    """
+    username = request.data.get("username")
+    password = request.data.get("password")
+
+    if not username or not password:
+        return Response(
+            {"detail": "Please provide both username and password."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Authenticate user
+    user = authenticate(username=username, password=password)
+
+    if not user:
+        return Response(
+            {"detail": "Invalid credentials."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Get or create token
+    token, _ = Token.objects.get_or_create(user=user)
+
+    # Login user (create session)
+    login(request, user)
+
+    # Return user data and token
+    return Response({
+        "token": token.key,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+        }
+    })
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
@@ -31,7 +73,6 @@ def user_profile(request):
     }
 
     return Response(data)
-
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
