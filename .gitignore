@@ -73,12 +73,7 @@ dmypy.json
 
 # Environment Variables
 .env
-.env.*
-!.env.example
 
-# IDE
-.idea/
-.vscode/
 .vscode-server/
 
 # Editor Temp Files

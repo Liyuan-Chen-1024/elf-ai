@@ -2,6 +2,9 @@
 
 from .base import *  # noqa
 
+# Environment
+APP_ENVIRONMENT = 'test'
+
 # Override base settings for testing
 DEBUG = True
 ALLOWED_HOSTS = ["*"]

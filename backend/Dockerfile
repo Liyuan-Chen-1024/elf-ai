@@ -1,5 +1,5 @@
-# Use Python 3.11 slim-buster image
-FROM python:3.11-slim-buster as base
+# Use Python 3.11 with Debian bookworm (newer SQLite)
+FROM python:3.11-slim-bookworm as base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -51,6 +51,17 @@ RUN chmod +x /docker-entrypoint.sh
 # Run the development server
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+# Test stage
+FROM base as test
+
+# Create entrypoint script
+COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Run tests
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["pytest"]
 
 # Production stage
 FROM base as production
