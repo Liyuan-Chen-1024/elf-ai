@@ -14,6 +14,10 @@ test:
 	@mv .env.tmp .env
 	docker compose -f docker-compose.yml run --rm --build backend pytest -v --collect-only && \
 	docker compose -f docker-compose.yml run --rm backend pytest -v
+	docker-compose run --rm web npm test
+
+build:
+	docker build --target production -t elfai-web:latest .
 
 # Linting
 lint:
@@ -21,6 +25,7 @@ lint:
 	docker compose exec backend flake8 .
 	docker compose exec backend black . --check
 	docker compose exec backend isort . --check-only
+	docker-compose run --rm web npm run format
 
 # Cleanup
 clean:
@@ -33,3 +38,5 @@ clean:
 	find . -type f -name ".coverage" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} +
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 
+	rm -rf frontend/node_modules
+	rm -rf backend/venv

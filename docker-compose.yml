@@ -42,6 +42,25 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: ${APP_ENVIRONMENT}
+    restart: unless-stopped
+    networks:
+      - elfai-network
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+      - media-data:/app/media
+      - ./.vscode-server:/root/.vscode-server
+    environment:
+      - NODE_ENV=${APP_ENVIRONMENT}
+      - PORT=${FRONTEND_PORT}
+
   db:
     image: mysql:8.0
     restart: unless-stopped
