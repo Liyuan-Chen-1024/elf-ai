@@ -13,10 +13,7 @@ from typing import Callable, Dict, Set
 
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse
-from django.utils.cache import (
-    patch_cache_control,
-    patch_vary_headers,
-)
+from django.utils.cache import patch_cache_control, patch_vary_headers
 
 from structlog import get_logger
 

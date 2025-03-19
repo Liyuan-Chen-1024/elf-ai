@@ -1,6 +1,5 @@
 """Custom health check backends."""
 
-from apps.core.logging import get_logger
 from typing import Optional
 
 from django.conf import settings
@@ -8,6 +7,8 @@ from django.conf import settings
 from health_check.contrib.redis.backends import RedisHealthCheck as BaseRedisHealthCheck
 from redis import Redis
 from redis.exceptions import ConnectionError, RedisError
+
+from apps.core.logging import get_logger
 
 logger = get_logger(__name__)
 

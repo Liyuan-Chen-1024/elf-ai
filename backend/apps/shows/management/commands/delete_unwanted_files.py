@@ -1,11 +1,11 @@
 """Command to delete unwanted files."""
 
-from apps.core.logging import get_logger
 from typing import Any, Dict, Optional
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
+from apps.core.logging import get_logger
 from apps.shows.utils.files import (
     delete_empty_directories,
     delete_small_video_files,

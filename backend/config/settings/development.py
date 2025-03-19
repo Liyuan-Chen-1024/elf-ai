@@ -1,6 +1,7 @@
 """Development settings for Django project."""
 
 from typing import Any, Dict, List
+
 import structlog
 
 from .base import *  # noqa
@@ -17,45 +18,45 @@ CORS_ORIGIN_ALLOW_ALL: bool = True  # Add this for older versions of django-cors
 CORS_ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 # Add all CORS-related headers
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-    'access-control-allow-origin',
-    'cache-control',
-    'connection',
-    'content-encoding',
-    'content-length',
-    'host',
-    'pragma',
-    'referer',
-    'sec-fetch-dest',
-    'sec-fetch-mode',
-    'sec-fetch-site',
-    'last-event-id',  # Required for SSE
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "access-control-allow-origin",
+    "cache-control",
+    "connection",
+    "content-encoding",
+    "content-length",
+    "host",
+    "pragma",
+    "referer",
+    "sec-fetch-dest",
+    "sec-fetch-mode",
+    "sec-fetch-site",
+    "last-event-id",  # Required for SSE
 ]
 
 CORS_EXPOSE_HEADERS = [
-    'content-type',
-    'content-encoding',
-    'content-length',
-    'connection',
-    'cache-control',
+    "content-type",
+    "content-encoding",
+    "content-length",
+    "connection",
+    "cache-control",
 ]
 
 # Add SSE-specific settings
 CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]
 
 # Ensure long-lived connections are allowed
@@ -67,7 +68,9 @@ INSTALLED_APPS += [  # noqa
 ]
 
 # Add custom middleware
-MIDDLEWARE.insert(0, "config.middleware.cors.CustomCorsMiddleware")  # Add custom CORS middleware
+MIDDLEWARE.insert(
+    0, "config.middleware.cors.CustomCorsMiddleware"
+)  # Add custom CORS middleware
 
 # Disable security settings in development
 SECURE_SSL_REDIRECT: bool = False
@@ -128,18 +131,27 @@ STRUCTLOG = {
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         # Filter out noisy logs
-        lambda logger, name, event_dict: None
-        if (
-            event_dict.get("path", "").startswith(
-                ("/static/", "/admin/static/", "/media/", "/admin/jsi18n/", "/health/")
+        lambda logger, name, event_dict: (
+            None
+            if (
+                event_dict.get("path", "").startswith(
+                    (
+                        "/static/",
+                        "/admin/static/",
+                        "/media/",
+                        "/admin/jsi18n/",
+                        "/health/",
+                    )
+                )
+                or (
+                    event_dict.get("event") == "http_request_finished"
+                    and event_dict.get("status_code", 200) < 400
+                    and event_dict.get("duration_ms", 0)
+                    < 1000  # Only log slow requests
+                )
             )
-            or (
-                event_dict.get("event") == "http_request_finished"
-                and event_dict.get("status_code", 200) < 400
-                and event_dict.get("duration_ms", 0) < 1000  # Only log slow requests
-            )
-        )
-        else event_dict,
+            else event_dict
+        ),
         structlog.processors.JSONRenderer(),
     ],
     "context_class": dict,

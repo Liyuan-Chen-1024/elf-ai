@@ -3,8 +3,9 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from .base import *  # noqa
 import structlog
+
+from .base import *  # noqa
 
 # Production settings
 DEBUG: bool = False
@@ -97,17 +98,19 @@ STRUCTLOG = {
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
         # Filter out health check and static file requests
-        lambda logger, name, event_dict: None
-        if (
-            event_dict.get("path", "").startswith(
-                ("/static/", "/admin/", "/media/", "/admin/jsi18n/", "/health/")
+        lambda logger, name, event_dict: (
+            None
+            if (
+                event_dict.get("path", "").startswith(
+                    ("/static/", "/admin/", "/media/", "/admin/jsi18n/", "/health/")
+                )
+                or (
+                    event_dict.get("event") in ["request_started", "request_finished"]
+                    and not event_dict.get("status_code", 200) >= 400
+                )
             )
-            or (
-                event_dict.get("event") in ["request_started", "request_finished"]
-                and not event_dict.get("status_code", 200) >= 400
-            )
-        )
-        else event_dict,
+            else event_dict
+        ),
         structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
     ],
     "logger_factory": structlog.stdlib.LoggerFactory(),

@@ -1,4 +1,3 @@
-from apps.core.logging import get_logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -9,6 +8,7 @@ from django.db.models import Q
 from tqdm import tqdm
 
 from apps.core.exceptions import ShowNotFoundException
+from apps.core.logging import get_logger
 from apps.shows.models import TVShow
 
 logger = get_logger(__name__)

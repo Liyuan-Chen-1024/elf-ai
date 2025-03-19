@@ -1,4 +1,3 @@
-from apps.core.logging import get_logger
 from typing import Any, Dict, Optional
 
 import requests
@@ -8,6 +7,7 @@ from apps.core.exceptions import (
     SeasonNotFoundException,
     ShowNotFoundException,
 )
+from apps.core.logging import get_logger
 
 logger = get_logger(__name__)
 

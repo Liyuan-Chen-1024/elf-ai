@@ -7,12 +7,7 @@ from transmission_rpc import Client, Torrent
 from transmission_rpc.error import TransmissionError
 
 from ..enums import TorrentStatus
-from ..typing import (
-    QueueResult,
-    QueueStats,
-    TorrentId,
-    TorrentInfo,
-)
+from ..typing import QueueResult, QueueStats, TorrentId, TorrentInfo
 
 
 @dataclass

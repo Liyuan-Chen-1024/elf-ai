@@ -1,4 +1,3 @@
-from apps.core.logging import get_logger
 import os
 import time
 from datetime import datetime
@@ -9,8 +8,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.exceptions import EpguidesException
-from apps.core.models import TimeStampedModel
 from apps.core.logging import get_logger
+from apps.core.models import TimeStampedModel
 from apps.shows.typing import ShowStatus, StatusColor
 from apps.shows.utils.ai import extract_movie_title, extract_title_and_season_episode
 from apps.shows.utils.fetcher import epguides_api_request
@@ -334,45 +333,39 @@ class TVShow(TimeStampedModel):
 
 class Show(models.Model):
     """Model representing a TV show."""
-    
+
     title = models.CharField(_("title"), max_length=255)
     description = models.TextField(_("description"), blank=True)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
-    
+
     def save(self, *args, **kwargs):
         """Override save to add logging."""
         is_new = self.pk is None
-        
+
         # Bind relevant context to logger
-        ctx_logger = logger.bind(
-            show_id=self.pk,
-            show_title=self.title,
-            is_new=is_new
-        )
-        
+        ctx_logger = logger.bind(show_id=self.pk, show_title=self.title, is_new=is_new)
+
         if is_new:
             ctx_logger.info("creating_new_show", action="create")
         else:
             ctx_logger.info("updating_show", action="update")
-            
+
         super().save(*args, **kwargs)
-        
+
         # Log after save to include the new ID for new records
         if is_new:
             ctx_logger.bind(show_id=self.pk).info("show_created")
-    
+
     def delete(self, *args, **kwargs):
         """Override delete to add logging."""
-        logger.info("deleting_show",
-                   show_id=self.pk,
-                   show_title=self.title)
+        logger.info("deleting_show", show_id=self.pk, show_title=self.title)
         super().delete(*args, **kwargs)
-    
+
     class Meta:
         verbose_name = _("show")
         verbose_name_plural = _("shows")
         ordering = ["-created_at"]
-    
+
     def __str__(self):
         return self.title

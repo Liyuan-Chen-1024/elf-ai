@@ -15,7 +15,7 @@ from drf_spectacular.views import (
 )
 
 # Import our auth views
-from apps.auth.views import user_profile, change_password
+from apps.auth.views import change_password, user_profile
 
 # Customize admin site
 admin.site.site_header = "AI Chat Admin"
@@ -67,11 +67,11 @@ urlpatterns = [
                                 django_auth_views.LogoutView.as_view(),
                                 name="api-logout",
                             ),
+                            path("profile/", user_profile, name="api-profile"),
                             path(
-                                "profile/", user_profile, name="api-profile"
-                            ),
-                            path(
-                                "change-password/", change_password, name="api-change-password"
+                                "change-password/",
+                                change_password,
+                                name="api-change-password",
                             ),
                         ]
                     ),

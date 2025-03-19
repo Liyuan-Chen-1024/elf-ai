@@ -1,9 +1,10 @@
-from apps.core.logging import get_logger
 import re
 from dataclasses import dataclass
 from typing import Optional
 
 import openai
+
+from apps.core.logging import get_logger
 
 logger = get_logger(__name__)
 

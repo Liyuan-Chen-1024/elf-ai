@@ -1,5 +1,4 @@
 import json
-from apps.core.logging import get_logger
 from typing import Any, Dict
 
 from django.conf import settings
@@ -13,6 +12,8 @@ from rest_framework.response import Response
 
 import requests
 
+from apps.core.logging import get_logger
+
 from .models import Conversation, Message
 from .serializers import (
     ConversationSerializer,
@@ -22,6 +23,7 @@ from .serializers import (
 
 logger = get_logger(__name__)
 
+
 class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated]
@@ -29,62 +31,60 @@ class ConversationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return (
             Conversation.objects.filter(user=self.request.user)
-            .prefetch_related('messages')
-            .order_by('-updated_at')
+            .prefetch_related("messages")
+            .order_by("-updated_at")
         )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def archive(self, request: Request, pk=None) -> Response:
         conversation = self.get_object()
         conversation.is_archived = True
         conversation.save()
         return Response(self.get_serializer(conversation).data)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def unarchive(self, request: Request, pk=None) -> Response:
         conversation = self.get_object()
         conversation.is_archived = False
         conversation.save()
         return Response(self.get_serializer(conversation).data)
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def messages(self, request: Request, pk=None) -> Response:
         conversation = self.get_object()
-        messages = conversation.messages.filter(is_deleted=False).order_by('created_at')
+        messages = conversation.messages.filter(is_deleted=False).order_by("created_at")
         return Response(MessageSerializer(messages, many=True).data)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def stream_message(self, request: Request, pk=None) -> StreamingHttpResponse:
         conversation = self.get_object()
         serializer = MessageCreateSerializer(data=request.data)
-        
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        content = serializer.validated_data['content']
+
+        content = serializer.validated_data["content"]
 
         def stream_response():
             try:
                 # Create user message and initial assistant message
                 with transaction.atomic():
                     Message.objects.create(
-                        conversation=conversation,
-                        role='user',
-                        content=content
+                        conversation=conversation, role="user", content=content
                     )
                     assistant_message = Message.objects.create(
-                        conversation=conversation,
-                        role='assistant',
-                        content=''
+                        conversation=conversation, role="assistant", content=""
                     )
 
                 # Get conversation history for context
-                history = conversation.messages.filter(
-                    is_deleted=False
-                ).order_by('-created_at')[:5][::-1]  # Last 5 messages in chronological order
+                history = conversation.messages.filter(is_deleted=False).order_by(
+                    "-created_at"
+                )[:5][
+                    ::-1
+                ]  # Last 5 messages in chronological order
 
                 # Build conversation context
                 context = "You are an AI assistant. Be helpful and concise.\n\n"
@@ -99,12 +99,12 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 response = requests.post(
                     settings.LLM_API_URL,
                     json={
-                        'model': settings.LLM_MODEL_NAME,
-                        'prompt': context,
-                        'stream': True
+                        "model": settings.LLM_MODEL_NAME,
+                        "prompt": context,
+                        "stream": True,
                     },
                     stream=True,
-                    timeout=30
+                    timeout=30,
                 )
 
                 if response.status_code == 200:
@@ -112,9 +112,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     for line in response.iter_lines():
                         if line:
                             try:
-                                json_response = json.loads(line.decode('utf-8'))
-                                token = json_response.get('response', '')
-                                
+                                json_response = json.loads(line.decode("utf-8"))
+                                token = json_response.get("response", "")
+
                                 if token:
                                     full_response += token
                                     assistant_message.content = full_response
@@ -138,12 +138,12 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
         response = StreamingHttpResponse(
-            stream_response(),
-            content_type='text/event-stream'
+            stream_response(), content_type="text/event-stream"
         )
-        response['Cache-Control'] = 'no-cache'
-        response['X-Accel-Buffering'] = 'no'
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"
         return response
+
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
@@ -151,10 +151,9 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Message.objects.filter(
-            conversation__user=self.request.user,
-            is_deleted=False
-        ).select_related('conversation')
+            conversation__user=self.request.user, is_deleted=False
+        ).select_related("conversation")
 
     def perform_destroy(self, instance):
         instance.is_deleted = True
-        instance.save() 
+        instance.save()

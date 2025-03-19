@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+
 class BasicTest(TestCase):
     def test_basic_addition(self):
         """
@@ -12,4 +13,5 @@ class BasicTest(TestCase):
         Test that we're using the test environment
         """
         from django.conf import settings
-        self.assertEqual(settings.APP_ENVIRONMENT, 'test') 
+
+        self.assertEqual(settings.APP_ENVIRONMENT, "test")

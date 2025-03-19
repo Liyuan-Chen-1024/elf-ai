@@ -14,8 +14,8 @@ from structlog.typing import FilteringBoundLogger
 
 from apps.core.logging import (
     get_request_logger,
-    log_request_started,
     log_request_finished,
+    log_request_started,
 )
 
 logger: FilteringBoundLogger = get_logger(__name__)
@@ -69,24 +69,24 @@ class StructLogMiddleware:
 
         # Get logger with request context
         logger = get_request_logger(request)
-        
+
         # Log request start
         log_request_started(logger, request)
-        
+
         # Process request and measure duration
         start_time = time.perf_counter()
         try:
             response = self.get_response(request)
             duration_ms = (time.perf_counter() - start_time) * 1000
-            
+
             # Log request completion
             log_request_finished(logger, request, response, duration_ms)
-            
+
             return response
-            
+
         except Exception as e:
             duration_ms = (time.perf_counter() - start_time) * 1000
-            
+
             # Log exception with full context
             logger.exception(
                 "http_request_failed",

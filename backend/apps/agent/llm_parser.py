@@ -6,7 +6,6 @@ and identify the most appropriate agent tools to handle them.
 """
 
 import json
-from apps.core.logging import get_logger
 import re
 import traceback
 from typing import Any, Dict, List
@@ -14,6 +13,8 @@ from typing import Any, Dict, List
 from django.conf import settings
 
 import requests
+
+from apps.core.logging import get_logger
 
 from .tools import registry
 from .tools.base import BaseTool, ToolParameterType

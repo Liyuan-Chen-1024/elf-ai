@@ -1,7 +1,6 @@
 """Utilities for epguides API."""
 
 import json
-from apps.core.logging import get_logger
 import re
 import time
 from datetime import date, datetime
@@ -16,6 +15,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 from apps.core.exceptions import EpguidesException
+from apps.core.logging import get_logger
 from apps.shows.models import TVShow
 
 from ..types import DateStr, EpisodeDict, JsonDict

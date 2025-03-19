@@ -1,4 +1,3 @@
-from apps.core.logging import get_logger
 import os
 import random
 import shutil
@@ -6,6 +5,8 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from django.conf import settings
+
+from apps.core.logging import get_logger
 
 UNWANTED_DIR_NAMES: Set[str] = {"screenshots", "screens", "samples", "extras"}
 

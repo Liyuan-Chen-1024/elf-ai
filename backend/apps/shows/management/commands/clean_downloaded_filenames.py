@@ -1,6 +1,5 @@
 """Command to clean downloaded filenames."""
 
-from apps.core.logging import get_logger
 from typing import Any, Optional
 
 from django.core.management.base import BaseCommand, CommandError
@@ -8,6 +7,7 @@ from django.db import models, transaction
 
 from tqdm import tqdm
 
+from apps.core.logging import get_logger
 from apps.shows.models import MediaFile
 
 logger = get_logger(__name__)
