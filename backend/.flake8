@@ -1,0 +1,41 @@
+[flake8]
+# Exclude patterns
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    *.pyc,
+    */migrations/*,
+    venv,
+    .venv,
+    backend/venv,
+    env,
+    .env,
+    .tox,
+    docs,
+    */settings/*
+
+# Line length settings
+max-line-length = 120
+max-doc-length = 120
+
+# Ignore certain errors/warnings
+ignore = D100,D101,D102,D103,D104,D105,D106,D107,D200,D204,D205,D400,D401,W291,W292,W293,W391,F401,F403,F405,F811,F841,W503,W504,E128,E203,E302,E402,E501,E704,E722,E731,B001,B007,B008,C901
+
+# Analysis settings
+count = True
+show-source = True
+statistics = True
+max-complexity = 15
+docstring-max-length = 120
+doctests = True
+
+# Output formatting
+format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
+
+# String formatting
+accept-encodings = utf-8
+inline-quotes = double
+multiline-quotes = double
+docstring-quotes = double 
