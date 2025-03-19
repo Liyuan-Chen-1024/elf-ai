@@ -1,0 +1,61 @@
+# Bandit configuration file for Python security scanning
+
+# Exclude test files and migrations
+exclude_dirs:
+  - 'apps/api/tests'
+  - 'apps/api/*/tests'
+  - 'apps/api/*/migrations'
+  - '*/venv'
+
+# Focus on high and medium severity issues
+skips:
+  # B101: Use of assert - Low risk in most Django contexts
+  - B101
+  # B104: Hardcoded bind to all interfaces - False positives in Django settings
+  - B104 
+  # B110: Try-except-pass - Often used intentionally
+  - B110
+  # B311: Standard pseudo-random generators - Skipped for non-crypto code
+  - B311
+  # B404: import subprocess - Legitimate use in management commands
+  - B404
+  # B603: subprocess with shell=True - Check individually
+  - B603
+
+# Scan targets
+targets:
+  - 'apps/api'
+
+# Severity and confidence thresholds
+any_confidence_level: Medium
+any_severity_level: Medium
+
+# Plugin configurations
+hardcoded_password_string:
+  # Strings to identify as passwords
+  strings:
+    - password
+    - passwd
+    - pwd
+    - secret
+    - token
+    - apikey
+    - api_key
+    - auth
+    - credentials
+
+# Extra checkers for security beyond the defaults
+extra_checks:
+  - try_except_pass:
+      severity: Low
+  - import_pdb:
+      message: "import pdb found - possible debugging code"
+      severity: Low
+  - sql_injection:
+      patterns:
+        - 'execute("SELECT'
+        - "execute('SELECT"
+        - 'raw("SELECT'
+        - "raw('SELECT"
+      message: "Possible SQL injection vulnerability"
+      severity: High 

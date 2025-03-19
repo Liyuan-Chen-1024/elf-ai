@@ -1,19 +1,43 @@
+# =================
+# Frontend (Node.js)
+# =================
+
 # Dependencies
 node_modules/
-.vscode-server
 .pnp
 .pnp.js
 .yarn/install-state.gz
-.venv/
-venv/
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
-*.so
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Testing
 coverage/
+
+# =================
+# Backend (Python)
+# =================
+
+# Virtual Environment
+.venv/
+venv/
+.Python
+
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing
 .coverage
 htmlcov/
 .pytest_cache/
@@ -24,52 +48,72 @@ coverage.xml
 .hypothesis/
 
 # Build
-dist/
-build/
 *.egg-info/
 .eggs/
-.next/
-out/
-
-# Development
-.env
-.env.*
-!.env.example
-*.log
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
-.python-version
-.node-version
 
 # Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Type Checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# =================
 # Database
+# =================
 *.sqlite3
 *.db
 
-# Turborepo
+# =================
+# Development
+# =================
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+.vscode-server/
+
+# Editor Temp Files
+*.swp
+*.swo
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Version Management
+.python-version
+.node-version
+
+# =================
+# Project Specific
+# =================
+
+# Build System
 .turbo
 
-# Vercel
+# Deployment
 .vercel
 
-# Media files
+# Media & Static
 media/
 uploads/
 static/
 !static/.gitkeep
 
 # Cache
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
 .cache/
+__pycache__/
+.ruff_cache/
+
+# Logs
+*.log
+logs/

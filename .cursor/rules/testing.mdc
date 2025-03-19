@@ -1,0 +1,264 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Write and maintain comprehensive tests for all code, both frontend and backend
+globs: ["**/*.{ts,tsx,js,jsx,py}", "**/*.test.{ts,tsx,js,jsx,py}", "**/tests/**/*"]
+alwaysApply: true
+---
+
+# Testing Requirements
+
+All code must be properly tested with appropriate test coverage, both in frontend and backend.
+
+## Frontend Testing (React/TypeScript)
+
+### Test Stack
+- Jest for unit tests
+- React Testing Library for component tests
+- Cypress for E2E tests
+
+### Test Organization
+```
+frontend/
+├── src/
+│   └── components/
+│       └── UserProfile/
+│           ├── UserProfile.tsx
+│           ├── UserProfile.test.tsx    # Unit/component tests
+│           └── UserProfile.e2e.ts      # E2E tests
+└── cypress/
+    └── e2e/
+        └── user-flow.cy.ts
+```
+
+### Frontend Examples
+✅ Good React Component Test:
+```tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { UserProfile } from './UserProfile';
+
+describe('UserProfile', () => {
+  it('should display user information', () => {
+    const user = { name: 'John', email: 'john@example.com' };
+    render(<UserProfile user={user} />);
+    expect(screen.getByText('John')).toBeInTheDocument();
+  });
+
+  it('should handle loading state', () => {
+    render(<UserProfile isLoading={true} />);
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  it('should handle form submission', async () => {
+    const onSubmit = jest.fn();
+    render(<UserProfile onSubmit={onSubmit} />);
+    
+    await fireEvent.change(screen.getByLabelText('Name'), {
+      target: { value: 'John' },
+    });
+    fireEvent.click(screen.getByText('Submit'));
+    
+    expect(onSubmit).toHaveBeenCalledWith({ name: 'John' });
+  });
+});
+```
+
+✅ Good E2E Test:
+```tsx
+describe('User Flow', () => {
+  beforeEach(() => {
+    cy.intercept('GET', '/api/user/*', { fixture: 'user.json' });
+  });
+
+  it('completes login and profile update flow', () => {
+    cy.visit('/login');
+    cy.findByLabelText('Email').type('user@example.com');
+    cy.findByLabelText('Password').type('password123');
+    cy.findByText('Login').click();
+    
+    cy.url().should('include', '/dashboard');
+    cy.findByText('John Doe').should('be.visible');
+  });
+});
+```
+
+### Running Frontend Tests in Docker
+```bash
+# Unit and component tests
+docker-compose exec web npm test
+
+# E2E tests
+docker-compose exec web npm run cypress:run
+
+# With coverage
+docker-compose exec web npm test -- --coverage
+```
+
+## Backend Testing (Django/Python)
+
+### Test Stack
+- Django's TestCase for unit tests
+- pytest for advanced testing features
+- Factory Boy for test data
+- Coverage.py for coverage reporting
+
+### Test Organization
+```
+backend/
+├── apps/
+│   └── users/
+│       ├── tests/
+│       │   ├── __init__.py
+│       │   ├── test_models.py
+│       │   ├── test_views.py
+│       │   ├── test_serializers.py
+│       │   └── factories.py
+│       └── models.py
+└── pytest.ini
+```
+
+### Backend Examples
+✅ Good Model Test:
+```python
+from django.test import TestCase
+from apps.users.models import User
+from apps.users.tests.factories import UserFactory
+
+class UserModelTest(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+
+    def test_user_creation(self):
+        self.assertTrue(isinstance(self.user, User))
+        self.assertEqual(str(self.user), self.user.email)
+
+    def test_user_soft_delete(self):
+        self.user.soft_delete()
+        self.assertFalse(self.user.is_active)
+```
+
+✅ Good API Test:
+```python
+from rest_framework.test import APITestCase
+from rest_framework import status
+from django.urls import reverse
+from apps.users.tests.factories import UserFactory
+
+class UserAPITest(APITestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.client.force_authenticate(user=self.user)
+
+    def test_user_list(self):
+        url = reverse('user-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_user_create(self):
+        url = reverse('user-list')
+        data = {
+            'email': 'new@example.com',
+            'password': 'secure123',
+            'first_name': 'John'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['email'], data['email'])
+```
+
+### Running Backend Tests in Docker
+```bash
+# Run all tests
+docker-compose exec api python manage.py test
+
+# Run with pytest
+docker-compose exec api pytest
+
+# With coverage
+docker-compose exec api coverage run manage.py test
+docker-compose exec api coverage report
+```
+
+## Integration Testing
+
+### API Integration Tests
+Test frontend-backend integration using real API calls:
+```tsx
+describe('API Integration', () => {
+  it('successfully fetches user data', async () => {
+    const response = await fetch('/api/users/me');
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toHaveProperty('email');
+  });
+});
+```
+
+### End-to-End Flow Tests
+Test complete user flows through the entire stack:
+```tsx
+describe('Complete User Flow', () => {
+  it('registers, logs in, and updates profile', () => {
+    // Registration
+    cy.visit('/register');
+    cy.fillRegistrationForm();
+    
+    // Login
+    cy.login();
+    
+    // Profile Update
+    cy.visit('/profile');
+    cy.updateProfile();
+    
+    // Verify Updates
+    cy.verifyProfileUpdates();
+  });
+});
+```
+
+## Test Coverage Requirements
+
+### Frontend Coverage
+- Unit tests for utility functions and hooks
+- Component tests for all React components
+- Integration tests for API calls
+- E2E tests for critical user flows
+- Minimum 80overage for components and utils
+
+### Backend Coverage
+- Unit tests for models and utilities
+- Integration tests for views/viewsets
+- API endpoint tests
+- Permission and authentication tests
+- Minimum 90overage for models and views
+
+## Best Practices
+- Write tests before fixing bugs
+- Follow AAA pattern (Arrange, Act, Assert)
+- Use factories and fixtures for test data
+- Mock external services appropriately
+- Test edge cases and error states
+- Keep tests focused and maintainable
+- Run tests in CI/CD pipeline
+- Monitor test coverage trends
+
+## Common Mistakes to Avoid
+- ❌ Testing implementation details
+- ❌ Brittle tests dependent on UI structure
+- ❌ Missing error case tests
+- ❌ Inadequate mocking of external services
+- ❌ Not testing permissions and authentication
+- ❌ Slow tests due to improper setup
+- ❌ Duplicate test code
+- ❌ Testing trivial code
+
+## Performance Testing
+- Load testing with locust or k6
+- API response time benchmarks
+- Frontend performance metrics
+- Database query optimization tests
+- Caching effectiveness tests

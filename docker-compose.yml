@@ -1,52 +1,39 @@
 services:
-  api:
+  backend:
     build:
-      context: ./apps/api
+      context: ./backend
       dockerfile: Dockerfile
-      target: development
+      target: ${APP_ENVIRONMENT}
     restart: unless-stopped
     networks:
       - elfai-network
     ports:
-      - "8000:8000"
-    command: python manage.py runserver 0.0.0.0:8000
+      - "${API_PORT}:${API_PORT}"
+    command: python manage.py runserver 0.0.0.0:${API_PORT}
     volumes:
-      - ./apps/api:/app
+      - ./backend:/app
       - media-data:/app/media
       - ./.vscode-server:/root/.vscode-server
     environment:
       - PYTHONPATH=/app
-      - DJANGO_SETTINGS_MODULE=config.settings.development
-      - DJANGO_ENV=development
-      - DATABASE_URL=mysql://elfai:elfai@db:3306/elfai
-      - REDIS_URL=redis://redis:6379/0
-      - DJANGO_SECRET_KEY=dev-secret-key
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
-      - CORS_ALLOWED_ORIGINS=http://localhost:3000
-      - DEBUG=1
-    depends_on:
-      - db
-      - redis
+      - DJANGO_SETTINGS_MODULE=config.settings.${APP_ENVIRONMENT}
+      - DJANGO_ENV=${APP_ENVIRONMENT}
+      - DATABASE_URL=mysql://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}
+      - REDIS_URL=redis://redis:${REDIS_INTERNAL_PORT}/0
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - LLM_API_URL=${LLM_API_URL}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - MEDIA_ROOT=${MEDIA_ROOT}
+      - MEDIA_URL=${MEDIA_URL}
+      - STATIC_ROOT=${STATIC_ROOT}
 
-  web:
-    build:
-      context: ./apps/client/web
-      dockerfile: Dockerfile
-      target: development
-    restart: unless-stopped
-    networks:
-      - elfai-network
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./apps/client/web:/app
-      - /app/node_modules
-      - ./.vscode-server:/root/.vscode-server
-    environment:
-      - VITE_API_URL=http://localhost:8000/api/v1
-      - NODE_ENV=development
-    depends_on:
-      - api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 
   db:
     image: mysql:8.0
@@ -54,20 +41,24 @@ services:
     networks:
       - elfai-network
     ports:
-      - "3306:3306"
+      - "${DB_PORT}:${DB_PORT}"
     environment:
-      - MYSQL_DATABASE=elfai
-      - MYSQL_USER=elfai
-      - MYSQL_PASSWORD=elfai
-      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
     command: --default-authentication-plugin=mysql_native_password
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: >
+        mysqladmin ping -h localhost &&
+        mysql -h localhost -u $$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1 FROM ${DB_NAME}.information_schema.tables LIMIT 1;' &&
+        mysql -h localhost -u $$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SHOW GRANTS;' | grep 'ALL PRIVILEGES'
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   redis:
     image: redis:7.0
@@ -75,7 +66,7 @@ services:
     networks:
       - elfai-network
     ports:
-      - "6380:6379"
+      - "${REDIS_PORT}:${REDIS_INTERNAL_PORT}"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -88,7 +79,6 @@ volumes:
   mysql-data:
   redis-data:
   media-data:
-
 
 networks:
   elfai-network:

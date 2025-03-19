@@ -1,0 +1,138 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Use relative imports for local modules and organize imports properly for both frontend and backend
+globs: ["**/*.{ts,tsx,js,jsx,py}"]
+alwaysApply: true
+---
+
+# Import Rules and Organization
+
+Use relative imports for local modules and follow proper import organization for both frontend and backend code.
+
+## Frontend Import Organization (React/TypeScript)
+
+### Import Order
+1. External dependencies
+2. Internal shared modules
+3. Local components/modules
+4. Types
+5. Styles
+
+### Examples
+✅ Good:
+```tsx
+// External dependencies
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
+// Internal shared modules
+import { useAuth } from '../../shared/hooks/useAuth';
+import { api } from '../../shared/api';
+
+// Local components/modules
+import { UserAvatar } from './UserAvatar';
+import { UserSettings } from './UserSettings';
+
+// Types
+import type { User } from './types';
+
+// Styles
+import './UserProfile.css';
+```
+
+❌ Bad:
+```tsx
+import { UserSettings } from './UserSettings';
+import { api } from '@/shared/api';  // Don't use absolute paths
+import './UserProfile.css';
+import type { User } from './types';
+import React from 'react';  // No organization
+```
+
+## Backend Import Organization (Django/Python)
+
+### Import Order
+1. Standard library imports
+2. Third-party imports
+3. Django imports
+4. Local app imports
+
+### Examples
+✅ Good:
+```python
+# Standard library imports
+import os
+from datetime import datetime
+
+# Third-party imports
+import django
+from rest_framework import viewsets
+
+# Django imports
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+# Local app imports
+from apps.users.models import User
+from apps.core.utils import get_timestamp
+```
+
+❌ Bad:
+```python
+from django.db import models
+import os
+from apps.users.models import User
+from datetime import datetime
+import django
+from rest_framework import viewsets
+from apps.core.utils import get_timestamp
+from django.contrib.auth.models import AbstractUser
+```
+
+## Path Aliases
+
+### Frontend
+- Avoid using path aliases like `@/components`
+- Use relative paths instead: `../../components`
+- Exception: External module aliases defined in tsconfig.json
+
+### Backend
+- Use relative imports for local modules
+- Use absolute imports for Django apps
+- Follow Django's app naming convention
+
+## Auto-organization
+
+### Frontend
+- Enable "organize imports" on save in your editor settings
+- Use ESLint import rules
+- Run `docker-compose exec web npm run lint` to check import organization
+
+### Backend
+- Use isort for import sorting
+- Configure isort in pyproject.toml
+- Run `docker-compose exec api isort .` to sort imports
+
+## Best Practices
+- Keep imports clean and organized
+- Remove unused imports
+- Use explicit imports
+- Group related imports
+- Use relative imports for local modules
+- Use absolute imports for external modules
+- Follow language-specific conventions
+- Use import aliases when needed
+
+## Common Mistakes to Avoid
+- ❌ Mixing import styles
+- ❌ Using wildcard imports
+- ❌ Circular imports
+- ❌ Unused imports
+- ❌ Inconsistent import ordering
+- ❌ Using absolute paths unnecessarily
+- ❌ Missing type imports
+- ❌ Incorrect import paths

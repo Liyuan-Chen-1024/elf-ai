@@ -1,0 +1,236 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Follow Django best practices and conventions
+globs: ["**/*.py", "**/manage.py", "**/urls.py", "**/settings/*.py"]
+alwaysApply: true
+---
+
+# Django Development Guidelines
+
+Follow Django best practices and conventions for maintainable and secure code.
+
+## Project Structure
+
+The Django backend lives in the `apps/api` directory. Key configuration files:
+- `pyproject.toml` - Project configuration and dependencies
+- `requirements-dev.txt` - Development dependencies
+- `mypy.ini` - Type checking configuration
+- `.bandit.yaml` - Security checking configuration
+- `.pre-commit-config.yaml` - Pre-commit hooks configuration
+
+For detailed project structure, refer to the actual code:
+```bash
+# View Django API structure
+ls apps/api/
+```
+
+## Models
+✅ Good:
+```python
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.utils.translation import gettext_lazy as _
+
+class User(AbstractUser):
+    bio = models.TextField(blank=True)
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('user')
+        verbose_name_plural = _('users')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.email
+```
+
+❌ Bad:
+```python
+class User(models.Model):
+    name = models.CharField(max_length=255)  # No validation
+    password = models.CharField(max_length=255)  # Unsafe password storage
+    created = models.DateTimeField()  # No auto_now_add
+```
+
+## Views
+✅ Good:
+```python
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return self.queryset.filter(is_active=True)
+
+    @action(detail=True, methods=['post'])
+    def activate(self, request, pk=None):
+        user = self.get_object()
+        user.is_active = True
+        user.save()
+        return Response({'status': 'user activated'})
+```
+
+## Serializers
+✅ Good:
+```python
+from rest_framework import serializers
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'password', 'first_name', 'last_name']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+```
+
+## URLs
+✅ Good:
+```python
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register('users', UserViewSet)
+
+urlpatterns = [
+    path('api/', include(router.urls)),
+    path('api/auth/', include('dj_rest_auth.urls')),
+]
+```
+
+## Settings
+✅ Good:
+```python
+# settings/base.py
+from pathlib import Path
+from decouple import config
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = config('DJANGO_SECRET_KEY')
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
+    'apps.users',
+    'apps.core',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+```
+
+## Testing
+✅ Good:
+```python
+from django.test import TestCase
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+class UserTests(APITestCase):
+    def setUp(self):
+        self.user_data = {
+            'email': 'test@example.com',
+            'password': 'securepassword123',
+        }
+        self.user = User.objects.create_user(**self.user_data)
+        self.client.force_authenticate(user=self.user)
+
+    def test_create_user(self):
+        response = self.client.post(reverse('user-list'), self.user_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+```
+
+## Celery Tasks
+✅ Good:
+```python
+from celery import shared_task
+from django.core.mail import send_mail
+
+@shared_task(bind=True, max_retries=3)
+def send_welcome_email(self, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+        send_mail(
+            'Welcome!',
+            f'Welcome {user.email}!',
+            'from@example.com',
+            [user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        self.retry(exc=e, countdown=60)
+```
+
+## Best Practices
+- Use Django's built-in security features
+- Follow REST framework conventions
+- Implement proper authentication
+- Use environment variables for secrets
+- Write comprehensive tests
+- Use Django ORM features properly
+- Implement proper error handling
+- Use Django's form validation
+- Implement proper caching
+- Use Django's admin interface effectively
+
+## Common Mistakes to Avoid
+- ❌ Storing sensitive data in code
+- ❌ Using raw SQL queries unnecessarily
+- ❌ Bypassing model validation
+- ❌ Missing database indexes
+- ❌ Not handling file uploads properly
+- ❌ Inadequate error handling
+- ❌ Missing API documentation
+- ❌ Not using Django's security features
+
+## Security Best Practices
+- Enable CSRF protection
+- Use secure password hashing
+- Implement proper authentication
+- Use HTTPS in production
+- Sanitize user input
+- Implement rate limiting
+- Use secure session configuration
+- Implement proper permissions
+
+## Performance Optimization
+- Use database indexes
+- Implement caching
+- Optimize database queries
+- Use select_related and prefetch_related
+- Implement pagination
+- Use async views when appropriate
+- Profile and monitor performance
+- Optimize static files

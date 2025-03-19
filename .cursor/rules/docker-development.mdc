@@ -1,0 +1,203 @@
+---
+description: All development must occur within Docker containers
+globs: ["**/*.{py,ts,tsx,js,jsx,yml,yaml,json}"]
+alwaysApply: true
+---
+
+# Docker Development Rules
+
+## Container Structure
+
+Our Docker setup is defined in the following files:
+- `docker-compose.yml` - Main development configuration
+- `docker-compose.prod.yml` - Production configuration
+- `docker-compose.debug.yml` - Debug configuration
+- `.devcontainer/` - VS Code dev container configuration
+
+The development environment includes:
+- Frontend container (React/TypeScript)
+- Backend container (Django/Python)
+- Database container (PostgreSQL)
+- Redis container (for caching and Celery)
+- Celery worker container (for async tasks)
+
+## Development Workflow
+
+### Starting the Environment
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
+### Frontend Development
+
+```bash
+# Install dependencies
+docker-compose exec frontend npm install
+
+# Start development server
+docker-compose exec frontend npm run dev
+
+# Run tests
+docker-compose exec frontend npm test
+
+# Build for production
+docker-compose exec frontend npm run build
+```
+
+### Backend Development
+
+```bash
+# Install dependencies
+docker-compose exec api pip install -r requirements.txt
+
+# Run migrations
+docker-compose exec api python manage.py migrate
+
+# Start development server
+docker-compose exec api python manage.py runserver 0.0.0.0:8000
+
+# Run tests
+docker-compose exec api python manage.py test
+
+# Create superuser
+docker-compose exec api python manage.py createsuperuser
+```
+
+### Database Management
+
+```bash
+# Access PostgreSQL
+docker-compose exec db psql -U postgres
+
+# Backup database
+docker-compose exec db pg_dump -U postgres > backup.sql
+
+# Restore database
+docker-compose exec -T db psql -U postgres < backup.sql
+```
+
+### Celery Tasks
+
+```bash
+# Start Celery worker
+docker-compose exec celery celery -A config worker -l INFO
+
+# Start Celery beat (for scheduled tasks)
+docker-compose exec celery celery -A config beat -l INFO
+```
+
+## Debugging
+
+### VS Code Integration
+
+1. Install the "Remote - Containers" extension
+2. Open the project in VS Code
+3. Click "Reopen in Container" when prompted
+4. Use the integrated debugger for both frontend and backend
+
+### Container Debugging
+
+```bash
+# View container logs
+docker-compose logs -f [service_name]
+
+# Access container shell
+docker-compose exec [service_name] /bin/bash
+
+# View container status
+docker-compose ps
+
+# Check container health
+docker-compose ps --format "table {{.Name}}\t{{.Status}}"
+```
+
+## Environment Configuration
+
+Environment variables are managed through:
+- `.env` file for local development
+- `.env.example` for documentation
+- Docker Compose environment files for different environments
+
+## Best Practices
+
+1. Always use Docker Compose commands instead of direct Docker commands
+2. Keep environment variables in `.env` file
+3. Use volume mounts for development
+4. Follow the service naming convention in docker-compose.yml
+5. Use health checks for service dependencies
+6. Keep container images up to date
+7. Use multi-stage builds for production
+
+## Common Mistakes to Avoid
+
+1. Running commands directly on host machine
+2. Not using volume mounts for development
+3. Hardcoding environment variables
+4. Not cleaning up unused containers/images
+5. Ignoring health checks
+6. Using root user in containers
+7. Not following service naming conventions
+
+## Performance Optimization
+
+1. Use Docker layer caching effectively
+2. Implement proper health checks
+3. Use appropriate resource limits
+4. Optimize volume mounts
+5. Use multi-stage builds
+6. Keep images minimal
+7. Use Docker Compose profiles
+
+## Troubleshooting
+
+Common issues and solutions:
+
+1. Port conflicts:
+   ```bash
+   # Check port usage
+   docker-compose ps
+   # Stop conflicting containers
+   docker-compose down
+   ```
+
+2. Volume issues:
+   ```bash
+   # Rebuild volumes
+   docker-compose down -v
+   docker-compose up -d
+   ```
+
+3. Network issues:
+   ```bash
+   # Rebuild network
+   docker-compose down --remove-orphans
+   docker-compose up -d
+   ```
+
+4. Permission issues:
+   ```bash
+   # Fix permissions
+   docker-compose exec api chown -R 1000:1000 /app
+   ```
+
+## Production Considerations
+
+1. Use production-specific compose file:
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+2. Enable SSL/TLS
+3. Use proper secrets management
+4. Implement proper logging
+5. Set up monitoring
+6. Configure backups
+7. Use production-grade database settings

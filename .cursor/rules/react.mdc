@@ -1,0 +1,250 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Follow React best practices and conventions for maintainable and performant frontend code
+globs: ["**/*.{tsx,jsx}", "**/components/**/*", "**/pages/**/*", "**/hooks/**/*"]
+alwaysApply: true
+---
+
+# React Development Guidelines
+
+Follow React best practices and conventions for maintainable and performant frontend code.
+
+## Project Structure
+
+The React frontend is split across:
+- `apps/client/` - Client application code
+- `src/` - Source directory containing:
+  - `features/` - Feature-based components and logic
+  - `styles/` - Global styles and theme configuration
+
+Key configuration files:
+- `package.json` - Project dependencies and scripts
+- `tsconfig.json` - TypeScript configuration
+- `.eslintrc.js` - ESLint configuration
+- `.prettierrc` - Code formatting configuration
+- `vite-env.d.ts` - Vite environment types
+
+For detailed project structure, refer to the actual code:
+```bash
+# View client structure
+ls apps/client/
+
+# View source structure
+ls src/
+ls src/features/
+ls src/styles/
+```
+
+## Components
+✅ Good:
+```tsx
+import React from 'react';
+import styles from './Button.module.css';
+
+interface ButtonProps {
+  onClick: () => void;
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary';
+  disabled?: boolean;
+}
+
+export const Button: React.FC<ButtonProps> = ({
+  onClick,
+  children,
+  variant = 'primary',
+  disabled = false,
+}) => (
+  <button
+    className={styles[variant]}
+    onClick={onClick}
+    disabled={disabled}
+    type="button"
+  >
+    {children}
+  </button>
+);
+```
+
+❌ Bad:
+```tsx
+function Button(props) {  // No TypeScript
+  return <button onClick={props.onClick}>{props.children}</button>;
+}
+```
+
+## Hooks
+✅ Good:
+```tsx
+import { useState, useEffect } from 'react';
+
+interface User {
+  id: string;
+  name: string;
+}
+
+export const useUser = (userId: string) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch();
+        const data = await response.json();
+        setUser(data);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Unknown error'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userId]);
+
+  return { user, loading, error };
+};
+```
+
+## Pages
+✅ Good:
+```tsx
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useAuth } from '@/hooks/useAuth';
+import { LoginForm } from '@/components/features/Auth/LoginForm';
+
+export default function LoginPage() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
+
+  return (
+    <div className="container">
+      <h1>Login</h1>
+      <LoginForm />
+    </div>
+  );
+}
+```
+
+## API Integration
+✅ Good:
+```tsx
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = ;
+  }
+  return config;
+});
+
+export const authApi = {
+  login: async (credentials: LoginCredentials) => {
+    const { data } = await api.post('/auth/login', credentials);
+    return data;
+  },
+};
+```
+
+## State Management
+✅ Good:
+```tsx
+import { create } from 'zustand';
+
+interface AuthStore {
+  user: User | null;
+  setUser: (user: User | null) => void;
+  logout: () => void;
+}
+
+export const useAuthStore = create<AuthStore>((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+  logout: () => set({ user: null }),
+}));
+```
+
+## Testing
+✅ Good:
+```tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('calls onClick when clicked', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick}>Click me</Button>);
+    
+    fireEvent.click(screen.getByText('Click me'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('is disabled when disabled prop is true', () => {
+    render(<Button onClick={() => {}} disabled>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeDisabled();
+  });
+});
+```
+
+## Best Practices
+- Use TypeScript for type safety
+- Implement proper error boundaries
+- Use React.memo for performance optimization
+- Implement proper form validation
+- Use proper loading states
+- Implement proper error handling
+- Use proper routing strategies
+- Implement proper authentication flow
+- Use environment variables
+- Follow component composition patterns
+
+## Common Mistakes to Avoid
+- ❌ Using any type in TypeScript
+- ❌ Not handling loading/error states
+- ❌ Prop drilling (use context or state management)
+- ❌ Not memoizing expensive computations
+- ❌ Not handling side effects properly
+- ❌ Not implementing proper form validation
+- ❌ Not using proper key props in lists
+- ❌ Not implementing proper error boundaries
+
+## Performance Best Practices
+- Use React.memo for pure components
+- Implement proper code splitting
+- Use lazy loading for routes
+- Optimize images and assets
+- Use proper caching strategies
+- Implement proper bundle optimization
+- Use proper development tools
+- Monitor performance metrics
+
+## Security Best Practices
+- Sanitize user input
+- Use proper authentication
+- Implement proper CSRF protection
+- Use HTTPS
+- Implement proper XSS protection
+- Use proper session management
+- Implement proper access control
+- Use secure dependencies
