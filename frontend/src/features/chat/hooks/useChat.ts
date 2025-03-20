@@ -2,362 +2,157 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { Conversation, Message, UUID } from '../types';
 import { messagesApi } from '../api/messages.api';
+import { API_BASE_URL } from '../../../shared/api/api-client';
 
 interface ChatState {
   conversations: Conversation[];
   currentConversation: Conversation | null;
   isLoading: boolean;
   error: string | null;
-  lastTokens: string[];
-  messages: Message[];
+  isStreaming: boolean;
 }
 
 export const useChat = () => {
-  const [state, setState] = useState<ChatState>({
-    conversations: [],
-    currentConversation: null,
-    isLoading: false,
-    error: null,
-    lastTokens: [],
-    messages: [],
-  });
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
 
-  const isStreamingRef = useRef(false);
-  const currentAssistantMessageRef = useRef<Message | null>(null);
-  const backendMessageIdRef = useRef<string>('');
+  const currentConversationIdRef = useRef<UUID | null>(null);
 
-  const updateConversations = useCallback((
-    newConversations: Conversation[] | ((prev: Conversation[]) => Conversation[])
-  ) => {
-    setState((prev) => ({
-      ...prev,
-      conversations:
-        typeof newConversations === 'function'
-          ? newConversations(prev.conversations)
-          : newConversations,
-    }));
-  }, []);
-
-  const updateCurrentConversation = useCallback((conversation: Conversation | null) => {
-    console.log('Updating current conversation:', {
-      previous: state.currentConversation,
-      new: conversation,
-    });
-    
-    // Only update if the conversation has actually changed
-    if (
-      (!state.currentConversation && conversation) ||
-      (state.currentConversation && !conversation) ||
-      (state.currentConversation?.id !== conversation?.id) ||
-      (state.currentConversation?.messages?.length !== conversation?.messages?.length)
-    ) {
-      setState((prev) => ({
-        ...prev,
-        currentConversation: conversation,
-      }));
-    }
-  }, [state.currentConversation]);
-
-  const setError = useCallback((error: string | null) => {
-    setState((prev) => ({
-      ...prev,
-      error,
-    }));
-  }, []);
-
-  const setIsLoading = useCallback((isLoading: boolean) => {
-    setState((prev) => ({
-      ...prev,
-      isLoading,
-    }));
-  }, []);
-
-  const setLastTokens = useCallback((lastTokens: string[]) => {
-    setState((prev) => ({
-      ...prev,
-      lastTokens,
-    }));
-  }, []);
-
-  const setMessages = useCallback((messages: Message[]) => {
-    setState((prev) => ({
-      ...prev,
-      messages,
-    }));
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
   const fetchConversations = useCallback(async () => {
     try {
       setIsLoading(true);
-      const conversations = await messagesApi.getConversations();
-      updateConversations(conversations);
+      const data = await messagesApi.getConversations();
+      console.log('Fetched conversations:', data);
+      setConversations(data);
+      return data;
     } catch (error) {
-      setError('Failed to fetch conversations');
       console.error('Failed to fetch conversations:', error);
+      setError('Failed to fetch conversations');
+      return [];
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, updateConversations, setError]);
+  }, []);
 
-  const selectConversation = useCallback(async (conversation: Conversation) => {
-    console.log('Selecting conversation:', {
-      conversation,
-      currentId: state.currentConversation?.id,
-    });
+  const refreshCurrentConversation = useCallback(async () => {
+    if (!currentConversationIdRef.current) return;
     
-    // Only update if selecting a different conversation
-    if (conversation.id !== state.currentConversation?.id) {
-      try {
-        setIsLoading(true);
-        const messages = await messagesApi.getMessages(conversation.id);
-        console.log('Fetched messages for conversation:', {
-          conversationId: conversation.id,
-          messageCount: messages.length,
-          messages,
+    try {
+      const convId = currentConversationIdRef.current;
+      console.log('Refreshing current conversation:', convId);
+      
+      const timestamp = new Date().getTime();
+      const url = `${API_BASE_URL}/chat/conversations/${convId}/messages/?_=${timestamp}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Token ${localStorage.getItem('authToken') || localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching messages: ${response.status}`);
+      }
+      
+      const messages = await response.json();
+      console.log('Refreshed messages:', messages);
+      
+      if (convId === currentConversationIdRef.current) {
+        setCurrentConversation(prev => {
+          if (!prev) return null;
+          
+          return {
+            ...prev,
+            messages: [...messages],
+          };
         });
-        
-        // Update the conversation with fetched messages
-        const updatedConversation = {
-          ...conversation,
-          messages: messages,
-        };
-        
-        // Update the conversations list with the new messages
-        updateConversations((prevConversations) =>
-          prevConversations.map((conv) =>
-            conv.id === conversation.id ? updatedConversation : conv
-          )
-        );
-        
-        // Update the current conversation
-        updateCurrentConversation(updatedConversation);
-      } catch (error) {
-        console.error('Failed to fetch messages for conversation:', error);
-        setError('Failed to fetch messages');
-      } finally {
-        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error refreshing conversation:', error);
+      if (currentConversation?.id === currentConversationIdRef.current) {
+        setError('Failed to refresh conversation');
       }
     }
-  }, [state.currentConversation?.id, setIsLoading, updateConversations, updateCurrentConversation, setError]);
+  }, [currentConversation]);
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, [setError]);
-
-  // Fetch conversations on mount
-  useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
-
-  /**
-   * Send a message in the current conversation
-   */
-  const sendMessage = async (content: string) => {
-    if (!state.currentConversation) {
-      console.error('Cannot send message: No conversation selected');
+  const selectConversation = useCallback(async (conversation: Conversation | UUID) => {
+    const convId = typeof conversation === 'object' ? conversation.id : conversation;
+    
+    if (currentConversationIdRef.current === convId) {
+      console.log('Already on conversation:', convId);
       return;
     }
-
-    setIsLoading(true);
-    setError(null);
-
+    
+    currentConversationIdRef.current = convId;
+    console.log('Selecting conversation:', convId);
+    
     try {
-      console.log(`Sending message in conversation ${state.currentConversation.id}:`, content);
+      setIsLoading(true);
       
-      // Create temporary user message that will show immediately
-      const tempUserMessage = {
-        id: `temp-user-${Date.now()}`,
-        conversation_id: state.currentConversation.id,
-        content,
-        role: 'user',
-        timestamp: new Date().toISOString(),
-        sender: { id: 'user', name: 'You' },
-        isEdited: false,
-      };
-      
-      // Create a temporary assistant message that will be updated with streaming tokens
-      const tempAssistantMessage = {
-        id: `temp-assistant-${Date.now()}`,
-        conversation_id: state.currentConversation.id,
-        content: '',
-        role: 'assistant',
-        timestamp: new Date().toISOString(),
-        sender: { id: 'assistant', name: 'Elf Agent' },
-        isEdited: false,
-      };
-      
-      // Update the current conversation with the temporary messages
-      const updatedConversation = {
-        ...state.currentConversation,
-        messages: [...state.currentConversation.messages, tempUserMessage, tempAssistantMessage],
-      };
-      
-      // Update state to show the messages immediately
-      updateCurrentConversation(updatedConversation);
-      
-      // Set up streaming handlers
-      let assistantResponse = '';
-      
-      const handleToken = (token: string) => {
-        console.log('Received token:', token);
-        assistantResponse += token;
+      if (typeof conversation === 'object' && conversation.messages) {
+        setCurrentConversation(conversation);
+      } else {
+        const existingConv = conversations.find(c => c.id === convId);
         
-        // Update the assistant message with the current content
-        const updatedMessages = updatedConversation.messages.map(msg => 
-          msg.id === tempAssistantMessage.id 
-            ? { ...msg, content: assistantResponse } 
-            : msg
-        );
+        if (existingConv) {
+          setCurrentConversation(existingConv);
+        }
         
-        // Update the conversation with the new content
-        updateCurrentConversation({
-          ...updatedConversation,
-          messages: updatedMessages,
-        });
-      };
-      
-      const handleError = (error: string) => {
-        console.error('Error streaming message:', error);
-        setError(error);
-        setIsLoading(false);
-      };
-      
-      const handleComplete = async () => {
-        console.log('Message streaming completed');
-        setIsLoading(false);
+        const messages = await messagesApi.getMessages(convId);
         
-        // Refresh the conversation to get the actual messages with proper IDs
-        if (state.currentConversation) {
-          try {
-            await fetchConversations();
-            const refreshedConversations = await messagesApi.getConversations();
-            const currentConversation = refreshedConversations.find(
-              c => c.id === state.currentConversation?.id
-            );
+        if (convId === currentConversationIdRef.current) {
+          if (existingConv) {
+            setCurrentConversation({
+              ...existingConv,
+              messages
+            });
+          } else {
+            const convs = await fetchConversations();
+            const freshConv = convs.find(c => c.id === convId);
             
-            if (currentConversation) {
-              selectConversation(currentConversation);
+            if (freshConv && convId === currentConversationIdRef.current) {
+              setCurrentConversation({
+                ...freshConv,
+                messages
+              });
             }
-          } catch (error) {
-            console.error('Error refreshing conversation after streaming:', error);
           }
         }
-      };
-      
-      // Start streaming
-      await messagesApi.streamMessage(
-        state.currentConversation.id,
-        content,
-        handleToken,
-        handleError,
-        handleComplete
-      );
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setError(error instanceof Error ? error.message : String(error));
-      setIsLoading(false);
-    }
-  };
-
-  const editMessage = async (messageId: UUID, content: string) => {
-    if (!state.currentConversation) {
-      setError('No conversation selected');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const updatedMessage = await messagesApi.updateMessage(messageId, content);
-      updateCurrentConversation({
-        ...state.currentConversation,
-        messages: state.currentConversation.messages.map((m) =>
-          m.id === messageId ? updatedMessage : m
-        ),
-      });
-    } catch (error) {
-      setError('Failed to edit message');
-      console.error('Failed to edit message:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const archiveConversation = async (id: UUID) => {
-    try {
-      setIsLoading(true);
-      await messagesApi.archiveConversation(id);
-      const conversations = await messagesApi.getConversations();
-      updateConversations(conversations);
-      if (state.currentConversation?.id === id) {
-        const archivedConversation = conversations.find(c => c.id === id);
-        updateCurrentConversation(archivedConversation || null);
       }
     } catch (error) {
-      setError('Failed to archive conversation');
-      console.error('Failed to archive conversation:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteConversation = useCallback(async (id: UUID) => {
-    try {
-      setIsLoading(true);
-      console.log('Deleting conversation:', id);
-      
-      await messagesApi.deleteConversation(id);
-      
-      // Remove from conversations list
-      updateConversations((prev) => prev.filter((conv) => conv.id !== id));
-      
-      // If this was the current conversation, clear it
-      if (state.currentConversation?.id === id) {
-        updateCurrentConversation(null);
+      console.error('Failed to select conversation:', error);
+      if (convId === currentConversationIdRef.current) {
+        setError('Failed to load conversation');
       }
-      
-      console.log('Successfully deleted conversation:', id);
-    } catch (error) {
-      console.error('Failed to delete conversation:', error);
-      setError('Failed to delete conversation');
     } finally {
       setIsLoading(false);
     }
-  }, [state.currentConversation?.id, setIsLoading, updateConversations, updateCurrentConversation, setError]);
-
-  const renameConversation = async (id: UUID, title: string) => {
-    try {
-      setIsLoading(true);
-      await messagesApi.renameConversation(id, title);
-      const conversations = await messagesApi.getConversations();
-      updateConversations(conversations);
-      if (state.currentConversation?.id === id) {
-        const renamedConversation = conversations.find(c => c.id === id);
-        updateCurrentConversation(renamedConversation || null);
-      }
-    } catch (error) {
-      setError('Failed to rename conversation');
-      console.error('Failed to rename conversation:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [conversations, fetchConversations]);
 
   const createConversation = useCallback(async (title: string) => {
     try {
       setIsLoading(true);
-      console.log('Creating new conversation with title:', title);
       
       const newConversation = await messagesApi.createConversation(title);
-      console.log('Created new conversation:', newConversation);
       
-      // Initialize with empty messages array
       const conversationWithMessages = {
         ...newConversation,
-        messages: [],
+        messages: []
       };
       
-      updateConversations((prev) => [...prev, conversationWithMessages]);
-      updateCurrentConversation(conversationWithMessages);
+      setConversations(prev => [...prev, conversationWithMessages]);
+      
+      currentConversationIdRef.current = conversationWithMessages.id;
+      setCurrentConversation(conversationWithMessages);
       
       return conversationWithMessages;
     } catch (error) {
@@ -367,19 +162,270 @@ export const useChat = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, updateConversations, updateCurrentConversation, setError]);
+  }, []);
+
+  const deleteConversation = useCallback(async (id: UUID) => {
+    try {
+      setIsLoading(true);
+      
+      await messagesApi.deleteConversation(id);
+      
+      setConversations(prev => prev.filter(c => c.id !== id));
+      
+      if (currentConversationIdRef.current === id) {
+        currentConversationIdRef.current = null;
+        setCurrentConversation(null);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+      setError('Failed to delete conversation');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const renameConversation = useCallback(async (id: UUID, title: string) => {
+    try {
+      setIsLoading(true);
+      
+      await messagesApi.renameConversation(id, title);
+      
+      setConversations(prev => 
+        prev.map(c => c.id === id ? { ...c, title } : c)
+      );
+      
+      if (currentConversation?.id === id) {
+        setCurrentConversation(prev => 
+          prev ? { ...prev, title } : null
+        );
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to rename conversation:', error);
+      setError('Failed to rename conversation');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentConversation]);
+
+  const archiveConversation = useCallback(async (id: UUID) => {
+    try {
+      setIsLoading(true);
+      
+      await messagesApi.archiveConversation(id);
+      
+      await fetchConversations();
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to archive conversation:', error);
+      setError('Failed to archive conversation');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchConversations]);
+
+  const editMessage = useCallback(async (messageId: UUID | string, content: string) => {
+    if (!currentConversation) {
+      setError('No conversation selected');
+      return false;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      const updatedMessage = await messagesApi.updateMessage(messageId, content);
+      
+      setCurrentConversation(prev => {
+        if (!prev) return null;
+        
+        return {
+          ...prev,
+          messages: prev.messages.map(m => 
+            m.id === messageId ? updatedMessage : m
+          )
+        };
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+      setError('Failed to edit message');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentConversation]);
+
+  const sendMessage = useCallback(async (content: string) => {
+    if (!currentConversation) {
+      console.error('Cannot send message: No conversation selected');
+      return false;
+    }
+    
+    const convId = currentConversation.id;
+    const conversationRef = { ...currentConversation };
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      setIsStreaming(true);
+      
+      console.log(`Sending message in conversation ${convId}:`, content);
+      
+      const tempUserMessage = {
+        id: `temp-user-${Date.now()}`,
+        conversation_id: convId,
+        content,
+        role: 'user',
+        timestamp: new Date().toISOString(),
+        sender: { id: 'user', name: 'You' },
+        isEdited: false,
+      };
+      
+      const tempAssistantMessage = {
+        id: `temp-assistant-${Date.now()}`,
+        conversation_id: convId,
+        content: 'Thinking...',
+        role: 'assistant',
+        timestamp: new Date().toISOString(),
+        sender: { id: 'assistant', name: 'Elf Agent' },
+        isEdited: false,
+        isThinking: true,
+      };
+      
+      if (currentConversationIdRef.current !== convId) {
+        console.warn('Conversation changed before message could be sent');
+        return false;
+      }
+      
+      setCurrentConversation(prev => {
+        if (!prev || prev.id !== convId) return prev;
+        
+        return {
+          ...prev,
+          messages: [...prev.messages, tempUserMessage, tempAssistantMessage]
+        };
+      });
+      
+      const assistantMessageId = tempAssistantMessage.id;
+      let assistantResponse = '';
+      
+      const handleToken = (token: string) => {
+        assistantResponse += token;
+        
+        if (currentConversationIdRef.current !== convId) return;
+        
+        setCurrentConversation(prev => {
+          if (!prev || prev.id !== convId) return prev;
+          
+          return {
+            ...prev,
+            messages: prev.messages.map(msg => 
+              msg.id === assistantMessageId
+                ? { ...msg, content: assistantResponse, isThinking: true }
+                : msg
+            )
+          };
+        });
+      };
+      
+      const handleError = (error: string) => {
+        console.error('Error streaming message:', error);
+        
+        if (currentConversationIdRef.current !== convId) return;
+        
+        setError(error);
+        
+        setCurrentConversation(prev => {
+          if (!prev || prev.id !== convId) return prev;
+          
+          return {
+            ...prev,
+            messages: prev.messages.map(msg => 
+              msg.id === assistantMessageId
+                ? { ...msg, content: `Error: ${error}`, isThinking: false }
+                : msg
+            )
+          };
+        });
+        
+        setIsLoading(false);
+        setIsStreaming(false);
+      };
+      
+      const handleComplete = async () => {
+        console.log('Message streaming completed');
+        
+        if (currentConversationIdRef.current !== convId) return;
+        
+        setCurrentConversation(prev => {
+          if (!prev || prev.id !== convId) return prev;
+          
+          return {
+            ...prev,
+            messages: prev.messages.map(msg => 
+              msg.id === assistantMessageId
+                ? { ...msg, content: assistantResponse, isThinking: false }
+                : msg
+            )
+          };
+        });
+        
+        setTimeout(() => {
+          refreshCurrentConversation();
+        }, 500);
+        
+        setIsLoading(false);
+        setIsStreaming(false);
+      };
+      
+      await messagesApi.streamMessage(
+        convId,
+        content,
+        handleToken,
+        handleError,
+        handleComplete
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      
+      if (currentConversationIdRef.current === convId) {
+        setError(error instanceof Error ? error.message : String(error));
+        setIsLoading(false);
+        setIsStreaming(false);
+      }
+      
+      return false;
+    }
+  }, [currentConversation, refreshCurrentConversation]);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
 
   return {
-    ...state,
+    conversations,
+    currentConversation,
+    isLoading,
+    error,
+    isStreaming,
     fetchConversations,
-    sendMessage,
-    editMessage,
-    archiveConversation,
+    selectConversation,
+    createConversation,
     deleteConversation,
     renameConversation,
-    createConversation,
-    selectConversation,
+    archiveConversation,
+    sendMessage,
+    editMessage,
     clearError,
-    isStreaming: isStreamingRef.current,
   };
 }; 

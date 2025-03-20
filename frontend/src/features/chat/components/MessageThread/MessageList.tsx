@@ -7,10 +7,16 @@ import { MessageItem } from './MessageItem';
 interface MessageListProps {
   messages: Message[];
   isLoading?: boolean;
+  isThinking?: boolean;
   onMessageEdit?: (messageId: string, content: string) => void;
 }
 
-export const MessageList = ({ messages, isLoading, onMessageEdit }: MessageListProps) => {
+export const MessageList = ({ 
+  messages, 
+  isLoading, 
+  isThinking,
+  onMessageEdit 
+}: MessageListProps) => {
   const theme = useTheme();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<UUID | null>(null);
@@ -35,6 +41,20 @@ export const MessageList = ({ messages, isLoading, onMessageEdit }: MessageListP
     }
     return acc;
   }, []);
+
+  // Determine if we need to show a thinking message
+  const shouldShowThinking = isThinking && uniqueMessages.length > 0;
+  
+  // Create a virtual thinking message for the assistant
+  const thinkingMessage = shouldShowThinking ? {
+    id: 'thinking-message',
+    conversation_id: uniqueMessages.length > 0 ? uniqueMessages[0].conversation_id : 'temp',
+    content: 'Thinking...',
+    role: 'assistant',
+    timestamp: new Date().toISOString(),
+    sender: { id: 'assistant', name: 'Elf AI' },
+    isEdited: false,
+  } : null;
 
   return (
     <Box
@@ -67,7 +87,15 @@ export const MessageList = ({ messages, isLoading, onMessageEdit }: MessageListP
         />
       ))}
       
-      {isLoading && (
+      {thinkingMessage && (
+        <MessageItem
+          key={thinkingMessage.id}
+          message={thinkingMessage}
+          isThinking={true}
+        />
+      )}
+      
+      {isLoading && uniqueMessages.length === 0 && (
         <Box sx={{ textAlign: 'center', my: 2 }}>
           <Typography variant="body2" color="text.secondary">
             Loading...

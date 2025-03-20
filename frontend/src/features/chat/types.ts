@@ -26,6 +26,7 @@ export interface Message {
   isEdited?: boolean;
   thinkingContent?: string;
   showThinking?: boolean;
+  isThinking?: boolean;
 }
 
 export interface Conversation {
