@@ -1,0 +1,111 @@
+---
+description: Always use the Makefile to start both frontend and backend services
+globs: ["**/*.{ts,tsx,js,jsx,py}", "**/docker-compose.yml", "**/Makefile"]
+alwaysApply: true
+---
+
+# Makefile Development Rules
+
+Always use the Makefile in the root directory to start development services. This ensures that environment variables are set correctly.
+
+## Environment Setup
+
+The Makefile at the project root contains essential commands for development:
+
+```bash
+# Start all development services with correct environment variables
+make dev
+
+# Run tests with test environment variables
+make test
+
+# Run linting
+make lint
+
+# Clean up resources
+make clean
+```
+
+## Key Commands
+
+### Starting Development Environment
+
+**Always** use this command to start development:
+
+```bash
+make dev
+```
+
+This command:
+1. Copies the base environment variables from `.env.base` to `.env`
+2. Stops any running containers and removes orphans
+3. Starts all services defined in docker-compose.yml with the correct environment
+
+### Running Tests
+
+```bash
+make test
+```
+
+This command:
+1. Creates a temporary environment file combining `.env.base` and `.env.test`
+2. Runs backend and frontend tests in their respective containers
+
+### Linting Code
+
+```bash
+make lint
+```
+
+This runs all linters for both frontend and backend code:
+- flake8, black, and isort for Python
+- Prettier/ESLint for JavaScript/TypeScript
+
+### Cleaning Up Resources
+
+```bash
+make clean
+```
+
+This removes:
+- All containers and volumes
+- Environment files
+- Cache files
+- Node modules
+- Python virtual environments
+
+## Why This Is Important
+
+- **Consistent Environment**: Using the Makefile ensures all developers have the same environment setup
+- **Correct Environment Variables**: The Makefile manages environment variables correctly for different contexts
+- **Container Management**: Properly handles stopping and starting containers to prevent conflicts
+- **Error Prevention**: Reduces the risk of misconfiguration or missing environment variables
+
+## Common Mistakes to Avoid
+
+- ❌ **Don't** start services directly with `docker-compose up`
+- ❌ **Don't** manually create or modify `.env` files
+- ❌ **Don't** run tests directly with `pytest` or `npm test`
+- ❌ **Don't** start only individual services unless you know what you're doing
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Try cleaning up first:
+   ```bash
+   make clean
+   ```
+
+2. Check for environmental conflicts:
+   ```bash
+   docker ps -a  # Look for running containers that might conflict
+   ```
+
+3. Verify that your `.env.base` file is up to date
+
+4. Make sure Docker is running properly on your system
+
+## Implementation in CI/CD
+
+The CI/CD pipeline uses variations of these Makefile commands to ensure consistent testing and deployment across environments.
