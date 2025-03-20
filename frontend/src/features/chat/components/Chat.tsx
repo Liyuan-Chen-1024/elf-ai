@@ -1,10 +1,8 @@
 import {
-    alpha,
     Box,
     Button,
     Divider,
     Drawer,
-    Fade,
     Typography,
     useMediaQuery,
     useTheme
@@ -38,62 +36,49 @@ export const Chat = () => {
   const {
     conversations,
     currentConversation,
-    messages,
     isLoading,
     error,
-    streamingContent,
+    isStreaming,
+    sendMessage,
+    editMessage,
     createConversation,
     selectConversation,
-    sendMessage,
-    handleSendMessageStreaming,
-    editMessage,
-    deleteMessage,
     renameConversation,
     deleteConversation,
-    toggleThinking
+    clearError
   } = useChat();
 
   // Memoize handlers to prevent re-creation on render
   const handleSendMessage = useCallback((content: string) => {
     if (currentConversation) {
-      handleSendMessageStreaming(content);
+      sendMessage(content);
     }
-  }, [currentConversation, handleSendMessageStreaming]);
-
-  const handleEditMessage = useCallback((messageId: string, content: string) => {
-    editMessage(messageId, content);
-  }, [editMessage]);
-
-  const handleDeleteMessage = useCallback((messageId: string) => {
-    deleteMessage(messageId);
-  }, [deleteMessage]);
-
-  const handleCopyMessage = useCallback((content: string) => {
-    navigator.clipboard.writeText(content).catch(err => {
-      console.error('Failed to copy: ', err);
-    });
-  }, []);
+  }, [currentConversation, sendMessage]);
 
   const handleToggleDrawer = useCallback(() => {
-    setDrawerOpen((prev: boolean) => !prev);
+    setDrawerOpen((prev) => !prev);
   }, []);
 
   const handleSelectConversation = useCallback((id: string | number) => {
     const conversation = conversations.find((c: Conversation) => String(c.id) === String(id));
-    
     if (conversation) {
       selectConversation(conversation);
       navigate(`/chat/${conversation.id}`);
     }
   }, [conversations, selectConversation, navigate]);
 
-  const handleCreateConversation = useCallback(() => {
-    createConversation("New Conversation");
-  }, [createConversation]);
-
-  const handleNewChatClick = useCallback(() => {
-    handleCreateConversation();
-  }, [handleCreateConversation]);
+  const handleCreateConversation = useCallback(async () => {
+    try {
+      const newConversation = await createConversation("New Conversation");
+      console.log('Created new conversation:', newConversation);
+      if (newConversation) {
+        selectConversation(newConversation);
+        navigate(`/chat/${newConversation.id}`);
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
+  }, [createConversation, selectConversation, navigate]);
 
   // Close drawer when switching to mobile
   useEffect(() => {
@@ -106,28 +91,20 @@ export const Chat = () => {
   
   // Handle URL parameter for conversation selection
   useEffect(() => {
-    if (conversationId) {
-      // Look for the conversation in active conversations
-      const activeConvo = conversations.find(
-        (c: Conversation) => String(c.id) === String(conversationId)
-      );
-      
-      if (activeConvo) {
-        selectConversation(activeConvo);
-        return;
-      }
-      
-      // If not found and we have conversations, select the first one
-      if (conversations.length > 0) {
-        selectConversation(conversations[0]);
-        navigate(`/chat/${conversations[0].id}`);
-      }
-    } else if (conversations.length > 0) {
-      // No conversation ID but we have active conversations, select the first one
-      selectConversation(conversations[0]);
+    if (!conversationId || conversations.length === 0) return;
+
+    const targetConversation = conversations.find(
+      (c) => String(c.id) === String(conversationId)
+    );
+    
+    // Only select if we have a valid conversation and it's different from the current one
+    if (targetConversation && (!currentConversation || currentConversation.id !== targetConversation.id)) {
+      selectConversation(targetConversation);
+    } else if (!targetConversation && conversations.length > 0) {
+      // If conversation not found, navigate to the first one
       navigate(`/chat/${conversations[0].id}`);
     }
-  }, [conversationId, conversations, selectConversation, navigate]);
+  }, [conversationId, conversations, currentConversation, selectConversation, navigate]);
 
   // Close drawer on mobile when a conversation is selected
   useEffect(() => {
@@ -136,35 +113,25 @@ export const Chat = () => {
     }
   }, [currentConversation, isMobile]);
   
-  // Memoize key UI elements to prevent unnecessary re-renders
   const drawerWidth = 320;
   
-  // Memoize the message thread props to prevent unnecessary re-renders
+  // Memoize the message thread props
   const messageThreadProps = useMemo(() => ({
-    messages,
+    messages: currentConversation?.messages || [],
     isLoading,
-    streamingContent,
+    isStreaming,
     error,
-    onEditMessage: handleEditMessage,
-    onDeleteMessage: handleDeleteMessage,
-    onToggleThinking: toggleThinking
-  }), [
-    messages,
-    isLoading,
-    streamingContent,
-    error,
-    handleEditMessage,
-    handleDeleteMessage,
-    toggleThinking
-  ]);
+    onEditMessage: editMessage,
+    clearError
+  }), [currentConversation?.messages, isLoading, isStreaming, error, editMessage, clearError]);
 
   // Memoize the message input props
   const messageInputProps = useMemo(() => ({
     onSendMessage: handleSendMessage,
-    disabled: isLoading
-  }), [handleSendMessage, isLoading]);
+    disabled: isLoading || isStreaming
+  }), [handleSendMessage, isLoading, isStreaming]);
   
-  if (isLoading && !currentConversation) {
+  if (isLoading && !currentConversation && conversations.length === 0) {
     return <ElfSpinner message="Loading conversations..." />;
   }
   
@@ -200,7 +167,7 @@ export const Chat = () => {
             variant="contained"
             color="primary"
             startIcon={<AddIcon />}
-            onClick={handleNewChatClick}
+            onClick={handleCreateConversation}
             sx={{
               py: 1,
               px: 2,
@@ -234,92 +201,44 @@ export const Chat = () => {
               conversations={conversations}
               currentConversationId={currentConversation?.id}
               onSelectConversation={handleSelectConversation}
-              onCreateConversation={createConversation}
               onRenameConversation={renameConversation}
               onDeleteConversation={deleteConversation}
               onCreateNewChat={handleCreateConversation}
+              onCreateConversation={handleCreateConversation}
             />
           )}
         </Box>
       </Drawer>
 
-      {/* Main content area */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          height: '100%', 
-          overflow: 'hidden',
-          bgcolor: theme.palette.background.default,
-          width: '100%',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* Chat header with conversation title */}
-        {currentConversation && (
-          <Box sx={{ 
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            bgcolor: theme.palette.background.default,
-            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-          }}>
+        {!currentConversation ? (
+          <WelcomeScreen
+            drawerOpen={drawerOpen}
+            isMobile={isMobile}
+            handleDrawerToggle={handleToggleDrawer}
+            createConversation={handleCreateConversation}
+          />
+        ) : (
+          <>
             <ChatHeader
               conversation={currentConversation}
-              onToggleDrawer={handleToggleDrawer}
               onRename={(title: string) => renameConversation(currentConversation.id, title)}
               onDelete={() => deleteConversation(currentConversation.id)}
               isMobile={isMobile}
+              onToggleDrawer={handleToggleDrawer}
             />
-          </Box>
-        )}
-
-        {/* Message thread or welcome screen */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflow: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0,
-            padding: '0 0 80px',
-            position: 'relative',
-            height: currentConversation ? 'calc(100% - 56px)' : '100%', // Adjust height based on whether there's a conversation header
-          }}
-        >
-          {currentConversation ? (
             <MemoizedMessageThread {...messageThreadProps} />
-          ) : (
-            <Fade in={true}>
-              <Box sx={{ flexGrow: 1 }}>
-                <WelcomeScreen
-                  drawerOpen={drawerOpen}
-                  isMobile={isMobile}
-                  handleDrawerToggle={handleToggleDrawer}
-                  createConversation={createConversation}
-                />
-              </Box>
-            </Fade>
-          )}
-        </Box>
-
-        {/* Message input area */}
-        {currentConversation && (
-          <Box sx={{ 
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            bgcolor: theme.palette.background.paper,
-            boxShadow: '0 -2px 10px rgba(0,0,0,0.05)',
-            borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            padding: '12px 16px',
-            zIndex: 10,
-          }}>
             <MemoizedMessageInput {...messageInputProps} />
-          </Box>
+          </>
         )}
       </Box>
     </Box>

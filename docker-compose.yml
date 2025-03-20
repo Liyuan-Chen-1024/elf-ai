@@ -87,10 +87,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: >
-        mysqladmin ping -h localhost &&
-        mysql -h localhost -u $$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1 FROM ${DB_NAME}.information_schema.tables LIMIT 1;' &&
-        mysql -h localhost -u $$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SHOW GRANTS;' | grep 'ALL PRIVILEGES'
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 5

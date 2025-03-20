@@ -16,6 +16,7 @@ from drf_spectacular.views import (
 
 # Import our auth views
 from apps.auth.views import change_password, login_view, user_profile
+from apps.core.views import csrf_token
 
 # Customize admin site
 admin.site.site_header = "AI Chat Admin"
@@ -68,6 +69,7 @@ urlpatterns = [
                     ),
                 ),
                 path("agent/", include("apps.agent.urls")),
+                path("csrf/", csrf_token, name="csrf-token"),
             ]
         ),
     ),

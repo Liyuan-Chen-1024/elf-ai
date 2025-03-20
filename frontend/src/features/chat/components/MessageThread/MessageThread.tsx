@@ -7,37 +7,54 @@ import MessageList from './MessageList';
 // Define the props interface
 interface MessageThreadProps {
   messages: Message[];
-  onToggleThinking?: (messageId: UUID) => void;
-  isStreaming?: boolean;
-  streamingContent?: string;
+  isLoading: boolean;
+  isStreaming: boolean;
+  error: string | null;
+  onEditMessage: (messageId: UUID, content: string) => void;
+  clearError: () => void;
 }
 
 export const MessageThread = ({
   messages,
-  onToggleThinking,
-  isStreaming = false,
-  streamingContent = '',
+  isLoading,
+  isStreaming,
+  error,
+  onEditMessage,
+  clearError,
 }: MessageThreadProps) => {
   const messagesEndRef = useRef(null);
+
+  // Log props for debugging
+  useEffect(() => {
+    console.log('MessageThread received props:', {
+      messages,
+      isLoading,
+      isStreaming,
+      error,
+      messagesLength: messages?.length,
+      isMessagesArray: Array.isArray(messages),
+    });
+  }, [messages, isLoading, isStreaming, error]);
+
+  // Clear error when component unmounts or when messages change
+  useEffect(() => {
+    return () => {
+      if (error) {
+        clearError();
+      }
+    };
+  }, [error, clearError]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const messageList = [...messages];
+  // Scroll to bottom when new messages arrive or during streaming
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isStreaming]);
 
-  if (isStreaming) {
-    const streamingMessage: Message = {
-      id: 'streaming',
-      conversation_id: messages.length > 0 && messages[0] ? messages[0].conversation_id : '0',
-      content: streamingContent,
-      role: 'assistant',
-      timestamp: new Date().toISOString(),
-      isEdited: false,
-    };
-
-    messageList.push(streamingMessage);
-  }
+  const messageList = [...(Array.isArray(messages) ? messages : [])];
 
   return (
     <Box
@@ -50,7 +67,12 @@ export const MessageThread = ({
         overflowY: 'auto',
       }}
     >
-      <MessageList messages={messageList} onToggleThinking={onToggleThinking} />
+      <MessageList 
+        messages={messageList} 
+        onEditMessage={onEditMessage}
+        isLoading={isLoading}
+        isStreaming={isStreaming}
+      />
       <div ref={messagesEndRef} />
     </Box>
   );

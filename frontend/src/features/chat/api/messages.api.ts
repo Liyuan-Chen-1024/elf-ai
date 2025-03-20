@@ -121,62 +121,116 @@ export class MessagesApi extends ApiClient {
     this.ensureAuthenticated();
     
     try {
-      const response = await fetch(`${API_BASE_URL}/chat/conversations/${conversationId}/stream_message/`, {
+      const url = `${API_BASE_URL}/chat/conversations/${conversationId}/stream_message/`;
+      console.log('Starting stream request to:', url);
+      
+      // Get the token from localStorage
+      const authToken = localStorage.getItem('authToken') || localStorage.getItem('token');
+      
+      // Get CSRF token from cookies
+      const csrfToken = this.getCsrfToken();
+      console.log('Using CSRF token:', csrfToken || 'none available');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${authToken}`,
+      };
+      
+      // Add CSRF token if available
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+      }
+      
+      console.log('Request headers:', headers);
+      
+      const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream',
-          'Authorization': `Token ${this.authToken}`,
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({ content })
       });
 
+      console.log('Stream response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorMessage = `HTTP error! status: ${response.status}`;
+        console.error('Stream request failed:', errorMessage);
+        onError(errorMessage);
+        return;
       }
 
       const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
       if (!reader) {
-        throw new Error('No reader available');
+        onError('No reader available');
+        return;
       }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        
+        if (done) {
+          console.log('Stream complete');
+          onComplete();
+          break;
+        }
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
+        const chunk = decoder.decode(value, { stream: true });
+        console.log('Received chunk:', chunk);
+        buffer += chunk;
+        
+        // Process complete SSE messages (they end with double newlines)
+        const messages = buffer.split('\n\n');
+        buffer = messages.pop() || ''; // Keep any incomplete message
+        
+        for (const message of messages) {
+          if (!message.trim()) continue;
+          
+          // SSE messages start with "data: "
+          if (message.startsWith('data: ')) {
             try {
-              const data = JSON.parse(line.slice(6));
-
-              switch (data.type) {
-                case 'token':
-                  onToken(data.content);
-                  break;
-                case 'error':
-                  onError(data.content);
-                  break;
-                case 'done':
-                  onComplete();
-                  return;
+              const data = JSON.parse(message.slice(6));
+              console.log('Parsed SSE data:', data);
+              
+              if (data.type === 'token' && data.content) {
+                onToken(data.content);
+              } else if (data.type === 'error') {
+                onError(data.content || 'Unknown error');
+              } else if (data.type === 'done') {
+                onComplete();
+                return;
               }
-            } catch (error) {
-              console.error('Error parsing SSE data:', error);
-              onError('Failed to parse server response');
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
             }
           }
         }
       }
     } catch (error) {
-      console.error('Error streaming message:', error);
+      console.error('Error in streamMessage:', error);
       onError(error instanceof Error ? error.message : 'Unknown error');
-      throw error;
     }
+  }
+
+  /**
+   * Get CSRF token from cookies specifically
+   */
+  private getCsrfToken(): string | null {
+    const name = 'csrftoken';
+    let cookieValue: string | null = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
   }
 
   /**
@@ -238,6 +292,52 @@ export class MessagesApi extends ApiClient {
         Authorization: `Token ${this.authToken}`,
       },
     });
+  }
+
+  /**
+   * Create a new conversation
+   */
+  async createConversation(title?: string): Promise<Conversation> {
+    this.ensureAuthenticated();
+    console.log('Creating conversation with title:', title);
+    try {
+      const response = await this.getAxiosInstance().post<Conversation>(
+        `${API_BASE_URL}/chat/conversations/`,
+        { title: title || 'New conversation' },
+        {
+          headers: {
+            Authorization: `Token ${this.authToken}`,
+          },
+        }
+      );
+      console.log('Created conversation:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a conversation
+   */
+  async deleteConversation(conversationId: UUID): Promise<void> {
+    this.ensureAuthenticated();
+    console.log('Deleting conversation:', conversationId);
+    try {
+      await this.getAxiosInstance().delete(
+        `${API_BASE_URL}/chat/conversations/${conversationId}/`,
+        {
+          headers: {
+            Authorization: `Token ${this.authToken}`,
+          },
+        }
+      );
+      console.log('Successfully deleted conversation:', conversationId);
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      throw error;
+    }
   }
 }
 

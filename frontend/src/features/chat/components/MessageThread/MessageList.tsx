@@ -1,53 +1,41 @@
 import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
-import { useChat } from '../../hooks/useChat';
-import { Box } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { Message, UUID } from '../../types';
 import { MessageItem } from './MessageItem';
 
 interface MessageListProps {
   messages: Message[];
-  onToggleThinking?: (messageId: UUID) => void;
+  isLoading?: boolean;
+  onMessageEdit?: (messageId: string, content: string) => void;
 }
 
-const MessageList = ({ messages, onToggleThinking }: MessageListProps) => {
+export const MessageList = ({ messages, isLoading, onMessageEdit }: MessageListProps) => {
   const theme = useTheme();
-  const { isLoading } = useChat();
-  const messagesEndRef = useRef(null);
-  const [highlightedMessageId, setHighlightedMessageId] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<UUID | null>(null);
 
-  // Enhanced deduplication that considers message content as well
-  const uniqueMessages = useMemo(() => {
-    const seenContent = new Map();
-    return messages.filter((message, index) => {
-      // We keep track of both ID and content to catch duplicates
-      const key = `${message.role}-${message.id}`;
-      const contentKey = `${message.role}-${message.content}`;
-      
-      // Check if we've seen this ID before
-      const isIdDuplicate = seenContent.has(key);
-      
-      // For assistant messages, also check content to avoid same-content duplicates
-      const isContentDuplicate = message.role === 'assistant' && 
-        messages.some((m, i) => i < index && m.role === 'assistant' && m.content === message.content);
-      
-      // If neither is duplicate, keep the message
-      if (!isIdDuplicate && !isContentDuplicate) {
-        seenContent.set(key, true);
-        return true;
-      }
-      
-      return false;
-    });
-  }, [messages]);
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [uniqueMessages]);
-  
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Filter out deleted messages and deduplicate by ID
+  const uniqueMessages = messages.filter(
+    (message) => !message.is_deleted
+  ).reduce((acc: Message[], message) => {
+    const existingIndex = acc.findIndex(m => m.id === message.id);
+    if (existingIndex === -1) {
+      return [...acc, message];
+    }
+    return acc;
+  }, []);
+
   return (
     <Box
       sx={{
@@ -55,21 +43,38 @@ const MessageList = ({ messages, onToggleThinking }: MessageListProps) => {
         flexDirection: 'column',
         flexGrow: 1,
         overflowY: 'auto',
-        p: 2,
         gap: 2,
+        p: 2,
+        bgcolor: theme.palette.background.default,
       }}
     >
-      <div>
-        {uniqueMessages.map((message) => (
-          <div key={String(message.id)}>
-            <MessageItem
-              message={message}
-              onToggleThinking={onToggleThinking}
-              isHighlighted={message.id === highlightedMessageId}
-            />
-          </div>
-        ))}
-      </div>
+      {uniqueMessages.length === 0 && !isLoading && (
+        <Box sx={{ textAlign: 'center', my: 4 }}>
+          <Typography variant="body1" color="text.secondary">
+            No messages yet. Start a conversation!
+          </Typography>
+        </Box>
+      )}
+      
+      {uniqueMessages.map((message) => (
+        <MessageItem
+          key={message.id}
+          message={message}
+          onEdit={onMessageEdit ? (content) => onMessageEdit(message.id, content) : undefined}
+          isHighlighted={message.id === highlightedMessageId}
+          onHighlight={setHighlightedMessageId}
+          isLoading={isLoading}
+        />
+      ))}
+      
+      {isLoading && (
+        <Box sx={{ textAlign: 'center', my: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Loading...
+          </Typography>
+        </Box>
+      )}
+      
       <div ref={messagesEndRef} />
     </Box>
   );

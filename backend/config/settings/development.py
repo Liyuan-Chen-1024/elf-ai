@@ -16,6 +16,17 @@ CORS_ALLOW_CREDENTIALS: bool = True
 CORS_ORIGIN_ALLOW_ALL: bool = True  # Add this for older versions of django-cors-headers
 # Override CORS_ALLOWED_ORIGINS from base.py
 CORS_ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_NAME = "csrftoken"
+CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
+SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_HTTPONLY = True
+
 # Add all CORS-related headers
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -74,8 +85,6 @@ MIDDLEWARE.insert(
 
 # Disable security settings in development
 SECURE_SSL_REDIRECT: bool = False
-SESSION_COOKIE_SECURE: bool = False
-CSRF_COOKIE_SECURE: bool = False
 
 # Email backend for development
 EMAIL_BACKEND: str = "django.core.mail.backends.console.EmailBackend"

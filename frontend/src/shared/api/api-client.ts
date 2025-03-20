@@ -1,7 +1,9 @@
-import type { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import axios from 'axios';
+type AxiosInstance = any;
+type AxiosError = any;
+type AxiosRequestConfig = any;
 
-export const API_BASE_URL = 'http://localhost:8000/api/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 /**
  * Base API client with common functionality like auth handling, 
@@ -9,18 +11,11 @@ export const API_BASE_URL = 'http://localhost:8000/api/v1';
  */
 export class ApiClient {
   protected authToken: string | null = null;
-  protected axiosInstance: AxiosInstance;
+  private _axiosInstance: any = null;
 
   constructor() {
-    const config: AxiosRequestConfig = {
-      baseURL: API_BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-    this.axiosInstance = (axios as any).create(config);
-    // Initialize the token from localStorage when the API is first created
-    this.initializeToken();
+    // Try to get the auth token from localStorage
+    this.authToken = localStorage.getItem('authToken');
   }
 
   /**
@@ -37,22 +32,18 @@ export class ApiClient {
   /**
    * Set or clear the auth token
    */
-  public setAuthToken(token: string | null): void {
+  public setAuthToken(token: string): void {
     this.authToken = token;
-    if (token) {
-      if (this.axiosInstance.defaults.headers) {
-        this.axiosInstance.defaults.headers['Authorization'] = `Token ${token}`;
-      }
-      // Store in both locations for compatibility
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('token', token);
-    } else {
-      if (this.axiosInstance.defaults.headers) {
-        delete this.axiosInstance.defaults.headers['Authorization'];
-      }
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('token');
-    }
+    localStorage.setItem('authToken', token);
+    // Reset axios instance to recreate with new token
+    this._axiosInstance = null;
+  }
+
+  public clearAuthToken(): void {
+    this.authToken = null;
+    localStorage.removeItem('authToken');
+    // Reset axios instance
+    this._axiosInstance = null;
   }
 
   /**
@@ -66,8 +57,7 @@ export class ApiClient {
    * Ensure the client is authenticated before making requests
    */
   protected ensureAuthenticated(): void {
-    this.initializeToken(); // Re-check token before each request
-    if (!this.isAuthenticated()) {
+    if (!this.authToken) {
       throw new Error('Authentication required');
     }
   }
@@ -90,7 +80,7 @@ export class ApiClient {
         const axiosError = error as AxiosError;
         if (axiosError.response?.status === 401) {
           // Handle authentication error
-          this.setAuthToken(null);
+          this.clearAuthToken();
           throw new Error('Authentication failed');
         }
         if (axiosError.response?.status === 429 && retries < maxRetries) {
@@ -110,8 +100,46 @@ export class ApiClient {
   /**
    * Get the axios instance for making requests
    */
-  protected getAxiosInstance() {
-    return this.axiosInstance;
+  protected getAxiosInstance(): AxiosInstance {
+    if (!this._axiosInstance) {
+      this._axiosInstance = axios.create({
+        baseURL: API_BASE_URL,
+        withCredentials: true, // Required for CSRF
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (this._axiosInstance) {
+        // Add request interceptor to include auth token
+        this._axiosInstance.interceptors.request.use(
+          (config) => {
+            if (this.authToken) {
+              config.headers = config.headers || {};
+              config.headers.Authorization = `Token ${this.authToken}`;
+            }
+
+            // Get CSRF token from cookie
+            const csrfToken = this.getCsrfToken();
+            if (csrfToken && config.method && config.method.toLowerCase() !== 'get') {
+              config.headers = config.headers || {};
+              config.headers['X-CSRFToken'] = csrfToken;
+            }
+
+            return config;
+          },
+          (error) => {
+            return Promise.reject(error);
+          }
+        );
+      }
+    }
+
+    if (!this._axiosInstance) {
+      throw new Error('Failed to create Axios instance');
+    }
+    
+    return this._axiosInstance;
   }
 
   /**
@@ -143,5 +171,24 @@ export class ApiClient {
       this.pendingRequests.delete(key);
       throw error;
     }
+  }
+
+  /**
+   * Get CSRF token from cookies
+   */
+  protected getCsrfToken(): string | null {
+    const name = 'csrftoken';
+    let cookieValue: string | null = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
   }
 } 

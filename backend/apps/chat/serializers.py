@@ -78,8 +78,8 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     lastMessage = serializers.SerializerMethodField()
     participants = serializers.SerializerMethodField()
-    createdAt = serializers.DateTimeField(source="created_at")
-    updatedAt = serializers.DateTimeField(source="updated_at")
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
     archived = serializers.BooleanField(source="is_archived", default=False)
     messages = MessageSerializer(many=True, read_only=True)
     messageCount = serializers.SerializerMethodField()

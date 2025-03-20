@@ -10,6 +10,7 @@ import { Chat } from './features/chat/components/Chat';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { ProfileContainer } from './features/profile/ProfileContainer';
 import lightTheme from './theme';
+import { API_BASE_URL } from './shared/api/api-client';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
@@ -25,7 +26,7 @@ const AppRoutes = () => {
     if (!user) return 'User';
     return user.name;
   };
-
+  
   if (isLoading) {
     return <ElfSpinner message="Preparing your experience..." />;
   }
@@ -38,7 +39,7 @@ const AppRoutes = () => {
       </Routes>
     );
   }
-
+  
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header onLogout={logout} username={getDisplayName()} />
@@ -67,6 +68,27 @@ function App() {
       console.log('Setting token from env to localStorage:', envToken);
       localStorage.setItem('token', envToken);
     }
+  }, []);
+  
+  // Fetch CSRF token on app initialization
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/csrf/`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (response.ok) {
+          console.log('CSRF token cookie has been set');
+        } else {
+          console.error('Failed to fetch CSRF token:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching CSRF token:', error);
+      }
+    };
+    
+    fetchCsrfToken();
   }, []);
   
   return (

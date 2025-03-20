@@ -42,7 +42,6 @@ class CustomCorsMiddleware:
                     "content-type",
                     "content-encoding",
                     "content-length",
-                    "connection",
                     "cache-control",
                 ]
             )
@@ -52,7 +51,9 @@ class CustomCorsMiddleware:
             # Add SSE-specific headers if this is an SSE response
             if response.get("Content-Type") == "text/event-stream":
                 response["Cache-Control"] = "no-cache"
-                response["Connection"] = "keep-alive"
+                # Remove Connection: keep-alive as it's a hop-by-hop header
+                if "Connection" in response:
+                    del response["Connection"]
                 response["X-Accel-Buffering"] = "no"
 
         return response

@@ -140,22 +140,14 @@ MEDIA_ROOT: Path = BASE_DIR / "media"
 # Default primary key field type
 DEFAULT_AUTO_FIELD: str = "django.db.models.BigAutoField"
 
-# REST Framework
-REST_FRAMEWORK: Dict[str, Any] = {
+# Django REST Framework configuration
+REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
-    ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": env.int("DRF_PAGE_SIZE", default=100),
-    "DEFAULT_FILTER_BACKENDS": [
-        "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.SearchFilter",
-        "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
@@ -163,19 +155,16 @@ REST_FRAMEWORK: Dict[str, Any] = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": env("DRF_THROTTLE_ANON_RATE", default="100/day"),
-        "user": env("DRF_THROTTLE_USER_RATE", default="1000/day"),
+        "anon": "60/hour",
+        "user": "1000/day",
     },
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ],
-    "DEFAULT_CONTENT_NEGOTIATION_CLASS": "rest_framework.negotiation.DefaultContentNegotiation",
+    "DEFAULT_CONTENT_NEGOTIATION_CLASS": "apps.core.negotiation.SSEContentNegotiation",
 }
 
 # Spectacular settings

@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const email = localStorage.getItem('email');
       
       if (!token) {
@@ -75,9 +75,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } catch (err) {
         console.error('Failed to initialize auth:', err);
         // Clear invalid token
-        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
         localStorage.removeItem('email');
-        authApi.clearAuthToken();
+        authApi.setAuthToken(null);
         
         setState(prev => ({
           ...prev,
@@ -132,8 +132,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       // Clear user data
       localStorage.removeItem('email');
-      localStorage.removeItem('token');
-      authApi.clearAuthToken();
+      localStorage.removeItem('authToken');
+      authApi.setAuthToken(null);
       
       setState(prev => ({
         ...prev,

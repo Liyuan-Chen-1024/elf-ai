@@ -60,6 +60,11 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def stream_message(self, request: Request, pk=None) -> StreamingHttpResponse:
+        from django.middleware.csrf import get_token
+        
+        # Force a CSRF cookie to be set
+        get_token(request)
+        
         conversation = self.get_object()
         serializer = MessageCreateSerializer(data=request.data)
 
@@ -67,6 +72,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         content = serializer.validated_data["content"]
+        logger.info(f"Starting stream for conversation {pk} with content: {content}")
+        logger.info(f"Request headers: {request.headers}")
+        logger.info(f"CSRF cookie set: {request.COOKIES.get('csrftoken', 'Not found')}")
 
         def stream_response():
             try:
@@ -82,9 +90,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 # Get conversation history for context
                 history = conversation.messages.filter(is_deleted=False).order_by(
                     "-created_at"
-                )[:5][
-                    ::-1
-                ]  # Last 5 messages in chronological order
+                )[:5][::-1]  # Last 5 messages in chronological order
 
                 # Build conversation context
                 context = "You are an AI assistant. Be helpful and concise.\n\n"
@@ -92,10 +98,12 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     context += f"{msg.role}: {msg.content}\n"
                 context += f"user: {content}\nassistant:"
 
+                logger.info(f"Sending initial SSE message for conversation {pk}")
                 # Initial response to establish connection
                 yield f"data: {json.dumps({'type': 'start', 'message_id': str(assistant_message.id)})}\n\n"
 
                 # Make streaming request to LLM
+                logger.info(f"Making LLM request to {settings.LLM_API_URL}")
                 response = requests.post(
                     settings.LLM_API_URL,
                     json={
@@ -120,8 +128,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
                                     assistant_message.content = full_response
                                     assistant_message.save()
 
+                                    logger.debug(f"Sending token: {token}")
                                     yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
-                            except json.JSONDecodeError:
+                            except json.JSONDecodeError as e:
+                                logger.error(f"Error decoding LLM response: {e}, line: {line}")
                                 continue
                 else:
                     error_msg = f"Error from LLM API: {response.status_code}"
@@ -135,13 +145,32 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
             finally:
                 # Always send a done event
+                logger.info(f"Completing stream for conversation {pk}")
                 yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
+        # Create and configure the streaming response
         response = StreamingHttpResponse(
-            stream_response(), content_type="text/event-stream"
+            stream_response(),
+            content_type='text/event-stream',
+            status=200
         )
-        response["Cache-Control"] = "no-cache"
-        response["X-Accel-Buffering"] = "no"
+        
+        # Add required headers for SSE
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'
+        
+        # Add CORS headers
+        if 'HTTP_ORIGIN' in request.META:
+            origin = request.META['HTTP_ORIGIN']
+            response['Access-Control-Allow-Origin'] = origin
+            response['Access-Control-Allow-Credentials'] = 'true'
+            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-CSRFToken, Accept'
+            response['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+            response['Access-Control-Expose-Headers'] = 'Content-Type'
+        
+        # Set Vary header to avoid caching issues
+        response['Vary'] = 'Accept, Cookie, Origin'
+        
         return response
 
 

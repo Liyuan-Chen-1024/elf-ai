@@ -1,14 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-
-// Create axios instance
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+import { ApiClient, API_BASE_URL } from '../../shared/api/api-client';
 
 interface LoginResponse {
   token: string;
@@ -29,24 +19,15 @@ interface User {
   last_name?: string;
 }
 
-export const authApi = {
-  // Set auth token in axios headers
-  setAuthToken: (token: string) => {
-    api.defaults.headers.common['Authorization'] = `Token ${token}`;
-    localStorage.setItem('token', token);
-  },
-
-  // Clear auth token from axios headers
-  clearAuthToken: () => {
-    delete api.defaults.headers.common['Authorization'];
-    localStorage.removeItem('token');
-  },
+class AuthApi extends ApiClient {
+  constructor() {
+    super();
+  }
 
   // Login with email and password
-  login: async (email: string, password: string): Promise<LoginResponse> => {
+  async login(email: string, password: string): Promise<LoginResponse> {
     try {
-      // Get the token and user data from the login endpoint
-      const response = await api.post('/auth/login/', {
+      const response = await this.getAxiosInstance().post<LoginResponse>('/auth/login/', {
         username: email,
         password: password
       });
@@ -56,7 +37,7 @@ export const authApi = {
       }
       
       // Set the token
-      authApi.setAuthToken(response.data.token);
+      this.setAuthToken(response.data.token);
       
       return response.data;
     } catch (error: any) {
@@ -72,35 +53,37 @@ export const authApi = {
       }
       throw error;
     }
-  },
+  }
   
   // Logout the current user
-  logout: async (): Promise<void> => {
+  async logout(): Promise<void> {
     try {
-      await api.post('/auth/logout/');
+      await this.getAxiosInstance().post('/auth/logout/');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       // Always clear token even if logout request fails
-      authApi.clearAuthToken();
+      this.setAuthToken(null);
     }
-  },
+  }
   
   // Get current user profile
-  getCurrentUser: async (): Promise<User> => {
+  async getCurrentUser(): Promise<User> {
+    this.ensureAuthenticated();
     try {
-      const response = await api.get('/auth/profile/');
+      const response = await this.getAxiosInstance().get<User>('/auth/profile/');
       return response.data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       throw error;
     }
-  },
+  }
   
   // Change password
-  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    this.ensureAuthenticated();
     try {
-      await api.post('/auth/change-password/', {
+      await this.getAxiosInstance().post('/auth/change-password/', {
         current_password: currentPassword,
         new_password: newPassword
       });
@@ -108,10 +91,7 @@ export const authApi = {
       console.error('Error changing password:', error);
       throw error;
     }
-  },
-  
-  // Check if user is authenticated
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('token');
   }
-}; 
+}
+
+export const authApi = new AuthApi(); 

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { Box, Typography } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
@@ -8,8 +8,7 @@ interface MarkdownPreviewProps {
   content: string;
   highlightMatches?: (text: string) => any;
   children?: any;
-  hasThinking?: boolean;
-  onToggleThinking?: () => void;
+  isStreaming?: boolean;
 }
 
 interface CodeBlockProps {
@@ -22,10 +21,9 @@ export const MarkdownPreview = ({
   content,
   highlightMatches,
   children,
-  hasThinking,
-  onToggleThinking,
+  isStreaming = false,
 }: MarkdownPreviewProps) => {
-  const containerRef = React.useRef(null);
+  const containerRef = React.createRef<HTMLDivElement>();
 
   if (highlightMatches) {
     return highlightMatches(content);
@@ -52,14 +50,16 @@ export const MarkdownPreview = ({
             marginBottom: 0,
           },
         },
+        opacity: isStreaming ? 0.7 : 1,
+        transition: 'opacity 0.2s ease',
       }}
     >
       <ReactMarkdown
         components={{
           pre: ({ children, ...props }) => (
-            <Box {...props} sx={{ margin: 0, padding: '1rem', borderRadius: '4px', overflow: 'auto' }}>
+            <pre {...props} style={{ margin: 0, padding: '1rem', borderRadius: '4px', overflow: 'auto' }}>
               {children}
-            </Box>
+            </pre>
           ),
           code: ({ inline, className, children }: CodeBlockProps) => {
             const match = /language-(\w+)/.exec(className || '');

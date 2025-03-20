@@ -17,7 +17,7 @@ interface WelcomeScreenProps {
   drawerOpen: boolean;
   isMobile: boolean;
   handleDrawerToggle: () => void;
-  createConversation: (title: string) => void;
+  createConversation: (title?: string) => void;
 }
 
 export function WelcomeScreen({
@@ -28,6 +28,10 @@ export function WelcomeScreen({
 }: WelcomeScreenProps) {
   const theme = useTheme();
   const [hovered, setHovered] = useState(false);
+  
+  const handleStartNewChat = () => {
+    createConversation();
+  };
   
   return (
     <div>
@@ -92,33 +96,26 @@ export function WelcomeScreen({
         </Box>
 
         {/* Action buttons */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
-            mt: 2,
-          }}
-        >
+        <Box sx={{ mb: 6 }}>
           <Button
             variant="contained"
             color="primary"
+            size="large"
             startIcon={<AddIcon />}
-            onClick={() => createConversation('New Conversation')}
+            onClick={handleStartNewChat}
             sx={{
               py: 1.5,
-              px: 3,
+              px: 4,
               borderRadius: 28,
               textTransform: 'none',
               fontWeight: 'bold',
               fontSize: '1rem',
-              boxShadow: '0 4px 14px rgba(0, 206, 172, 0.30)',
+              boxShadow: '0 3px 8px rgba(0, 206, 172, 0.25)',
               backgroundColor: '#00CEAC',
               '&:hover': {
                 backgroundColor: '#00B597',
-                boxShadow: '0 6px 20px rgba(0, 206, 172, 0.40)',
+                boxShadow: '0 4px 12px rgba(0, 206, 172, 0.35)',
               },
-              transition: 'all 0.2s ease-in-out',
             }}
           >
             Start a New Conversation
