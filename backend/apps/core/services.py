@@ -102,3 +102,82 @@ class BaseService(Generic[ModelType]):
             return True
         except Exception:
             return False
+
+import json
+from typing import Dict, Any, List, Optional
+import logging
+import re
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+import requests
+from django.utils import timezone
+
+from apps.core.models import UserKnowledgeBase
+from apps.core.logging import get_logger
+
+User = get_user_model()
+logger = get_logger(__name__)
+
+
+class KnowledgeBaseService:
+    """Service for managing user knowledge bases."""
+
+    @classmethod
+    def get_or_create_knowledge_base(cls, user) -> UserKnowledgeBase:
+        """Get or create a knowledge base for a user."""
+        knowledge_base, created = UserKnowledgeBase.objects.get_or_create(user=user)
+        if created:
+            # Initialize with empty knowledge
+            knowledge_base.knowledge_text = cls._create_initial_knowledge_text()
+            knowledge_base.save()
+        return knowledge_base
+
+    @classmethod
+    def _create_initial_knowledge_text(cls) -> str:
+        """Create initial knowledge text structure."""
+        return """# User Knowledge Base
+
+## Personal Information
+- No personal information has been shared yet
+
+## Topics of Interest
+- No topics of interest identified yet
+
+## Additional Information
+- No additional information available yet
+
+## New Information
+- No new information has been shared in this message
+
+Version: 1.0
+Last Updated: {}""".format(timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+    @classmethod
+    def update_knowledge_base_from_message(cls, user, message) -> UserKnowledgeBase:
+        """Update a user's knowledge base with information from a message."""
+        knowledge_base = cls.get_or_create_knowledge_base(user)
+        
+        # Update version and timestamp
+        current_version = round(float(knowledge_base.version), 1)  # Round to 1 decimal place
+        new_version = round(current_version + 0.1, 1)  # Round to 1 decimal place
+        knowledge_base.version = new_version
+        
+        # Update version and timestamp in knowledge text
+        knowledge_base.knowledge_text = knowledge_base.knowledge_text.replace(
+            f"Version: {current_version:.1f}",  # Format with exactly 1 decimal place
+            f"Version: {new_version:.1f}"  # Format with exactly 1 decimal place
+        ).replace(
+            "Last Updated: {}".format(knowledge_base.knowledge_text.split("Last Updated: ")[-1]),
+            "Last Updated: {}".format(timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
+        )
+        
+        # Save changes
+        knowledge_base.save()
+        return knowledge_base
+
+    @classmethod
+    def get_knowledge_as_context(cls, user) -> str:
+        """Get the knowledge base in a format suitable for AI context."""
+        knowledge_base = cls.get_or_create_knowledge_base(user)
+        return knowledge_base.knowledge_text

@@ -286,5 +286,5 @@ RATE_LIMIT_WINDOW: int = env.int("RATE_LIMIT_WINDOW", 10)  # window size in seco
 
 
 # LLM Configuration
-LLM_MODEL_NAME = env("LLM_MODEL_NAME", default="gemma3:1b")
-LLM_API_URL = env("LLM_API_URL", default="http://localhost:11400/api/generate")
+LLM_MODEL_NAME = env("LLM_MODEL_NAME")
+LLM_API_URL = env("LLM_API_URL")

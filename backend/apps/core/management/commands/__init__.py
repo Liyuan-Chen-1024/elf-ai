@@ -1,1 +1,1 @@
- 
+"""Core app management commands.""" 

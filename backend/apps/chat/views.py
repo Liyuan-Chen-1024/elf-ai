@@ -1,5 +1,7 @@
 import json
-from typing import Any, Dict
+import time
+import re
+from typing import Any, Dict, Generator, List
 
 from django.conf import settings
 from django.db import transaction
@@ -13,6 +15,7 @@ from rest_framework.response import Response
 import requests
 
 from apps.core.logging import get_logger
+from apps.core.services import KnowledgeBaseService
 
 from .models import Conversation, Message
 from .serializers import (
@@ -22,6 +25,39 @@ from .serializers import (
 )
 
 logger = get_logger(__name__)
+
+
+def tokenize_text(text: str) -> List[str]:
+    """
+    Tokenize text into natural chunks for streaming.
+    This is a simple implementation that splits on space, punctuation, and keeps punctuation attached.
+    """
+    # Split on spaces but keep punctuation attached to the previous word
+    tokens = []
+    pattern = r'([,.!?;:])'
+    
+    # First split by spaces
+    space_split = text.split()
+    
+    for word in space_split:
+        # Check if the word has punctuation
+        parts = re.split(pattern, word)
+        
+        # Filter out empty strings
+        parts = [p for p in parts if p]
+        
+        if len(parts) > 1:
+            # If there's punctuation, add the word and punctuation separately
+            for i in range(0, len(parts) - 1, 2):
+                if i + 1 < len(parts):
+                    tokens.append(parts[i] + parts[i + 1])
+                else:
+                    tokens.append(parts[i])
+        else:
+            # No punctuation, just add the word
+            tokens.append(word)
+    
+    return tokens
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -57,6 +93,38 @@ class ConversationViewSet(viewsets.ModelViewSet):
         conversation = self.get_object()
         messages = conversation.messages.filter(is_deleted=False).order_by("created_at")
         return Response(MessageSerializer(messages, many=True).data)
+    
+    def _stream_tokens(
+        self, tokens: List[str], assistant_message: Message
+    ) -> Generator[str, None, None]:
+        """
+        Stream tokens with a natural typing rhythm.
+        Updates the assistant message with each token.
+        
+        Args:
+            tokens: List of tokens to stream
+            assistant_message: Message object to update
+            
+        Yields:
+            SSE formatted data strings
+        """
+        full_response = ""
+        for token in tokens:
+            # Add a small delay for more natural typing (20-30ms per token)
+            time.sleep(0.02)
+            
+            # Add space before token if not punctuation and not first token
+            if full_response and not token.startswith((",", ".", "!", "?", ";", ":")):
+                token = " " + token
+                
+            full_response += token
+            
+            # Update the message in the database
+            assistant_message.content = full_response.strip()
+            assistant_message.save(update_fields=["content", "updated_at"])
+            
+            # Yield the token for streaming
+            yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
 
     @action(detail=True, methods=["post"])
     def stream_message(self, request: Request, pk=None) -> StreamingHttpResponse:
@@ -80,20 +148,39 @@ class ConversationViewSet(viewsets.ModelViewSet):
             try:
                 # Create user message and initial assistant message
                 with transaction.atomic():
-                    Message.objects.create(
+                    user_message = Message.objects.create(
                         conversation=conversation, role="user", content=content
                     )
                     assistant_message = Message.objects.create(
                         conversation=conversation, role="assistant", content=""
                     )
+                
+                # Update the user's knowledge base (in background - don't wait for response)
+                # This will analyze the new message and extract knowledge
+                KnowledgeBaseService.update_knowledge_base_from_message(
+                    user=conversation.user,
+                    message=user_message
+                )
 
                 # Get conversation history for context
                 history = conversation.messages.filter(is_deleted=False).order_by(
                     "-created_at"
                 )[:5][::-1]  # Last 5 messages in chronological order
 
-                # Build conversation context
-                context = "You are an AI assistant. Be helpful and concise.\n\n"
+                # Get user knowledge base for personalization
+                user_knowledge = KnowledgeBaseService.get_knowledge_as_context(user=conversation.user)
+                
+                # Build conversation context with personalized knowledge
+                context = (
+                    "You are Elf AI, a helpful AI assistant that personalizes responses based on the user's preferences and interests.\n\n"
+                    f"{user_knowledge}\n\n"
+                    "When responding:\n"
+                    "1. Be helpful and concise\n"
+                    "2. Reference the user's known interests and preferences when relevant\n"
+                    "3. Don't explicitly mention that you know these details unless asked directly\n\n"
+                )
+                
+                # Add conversation history
                 for msg in history:
                     context += f"{msg.role}: {msg.content}\n"
                 context += f"user: {content}\nassistant:"
@@ -117,6 +204,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
                 if response.status_code == 200:
                     full_response = ""
+                    token_buffer = ""
+                    last_save_time = time.time()
+                    last_was_whitespace = False
+                    
                     for line in response.iter_lines():
                         if line:
                             try:
@@ -124,15 +215,56 @@ class ConversationViewSet(viewsets.ModelViewSet):
                                 token = json_response.get("response", "")
 
                                 if token:
-                                    full_response += token
-                                    assistant_message.content = full_response
-                                    assistant_message.save()
-
-                                    logger.debug(f"Sending token: {token}")
-                                    yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
+                                    # Smart whitespace handling
+                                    current_is_whitespace = token.isspace()
+                                    
+                                    # Handle special cases for punctuation and spacing
+                                    if token_buffer:
+                                        if token.startswith((",", ".", "!", "?", ";", ":", ")", "]", "}")):
+                                            # No space before punctuation
+                                            pass
+                                        elif token.startswith(("(", "[", "{")):
+                                            # No space before opening brackets
+                                            pass
+                                        elif token_buffer.endswith(("(", "[", "{")):
+                                            # No space after opening brackets
+                                            pass
+                                        elif not (last_was_whitespace or current_is_whitespace):
+                                            # Add space between words if needed
+                                            token_buffer += " "
+                                    
+                                    token_buffer += token
+                                    current_time = time.time()
+                                    last_was_whitespace = current_is_whitespace
+                                    
+                                    # Batch tokens based on natural breaks (sentences, phrases) or time
+                                    should_send = (
+                                        current_time - last_save_time >= 0.5 or  # Time-based threshold
+                                        len(token_buffer) >= 30 or              # Size-based threshold
+                                        any(token.endswith(c) for c in ".!?\n") # Natural breaks
+                                    )
+                                    
+                                    if should_send and token_buffer:
+                                        full_response += token_buffer
+                                        assistant_message.content = full_response
+                                        assistant_message.save(update_fields=["content", "updated_at"])
+                                        
+                                        logger.debug(f"Sending token batch: {token_buffer}")
+                                        yield f"data: {json.dumps({'type': 'token', 'content': token_buffer})}\n\n"
+                                        
+                                        token_buffer = ""
+                                        last_save_time = current_time
+                                        
                             except json.JSONDecodeError as e:
                                 logger.error(f"Error decoding LLM response: {e}, line: {line}")
                                 continue
+                    
+                    # Send any remaining tokens in the buffer
+                    if token_buffer:
+                        full_response += token_buffer
+                        assistant_message.content = full_response
+                        assistant_message.save(update_fields=["content", "updated_at"])
+                        yield f"data: {json.dumps({'type': 'token', 'content': token_buffer})}\n\n"
                 else:
                     error_msg = f"Error from LLM API: {response.status_code}"
                     logger.error(error_msg)
