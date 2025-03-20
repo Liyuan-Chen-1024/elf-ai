@@ -13,7 +13,7 @@ services:
     command: python manage.py runserver 0.0.0.0:${API_PORT}
     volumes:
       - ./backend:/app
-      - media-data:/app/media
+      - ${HOME}/docker_volumes/elfai/media:/app/media
       - ./.vscode-server:/root/.vscode-server
     depends_on:
       db:
@@ -67,9 +67,9 @@ services:
     command: npm run dev -- --debug
     volumes:
       - ./frontend:/app
-      - media-data:/app/media
+      - ${HOME}/docker_volumes/elfai/media:/app/media
       - ./.vscode-server:/root/.vscode-server
-      - frontend-node-modules:/app/node_modules
+      - ${HOME}/docker_volumes/elfai/node_modules:/app/node_modules
     environment:
       - NODE_ENV=${APP_ENVIRONMENT}
       - PORT=${FRONTEND_PORT}
@@ -118,7 +118,8 @@ services:
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
-    command: celery -A config worker -l INFO
+    command: python celery_run.py
+    # command: celery -A config worker -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -197,25 +198,44 @@ services:
     command: celery -A config flower --port=5555 --basic_auth=${FLOWER_BASIC_AUTH:-admin:admin}
 
   db:
-    image: mysql:8.0
+    image: postgres:15-alpine
     restart: unless-stopped
     networks:
       - elfai-network
     ports:
-      - "${DB_PORT}:3306"
+      - "${DB_PORT}:5432"
     environment:
-      - MYSQL_DATABASE=${DB_NAME}
-      - MYSQL_USER=${DB_USER}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-    command: --default-authentication-plugin=mysql_native_password
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - LANG=en_US.utf8
+      - LC_ALL=en_US.utf8
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
     volumes:
-      - mysql-data:/var/lib/mysql
+      - ${HOME}/docker_volumes/elfai/postgres:/var/lib/postgresql/data
+      - ./backend/db/backups:/backups
+      - ./backend/db/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    command: >
+      postgres
+      -c 'max_connections=1000'
+      -c 'shared_buffers=256MB'
+      -c 'effective_cache_size=768MB'
+      -c 'work_mem=32MB'
+      -c 'maintenance_work_mem=64MB'
+      -c 'random_page_cost=1.1'
+      -c 'temp_file_limit=10GB'
+      -c 'log_min_duration_statement=200ms'
+      -c 'idle_in_transaction_session_timeout=10s'
+      -c 'lock_timeout=1s'
+      -c 'statement_timeout=60s'
+      -c 'shared_preload_libraries=pg_stat_statements'
+      -c 'pg_stat_statements.max=10000'
+      -c 'pg_stat_statements.track=all'
 
   redis:
     image: redis:7-alpine
@@ -225,18 +245,12 @@ services:
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
-      - redis-data:/data
+      - ${HOME}/docker_volumes/elfai/redis:/data
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
-
-volumes:
-  mysql-data:
-  redis-data:
-  media-data:
-  frontend-node-modules:
 
 networks:
   elfai-network:

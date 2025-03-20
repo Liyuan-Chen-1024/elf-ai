@@ -3,6 +3,7 @@
         "deepseek",
         "elfai",
         "healthcheck",
+        "initdb",
         "mysqladmin",
         "PYTHONPATH",
         "runserver",

@@ -20,14 +20,14 @@ class UserKnowledgeBaseAdmin(admin.ModelAdmin):
             'classes': ('wide',)
         }),
         ('Structured Data', {
-            'fields': ('topics', 'preferences'),
+            'fields': ('topics',),
             'description': 'Structured information extracted from conversations',
-            'classes': ('collapse',)
+            'classes': ('wide',)
         }),
         ('Metadata', {
             'fields': ('knowledge_version', 'version', 'last_analyzed_message_id'),
             'description': 'Technical metadata about the knowledge base',
-            'classes': ('collapse',)
+            'classes': ('wide',)
         }),
     )
 
@@ -40,7 +40,6 @@ class UserKnowledgeBaseAdmin(admin.ModelAdmin):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields['knowledge_text'].widget.attrs['style'] = 'width: 90%; height: 300px;'
         form.base_fields['topics'].widget.attrs['style'] = 'width: 90%; height: 150px;'
-        form.base_fields['preferences'].widget.attrs['style'] = 'width: 90%; height: 150px;'
         return form
 
 

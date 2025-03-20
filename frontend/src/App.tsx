@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { LoginPage } from './features/auth/LoginPage';
 import { Chat } from './features/chat/components/Chat';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { NewsPage } from './features/news/NewsPage';
 import { ProfileContainer } from './features/profile/ProfileContainer';
 import lightTheme from './theme';
 import { API_BASE_URL } from './shared/api/api-client';
@@ -47,6 +48,7 @@ const AppRoutes = () => {
         <Routes>
           <Route path="/chat" element={<Chat />} />
           <Route path="/chat/:conversationId" element={<Chat />} />
+          <Route path="/news" element={<NewsPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profile" element={<ProfileContainer />} />
           <Route path="/" element={<Navigate to="/chat" replace />} />

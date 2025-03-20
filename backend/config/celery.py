@@ -1,18 +1,23 @@
+"""Celery configuration settings."""
+
 import os
+
 from celery import Celery
 
-# Set the default Django settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
+# Set the default Django settings module for the 'celery' program.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-# Create the Celery app
-app = Celery('elfai')
+# Create a Celery instance and configure it using the settings from Django
+celery_app = Celery('config')
 
-# Read config from Django settings, prefix with CELERY_
-app.config_from_object('django.conf:settings', namespace='CELERY')
+# Load task modules from all registered Django app configs.
+celery_app.config_from_object('django.conf:settings', namespace='CELERY')
 
-# Load tasks from all registered Django app configs
-app.autodiscover_tasks()
+# Auto-discover tasks in all installed apps
+celery_app.autodiscover_tasks()
 
-@app.task(bind=True, ignore_result=True)
+@celery_app.task(bind=True)
 def debug_task(self):
+    """Debug task to verify Celery is working."""
     print(f'Request: {self.request!r}') 
+    

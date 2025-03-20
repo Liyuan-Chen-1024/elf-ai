@@ -99,7 +99,7 @@ WSGI_APPLICATION: str = "config.wsgi.application"
 # Database
 DATABASES: Dict[str, Dict[str, Any]] = {
     "default": env.db(
-        "DATABASE_URL", default="mysql://elfai:elfai@localhost:3306/elfai"
+        "DATABASE_URL", default="postgresql://elfai:elfai@localhost:5432/elfai"
     ),
 }
 

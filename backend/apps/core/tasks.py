@@ -28,7 +28,6 @@ def update_knowledge_base_from_message(self, user_id: int, message_id: int):
             'id': str(knowledge_base.id),
             'user_id': str(knowledge_base.user.id),
             'topics': knowledge_base.topics,
-            'preferences': knowledge_base.preferences,
             'knowledge_text': knowledge_base.knowledge_text,
             'version': float(knowledge_base.version),
             'knowledge_version': knowledge_base.knowledge_version,

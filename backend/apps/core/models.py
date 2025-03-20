@@ -41,8 +41,17 @@ class UserKnowledgeBase(TimeStampedModel, UUIDModel):
     )
     
     # Structured fields for specific types of knowledge
-    topics = models.JSONField(default=dict, blank=True, help_text="Topics the user is interested in")
-    preferences = models.JSONField(default=dict, blank=True, help_text="User preferences")
+    topics = models.JSONField(
+        default=dict, 
+        blank=True, 
+        help_text=(
+            "Ranked topics the user is interested in. Format: "
+            "{'topics': ["
+            "{'name': 'AI', 'description': 'Strong interest in artificial intelligence and machine learning', 'rank': 0.95}, "
+            "{'name': 'Art', 'description': 'Digital art and generative AI art creation', 'rank': 0.8}"
+            "]}"
+        )
+    )
     
     # Free-text knowledge representation that the AI can structure as needed
     knowledge_text = models.TextField(
@@ -103,6 +112,5 @@ class UserKnowledgeBase(TimeStampedModel, UUIDModel):
         """
         return {
             "topics": self.topics,
-            "preferences": self.preferences,
             "knowledge": self.knowledge_text,
         }

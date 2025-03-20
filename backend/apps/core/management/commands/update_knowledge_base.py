@@ -121,7 +121,6 @@ class Command(BaseCommand):
         self.stdout.write("\nStructured data:")
         self.stdout.write("-" * 80)
         self.stdout.write(f"Topics: {knowledge_base.topics}")
-        self.stdout.write(f"Preferences: {knowledge_base.preferences}")
         self.stdout.write("-" * 80)
         
         return knowledge_base 

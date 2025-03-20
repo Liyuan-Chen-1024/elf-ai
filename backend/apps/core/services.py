@@ -130,6 +130,7 @@ class KnowledgeBaseService:
         if created:
             # Initialize with empty knowledge
             knowledge_base.knowledge_text = cls._create_initial_knowledge_text()
+            knowledge_base.topics = {"topics": []}
             knowledge_base.save()
         return knowledge_base
 
@@ -141,10 +142,6 @@ class KnowledgeBaseService:
 ## Commands and Requirements
 - No specific commands or requirements set yet
 - This section tracks explicit instructions that must be followed (e.g. always respond in Spanish)
-
-## Preferences
-- No preferences set yet
-- This section tracks user preferences that should influence responses when appropriate
 
 ## Topics of Interest
 - No topics of interest identified yet
@@ -166,7 +163,8 @@ Last Updated: {}""".format(timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
         """Update a user's knowledge base with information from a message."""
         knowledge_base = cls.get_or_create_knowledge_base(user)
         
-        prompt = f"""Given the user's message and their current knowledge base, update the knowledge base with any new information.
+        # First update the knowledge text
+        knowledge_prompt = f"""Given the user's message and their current knowledge base, update the knowledge base with any new information.
 Keep the existing format but update or add sections as needed.
 
 Current Knowledge Base:
@@ -178,15 +176,13 @@ New Message:
 Instructions:
 1. Analyze the message for:
    - COMMANDS: Explicit instructions that MUST be followed (e.g. "always respond in Spanish", "never use emojis")
-   - PREFERENCES: User preferences that should influence responses (e.g. "I prefer technical explanations")
-   - TOPICS: Topics of interest or expertise
+   - TOPICS: Topics of interest or expertise (with any context about their interest level)
    - PERSONAL INFO: Any personal information shared
    - COMMUNICATION STYLE: How the user prefers to communicate
    - CONTEXT: Any other relevant information
 
 2. Update the knowledge base sections:
    - Commands section should be authoritative and clear
-   - Preferences should influence but not mandate responses
    - Maintain all existing valid information
    - Remove outdated or contradicted information
    - Group related information together
@@ -201,14 +197,13 @@ Instructions:
 4. Special Handling:
    - Commands are HIGHEST priority and must be prominently listed
    - If a new command contradicts an old one, use the newest
-   - Merge similar preferences/commands
    - Note any conflicts or ambiguities"""
 
         response = requests.post(
             settings.LLM_API_URL,
             json={
                 "model": settings.LLM_MODEL_NAME,
-                "prompt": prompt,
+                "prompt": knowledge_prompt,
                 "stream": True
             },
             stream=True
@@ -239,6 +234,86 @@ Instructions:
         knowledge_base.knowledge_text = new_knowledge_text
         knowledge_base.version = round(float(knowledge_base.version) + 0.1, 1)
         knowledge_base.last_analyzed_message_id = message.id
+        
+        # Now analyze the entire knowledge text to rank topics
+        topic_prompt = f"""Analyze the entire knowledge base and extract ranked topics based on the user's overall interests and engagement.
+Return a JSON array of topics with their rankings (0.0 to 1.0, where 1.0 is highest interest).
+Format: {{"topics": [
+    {{"name": "AI", "description": "Strong interest in artificial intelligence and machine learning", "rank": 0.95}},
+    {{"name": "Art", "description": "Digital art and generative AI art creation", "rank": 0.8}}
+]}}
+
+Knowledge Base:
+{new_knowledge_text}
+
+Instructions:
+1. Extract ALL topics mentioned throughout the knowledge base
+2. For each topic:
+   - NAME: Use a single word or acronym (e.g. "AI", "Python", "Art")
+   - DESCRIPTION: Add a brief description explaining the context and specific areas of interest
+   - RANK: Assign a rank from 0.0 to 1.0
+
+3. Rank topics based on:
+   - Frequency of mentions
+   - Explicit statements of interest
+   - Emotional connection to the topic
+   - Demonstrated expertise or knowledge
+   - Recency of mentions
+   - Context of mentions (e.g. mentioned in commands vs casual reference)
+   
+4. Topic Ranking Guidelines:
+   - 0.9 - 1.0: Core interests, explicitly stated passions, or professional expertise
+   - 0.7 - 0.8: Strong interests, frequently discussed or actively pursued
+   - 0.5 - 0.6: Moderate interests, mentioned multiple times with positive engagement
+   - 0.3 - 0.4: Casual interests, mentioned occasionally or with neutral engagement
+   - 0.1 - 0.2: Minor interests, mentioned in passing or with limited engagement
+
+5. Topic Name Guidelines:
+   - Use single words where possible (e.g. "Art" not "Digital Art")
+   - Use widely recognized acronyms (e.g. "AI" for Artificial Intelligence)
+   - For technical topics, use standard terminology (e.g. "Python", "React")
+   - Capitalize appropriately (e.g. "JavaScript", "Art", "Science")
+   - Avoid compound words or phrases
+   - If a concept needs multiple words, use the description field to clarify
+
+6. Description Guidelines:
+   - Be specific about the user's relationship with the topic
+   - Include relevant subtopics or specific areas of interest
+   - Mention skill level or expertise if known
+   - Note any specific preferences or focus areas
+   - Keep to one sentence, maximum 100 characters
+
+7. Ensure Consistency:
+   - Use standard terminology for technical topics
+   - Combine related interests under main topic names
+   - Use the description to capture nuance and detail
+   - Maintain professional terminology where appropriate
+
+8. Return only the JSON array, no other text"""
+
+        # Get topic rankings
+        topic_response = requests.post(
+            settings.LLM_API_URL,
+            json={
+                "model": settings.LLM_MODEL_NAME,
+                "prompt": topic_prompt,
+                "stream": False
+            }
+        )
+        
+        if topic_response.status_code != 200:
+            error_msg = f"Error from LLM API (topics): {topic_response.status_code} - {topic_response.text}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
+        try:
+            topic_data = json.loads(topic_response.json()["response"])
+            knowledge_base.topics = topic_data
+            logger.info(f"Updated topics: {topic_data}")
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Failed to parse topic response: {e}")
+            # Continue even if topic parsing fails - the knowledge text was still updated
+        
         knowledge_base.save()
         logger.info(f"Updated knowledge base for user {user.id}")
         
