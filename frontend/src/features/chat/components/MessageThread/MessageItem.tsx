@@ -207,18 +207,16 @@ export const MessageItem = ({
   
   // Render the final state with solution and toggle button
   const renderFinalContent = () => {
-    // Remove <think> tags and content from the displayed message
+    // Extract thinking content and display content separately
     let displayContent = message.content;
-    if (displayContent.indexOf('<think>') !== -1) {
-      // If <think> tag exists, extract the part after it
-      const thinkTag = /<think>([\s\S]*?)(?=<\/think>|$)/;
-      const match = displayContent.match(thinkTag);
-      if (match && match[1]) {
-        // Store the thinking part for the toggle view
-        const thinkingPart = match[1].trim();
-        // Remove the <think> tag and its content from display
-        displayContent = displayContent.replace(/<think>[\s\S]*?(?=<\/think>|$)(.*?)<\/think>|<think>[\s\S]*/, '').trim();
-      }
+    let thinkingContent = '';
+
+    // Extract content between <think> tags if present
+    const thinkMatch = displayContent.match(/<think>([\s\S]*?)<\/think>/);
+    if (thinkMatch) {
+      thinkingContent = thinkMatch[1].trim();
+      // Remove the <think> section from display content
+      displayContent = displayContent.replace(/<think>[\s\S]*?<\/think>/, '').trim();
     }
     
     return (
@@ -226,29 +224,33 @@ export const MessageItem = ({
         <Box>
           <ReactMarkdown>{displayContent}</ReactMarkdown>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-          <ThinkingToggle
-            startIcon={<VisibilityIcon fontSize="small" />}
-            onClick={toggleThinking}
-            size="small"
-          >
-            {showThinking ? 'Hide thinking process' : 'Click here to see all thinking process'}
-          </ThinkingToggle>
-        </Box>
-        
-        <Collapse in={showThinking} timeout="auto">
-          <ThinkingProcess>
-            <Typography variant="caption" sx={{ 
-              display: 'block', 
-              mb: 1, 
-              fontWeight: 'medium',
-              color: 'text.secondary' 
-            }}>
-              Thinking process:
-            </Typography>
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </ThinkingProcess>
-        </Collapse>
+        {thinkingContent && (
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+              <ThinkingToggle
+                startIcon={showThinking ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                onClick={toggleThinking}
+                size="small"
+              >
+                {showThinking ? 'Hide thinking process' : 'Show thinking process'}
+              </ThinkingToggle>
+            </Box>
+            
+            <Collapse in={showThinking} timeout="auto">
+              <ThinkingProcess>
+                <Typography variant="caption" sx={{ 
+                  display: 'block', 
+                  mb: 1, 
+                  fontWeight: 'medium',
+                  color: 'text.secondary' 
+                }}>
+                  Thinking process:
+                </Typography>
+                <ReactMarkdown>{thinkingContent}</ReactMarkdown>
+              </ThinkingProcess>
+            </Collapse>
+          </>
+        )}
       </>
     );
   };
@@ -334,7 +336,8 @@ export const MessageItem = ({
         </MessageBubble>
         
         <ActionButtons className="action-buttons">
-          {!isEditing && !isUser && !message.isThinking && onEdit && (
+          {/* Only show edit button for user messages */}
+          {!isEditing && isUser && onEdit && (
             <IconButton size="small" onClick={handleEdit} sx={{ color: 'text.secondary' }}>
               <EditIcon fontSize="small" />
             </IconButton>

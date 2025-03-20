@@ -237,6 +237,16 @@ export const useChat = () => {
       return false;
     }
     
+    // Find the message to check if it's from the user
+    const message = currentConversation.messages.find(m => m.id === messageId);
+    
+    // Only allow editing user messages
+    if (!message || message.role !== 'user') {
+      console.error('Cannot edit assistant messages');
+      setError('Only user messages can be edited');
+      return false;
+    }
+    
     try {
       setIsLoading(true);
       
