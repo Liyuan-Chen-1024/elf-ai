@@ -175,9 +175,15 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     "You are Elf AI, a helpful AI assistant that personalizes responses based on the user's preferences and interests.\n\n"
                     f"{user_knowledge}\n\n"
                     "When responding:\n"
-                    "1. Be helpful and concise\n"
-                    "2. Reference the user's known interests and preferences when relevant\n"
-                    "3. Don't explicitly mention that you know these details unless asked directly\n\n"
+                    "1. Format your response in markdown\n"
+                    "2. For lists, use proper markdown list formatting:\n"
+                    "   - Numbered lists should use '1. ', '2. ' etc.\n"
+                    "   - Bullet points should use '- ' or '* '\n"
+                    "   - Ensure each list item is on a new line\n"
+                    "3. Be helpful and concise\n"
+                    "4. Reference the user's known interests and preferences when relevant\n"
+                    "5. Don't explicitly mention that you know these details unless asked directly\n"
+                    "6. Use proper markdown spacing (blank lines between sections)\n\n"
                 )
                 
                 # Add conversation history
@@ -206,7 +212,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     full_response = ""
                     token_buffer = ""
                     last_save_time = time.time()
-                    last_was_whitespace = False
+                    
+                    # Send initial message to indicate we're starting content streaming
+                    yield f"data: {json.dumps({'type': 'start_content'})}\n\n"
                     
                     for line in response.iter_lines():
                         if line:
@@ -215,56 +223,54 @@ class ConversationViewSet(viewsets.ModelViewSet):
                                 token = json_response.get("response", "")
 
                                 if token:
-                                    # Smart whitespace handling
-                                    current_is_whitespace = token.isspace()
-                                    
-                                    # Handle special cases for punctuation and spacing
-                                    if token_buffer:
-                                        if token.startswith((",", ".", "!", "?", ";", ":", ")", "]", "}")):
-                                            # No space before punctuation
-                                            pass
-                                        elif token.startswith(("(", "[", "{")):
-                                            # No space before opening brackets
-                                            pass
-                                        elif token_buffer.endswith(("(", "[", "{")):
-                                            # No space after opening brackets
-                                            pass
-                                        elif not (last_was_whitespace or current_is_whitespace):
-                                            # Add space between words if needed
-                                            token_buffer += " "
-                                    
+                                    # Add token to buffer
                                     token_buffer += token
                                     current_time = time.time()
-                                    last_was_whitespace = current_is_whitespace
                                     
-                                    # Batch tokens based on natural breaks (sentences, phrases) or time
+                                    # Check if we have a complete markdown element
+                                    complete_chunk = (
+                                        # End of line for list items and paragraphs
+                                        token_buffer.endswith("\n") or
+                                        # Complete sentence
+                                        any(token_buffer.rstrip().endswith(c) for c in ".!?") or
+                                        # Complete phrase
+                                        any(token_buffer.rstrip().endswith(c) for c in ",;:") or
+                                        # Complete markdown list item
+                                        (token_buffer.strip().startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.", "-", "*")) and
+                                         token_buffer.endswith("\n"))
+                                    )
+                                    
+                                    # Time or size-based threshold with markdown awareness
                                     should_send = (
-                                        current_time - last_save_time >= 0.5 or  # Time-based threshold
-                                        len(token_buffer) >= 30 or              # Size-based threshold
-                                        any(token.endswith(c) for c in ".!?\n") # Natural breaks
+                                        # Time threshold reached
+                                        (current_time - last_save_time >= 1 and 
+                                         (token_buffer.endswith((" ", "\n")) or complete_chunk)) or
+                                        # Size threshold reached
+                                        (len(token_buffer) >= 30 and 
+                                         (token_buffer.endswith((" ", "\n")) or complete_chunk)) or
+                                        # Complete markdown element
+                                        complete_chunk
                                     )
                                     
                                     if should_send and token_buffer:
-                                        full_response += token_buffer
-                                        assistant_message.content = full_response
-                                        assistant_message.save(update_fields=["content", "updated_at"])
-                                        
-                                        logger.debug(f"Sending token batch: {token_buffer}")
-                                        yield f"data: {json.dumps({'type': 'token', 'content': token_buffer})}\n\n"
+                                        chunk = token_buffer
+                                        if chunk:
+                                            # Preserve exact markdown formatting
+                                            full_response += chunk
+                                            assistant_message.content = full_response
+                                            assistant_message.save(update_fields=["content", "updated_at"])
+                                            
+                                            logger.debug(f"Sending chunk: {chunk}")
+                                            yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
                                         
                                         token_buffer = ""
                                         last_save_time = current_time
-                                        
                             except json.JSONDecodeError as e:
                                 logger.error(f"Error decoding LLM response: {e}, line: {line}")
                                 continue
                     
-                    # Send any remaining tokens in the buffer
-                    if token_buffer:
-                        full_response += token_buffer
-                        assistant_message.content = full_response
-                        assistant_message.save(update_fields=["content", "updated_at"])
-                        yield f"data: {json.dumps({'type': 'token', 'content': token_buffer})}\n\n"
+                    # Send completion message to show thinking toggle
+                    yield f"data: {json.dumps({'type': 'content_complete'})}\n\n"
                 else:
                     error_msg = f"Error from LLM API: {response.status_code}"
                     logger.error(error_msg)
