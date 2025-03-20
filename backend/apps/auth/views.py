@@ -37,7 +37,12 @@ def login_view(request):
         )
 
     # Get or create token
-    token, _ = Token.objects.get_or_create(user=user)
+    token, created = Token.objects.get_or_create(user=user)
+    
+    # If token exists but has an empty key, regenerate it
+    if not token.key:
+        token.delete()
+        token = Token.objects.create(user=user)
 
     # Login user (create session)
     login(request, user)

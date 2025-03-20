@@ -5,7 +5,13 @@ dev:
 	@echo "Starting development environment..."
 	@cp .env.base .env
 	docker compose down --remove-orphans
-	docker compose up
+	docker compose up -d
+	@echo "Waiting for services to initialize..."
+	@sleep 5
+	@echo "Running database migrations..."
+	docker compose exec backend python manage.py migrate
+	@echo "Development environment is ready!"
+	docker compose logs -f
 
 # Testing
 test:

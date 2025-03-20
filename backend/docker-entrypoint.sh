@@ -33,11 +33,5 @@ if [ "${APP_ENVIRONMENT}" != "test" ]; then
     python manage.py migrate
 fi
 
-# Create test user only in development
-if [ "${APP_ENVIRONMENT}" = "development" ]; then
-    echo "Creating test user..."
-    python manage.py create_test_user
-fi
-
 # Execute the main command
 exec "$@"
