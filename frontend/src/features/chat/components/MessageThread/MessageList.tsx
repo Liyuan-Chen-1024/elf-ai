@@ -1,25 +1,22 @@
-import React, { useRef, useMemo, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useTheme } from '@mui/material/styles';
-import { Box, CircularProgress, Typography } from '@mui/material';
-import { Message, UUID } from '../../types';
+import { Box, Typography } from '@mui/material';
+import { Message } from '../../types';
 import { MessageItem } from './MessageItem';
 
 interface MessageListProps {
   messages: Message[];
   isLoading?: boolean;
-  isThinking?: boolean;
-  onMessageEdit?: (messageId: string, content: string) => void;
+  isStreaming?: boolean;
 }
 
 export const MessageList = ({ 
   messages, 
   isLoading, 
-  isThinking,
-  onMessageEdit 
+  isStreaming
 }: MessageListProps) => {
   const theme = useTheme();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [highlightedMessageId, setHighlightedMessageId] = useState<UUID | null>(null);
+  const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -29,11 +26,14 @@ export const MessageList = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isStreaming]);
+
+  // Make sure messages is always an array
+  const safeMessages = Array.isArray(messages) ? messages : [];
 
   // Filter out deleted messages and deduplicate by ID
-  const uniqueMessages = messages.filter(
-    (message) => !message.is_deleted
+  const uniqueMessages = safeMessages.filter(
+    (message) => !message.is_deleted && message.content?.trim().length > 0
   ).reduce((acc: Message[], message) => {
     const existingIndex = acc.findIndex(m => m.id === message.id);
     if (existingIndex === -1) {
@@ -43,17 +43,18 @@ export const MessageList = ({
   }, []);
 
   // Determine if we need to show a thinking message
-  const shouldShowThinking = isThinking && uniqueMessages.length > 0;
+  const shouldShowThinking = isStreaming && uniqueMessages.length > 0;
   
   // Create a virtual thinking message for the assistant
   const thinkingMessage = shouldShowThinking ? {
     id: 'thinking-message',
     conversation_id: uniqueMessages.length > 0 ? uniqueMessages[0].conversation_id : 'temp',
     content: 'Thinking...',
-    role: 'assistant',
+    role: 'assistant' as const,
     timestamp: new Date().toISOString(),
     sender: { id: 'assistant', name: 'Elf AI' },
     isEdited: false,
+    isThinking: true
   } : null;
 
   return (
@@ -70,26 +71,26 @@ export const MessageList = ({
     >
       {uniqueMessages.length === 0 && !isLoading && (
         <Box sx={{ textAlign: 'center', my: 4 }}>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" component="div" color="text.secondary">
             No messages yet. Start a conversation!
           </Typography>
         </Box>
       )}
       
-      {uniqueMessages.map((message) => (
-        <MessageItem
-          key={message.id}
-          message={message}
-          onEdit={onMessageEdit ? (content) => onMessageEdit(message.id, content) : undefined}
-          isHighlighted={message.id === highlightedMessageId}
-          onHighlight={setHighlightedMessageId}
-          isLoading={isLoading}
-        />
-      ))}
+      {uniqueMessages.map((message) => {
+        // Create unique key outside of props
+        const key = String(message.id);
+        return (
+          <MessageItem
+            key={key}
+            message={message}
+          />
+        );
+      })}
       
       {thinkingMessage && (
         <MessageItem
-          key={thinkingMessage.id}
+          key="thinking-message"
           message={thinkingMessage}
           isThinking={true}
         />
@@ -97,7 +98,7 @@ export const MessageList = ({
       
       {isLoading && uniqueMessages.length === 0 && (
         <Box sx={{ textAlign: 'center', my: 2 }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography component="div" color="text.secondary">
             Loading...
           </Typography>
         </Box>

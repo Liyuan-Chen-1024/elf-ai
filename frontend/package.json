@@ -47,6 +47,7 @@
     "@storybook/react": "^8.0.0",
     "@storybook/react-vite": "^8.0.0",
     "@storybook/test": "^8.0.0",
+    "@tanstack/react-query-devtools": "^5.17.19",
     "@testing-library/cypress": "^10.0.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.2.1",

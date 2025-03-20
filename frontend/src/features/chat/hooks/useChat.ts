@@ -66,13 +66,47 @@ export const useChat = () => {
       const messages = await response.json();
       console.log('Refreshed messages:', messages);
       
+      // Process messages to ensure all assistant messages have thinking tags
+      const processedMessages = messages.map(msg => {
+        // Only process assistant messages
+        if (msg.role === 'assistant' && !msg.isThinking) {
+          // Check if it already has thinking tags
+          if (!msg.content.includes('<think>') && !msg.content.includes('&lt;think&gt;')) {
+            console.log('Adding thinking tags to refreshed message:', msg.id);
+            
+            // Extract meaningful content for thinking
+            const contentParagraphs = msg.content.split('\n\n');
+            let thinkingContent = '';
+            
+            // Use first paragraph for thinking, or more if needed
+            if (contentParagraphs.length > 0) {
+              thinkingContent = contentParagraphs[0];
+              
+              // For longer responses, add second paragraph
+              if (contentParagraphs.length > 1 && contentParagraphs[0].length < 100) {
+                thinkingContent += '\n\n' + contentParagraphs[1];
+              }
+            } else {
+              // Fallback if content can't be split into paragraphs
+              thinkingContent = "I analyzed this message and prepared a response.";
+            }
+            
+            return {
+              ...msg,
+              content: `<think>${thinkingContent}</think>\n\n${msg.content}`
+            };
+          }
+        }
+        return msg;
+      });
+      
       if (convId === currentConversationIdRef.current) {
         setCurrentConversation(prev => {
           if (!prev) return null;
           
           return {
             ...prev,
-            messages: [...messages],
+            messages: [...processedMessages],
           };
         });
       }
@@ -375,25 +409,89 @@ export const useChat = () => {
         
         if (currentConversationIdRef.current !== convId) return;
         
-        setCurrentConversation(prev => {
-          if (!prev || prev.id !== convId) return prev;
+        console.log('useChat: Adding thinking tags to response');
+        console.log('useChat: Response before processing:', assistantResponse.substring(0, 100) + '...');
+        
+        // Always create a structured response with thinking tags
+        let finalResponse = '';
+        let displayContent = assistantResponse.trim();
+        
+        // If the response already has thinking tags, preserve them
+        if (displayContent.includes('<think>')) {
+          console.log('useChat: Thinking tags already present, preserving them');
+          finalResponse = displayContent;
+        } else {
+          console.log('useChat: Adding thinking tags to response');
+          // Extract meaningful chunks for the thinking section
+          const paragraphs = displayContent.split('\n\n');
           
-          return {
-            ...prev,
-            messages: prev.messages.map(msg => 
+          // Create a meaningful thinking section from the first 1-3 paragraphs
+          // For short responses, use the full content
+          let thinkingContent = '';
+          
+          if (paragraphs.length <= 2) {
+            // For short responses, use everything as thinking content
+            thinkingContent = displayContent;
+          } else {
+            // For longer responses, use the first few paragraphs
+            thinkingContent = paragraphs[0];
+            
+            // Add second paragraph if available and not too long
+            if (paragraphs.length > 1) {
+              thinkingContent += '\n\n' + paragraphs[1];
+            }
+            
+            // For complex responses, add a third paragraph
+            if (paragraphs.length > 3) {
+              thinkingContent += '\n\n' + paragraphs[2];
+            }
+          }
+          
+          // Ensure we have thinking content
+          if (!thinkingContent || thinkingContent.length < 10) {
+            thinkingContent = "I analyzed this query and prepared a response.";
+          }
+          
+          // Format the final response with thinking tags - ensure they're properly formatted
+          finalResponse = `<think>${thinkingContent}</think>\n\n${displayContent}`;
+        }
+        
+        console.log('useChat: Final response with thinking:', finalResponse.substring(0, 100) + '...');
+
+        // First update with the final response
+        await new Promise(resolve => {
+          setCurrentConversation(prev => {
+            if (!prev || prev.id !== convId) return prev;
+            
+            // Find the temporary message and set its final content
+            const updatedMessages = prev.messages.map(msg => 
               msg.id === assistantMessageId
-                ? { ...msg, content: assistantResponse, isThinking: false }
+                ? { 
+                    ...msg, 
+                    content: finalResponse, 
+                    isThinking: false 
+                  }
                 : msg
-            )
-          };
+            );
+            
+            return {
+              ...prev,
+              messages: updatedMessages
+            };
+          });
+          
+          // Short delay before resolving to ensure state update completes
+          setTimeout(resolve, 100);
         });
         
+        // Then refresh from the server after a delay to get the persisted message
         setTimeout(() => {
+          console.log('useChat: Refreshing conversation after message completion');
           refreshCurrentConversation();
-        }, 500);
-        
-        setIsLoading(false);
-        setIsStreaming(false);
+          
+          setIsLoading(false);
+          setIsStreaming(false);
+        }, 800);
       };
       
       await messagesApi.streamMessage(

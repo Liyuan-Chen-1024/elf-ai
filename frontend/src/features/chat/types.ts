@@ -51,8 +51,9 @@ export interface ChatHookState {
 
 export interface MessageItemProps {
   message: Message;
-  onToggleThinking?: (messageId: UUID) => void;
-  isHighlighted?: boolean;
+  isThinking?: boolean;
+  isLoading?: boolean;
+  key?: string;
 }
 
 export interface MarkdownPreviewProps {

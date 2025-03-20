@@ -1,24 +1,23 @@
-import { useEffect, useRef, useMemo } from 'react';
+import React, { useRef, useEffect } from 'react';
+import { useTheme } from '@mui/material/styles';
 import { Box, Typography } from '@mui/material';
 import { Message } from '../types';
-import { MessageItem } from './MessageThread/MessageItem';
+import { MessageItem } from './MessageItem';
 
 interface MessageListProps {
   messages: Message[];
   isLoading?: boolean;
-  isThinking?: boolean;
-  onMessageEdit?: (messageId: string, content: string) => void;
+  isStreaming?: boolean;
 }
 
 export const MessageList = ({ 
   messages, 
   isLoading, 
-  isThinking,
-  onMessageEdit 
+  isStreaming
 }: MessageListProps) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const messagesEndRef = useRef(null);
 
-  // Scroll to the bottom when messages change
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -26,146 +25,90 @@ export const MessageList = ({
   };
 
   useEffect(() => {
-    // Slightly delay scrolling to ensure the DOM has updated
-    const timeoutId = setTimeout(() => {
-      scrollToBottom();
-    }, 100);
-    
-    return () => clearTimeout(timeoutId);
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, isStreaming]);
 
-  // Process messages to remove duplicates and thinking states that have been replaced
-  const processedMessages = useMemo(() => {
-    console.log('Processing messages:', messages?.length || 0);
-    
-    // Validate input
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return [];
+  // Make sure messages is always an array
+  const safeMessages = Array.isArray(messages) ? messages : [];
+
+  // Filter out deleted messages and deduplicate by ID
+  const uniqueMessages = safeMessages.filter(
+    (message) => !message.is_deleted && message.content?.trim().length > 0
+  ).reduce((acc: Message[], message) => {
+    const existingIndex = acc.findIndex(m => m.id === message.id);
+    if (existingIndex === -1) {
+      return [...acc, message];
     }
-    
-    // First, ensure all messages are from the same conversation (prevent mixing)
-    if (messages.length > 0) {
-      const firstConversationId = messages[0].conversation_id;
-      const allFromSameConv = messages.every(
-        msg => msg.conversation_id === firstConversationId
-      );
+    return acc;
+  }, []);
+
+  // Determine if we need to show a thinking message
+  const shouldShowThinking = isStreaming && uniqueMessages.length > 0;
+  
+  // Create a virtual thinking message for the assistant
+  const thinkingMessage = shouldShowThinking ? {
+    id: 'thinking-message',
+    conversation_id: uniqueMessages.length > 0 ? uniqueMessages[0].conversation_id : 'temp',
+    content: 'Thinking...',
+    role: 'assistant',
+    timestamp: new Date().toISOString(),
+    sender: { id: 'assistant', name: 'Elf AI' },
+    isThinking: true
+  } : null;
+
+  // Log unique messages for debugging
+  useEffect(() => {
+    if (uniqueMessages.length > 0) {
+      console.log(`MessageList: Rendering ${uniqueMessages.length} messages`);
       
-      if (!allFromSameConv) {
-        console.warn('MessageList received messages from different conversations');
-        
-        // Get the most common conversation ID
-        const convCounts = messages.reduce((counts, msg) => {
-          counts[msg.conversation_id] = (counts[msg.conversation_id] || 0) + 1;
-          return counts;
-        }, {} as Record<string, number>);
-        
-        const mainConvId = Object.entries(convCounts)
-          .sort((a, b) => b[1] - a[1])[0][0];
-        
-        // Filter to only include messages from the most common conversation
-        const filteredMessages = messages.filter(
-          msg => msg.conversation_id === mainConvId
-        );
-        
-        console.log(`Filtered out messages from other conversations. Kept ${filteredMessages.length} messages.`);
-        
-        // Continue processing with the filtered list
-        messages = filteredMessages;
+      // Check for messages without <think> tags
+      const assistantMessages = uniqueMessages.filter(m => m.role === 'assistant' && !m.isThinking);
+      const messagesWithoutThinking = assistantMessages.filter(m => !m.content.includes('<think>'));
+      
+      if (messagesWithoutThinking.length > 0) {
+        console.log(`MessageList: ${messagesWithoutThinking.length} assistant messages without thinking tags`);
       }
     }
-    
-    // Group messages by sender sequence to handle multi-message sequences
-    const messageGroups: Record<string, Message[]> = {};
-    
-    // Sort messages by timestamp to ensure proper ordering
-    const sortedMessages = [...messages].sort((a, b) => {
-      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-    });
-    
-    // Group by conversation_id, role, and message block
-    // This creates "conversation turns" even with multiple messages from the same sender
-    let lastSenderId = '';
-    let blockCounter = 0;
-    
-    sortedMessages.forEach(msg => {
-      const senderId = `${msg.conversation_id}-${msg.role}`;
-      
-      // If this is a new sender, increment the block counter
-      if (senderId !== lastSenderId) {
-        blockCounter++;
-        lastSenderId = senderId;
-      }
-      
-      const key = `${senderId}-${blockCounter}`;
-      
-      if (!messageGroups[key]) {
-        messageGroups[key] = [];
-      }
-      messageGroups[key].push(msg);
-    });
-    
-    // Filter out duplicate messages and thinking states
-    const finalMessages: Message[] = [];
-    
-    Object.values(messageGroups).forEach(group => {
-      if (group.length === 0) return;
-      
-      // Sort group by timestamp, newest first
-      const sortedGroup = [...group].sort((a, b) => {
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-      });
-      
-      // Prefer non-thinking messages over thinking messages
-      const nonThinkingMsg = sortedGroup.find(msg => !msg.isThinking);
-      
-      if (nonThinkingMsg) {
-        // Use the most recent non-thinking message
-        finalMessages.push(nonThinkingMsg);
-      } else {
-        // If all are thinking messages, use the most recent one
-        finalMessages.push(sortedGroup[0]);
-      }
-    });
-    
-    // Re-sort by timestamp for proper display order
-    return finalMessages.sort((a, b) => {
-      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-    });
-  }, [messages]);
-
-  // Filter out deleted messages
-  const visibleMessages = processedMessages.filter(msg => !msg.is_deleted);
+  }, [uniqueMessages]);
 
   return (
-    <Box 
-      sx={{ 
-        p: 2, 
-        overflowY: 'auto', 
-        flexGrow: 1,
+    <Box
+      sx={{
         display: 'flex',
         flexDirection: 'column',
+        flexGrow: 1,
+        overflowY: 'auto',
+        gap: 2,
+        p: 2,
+        bgcolor: theme.palette.background.default,
       }}
     >
-      {visibleMessages.length === 0 && !isLoading && (
-        <Box sx={{ textAlign: 'center', my: 4, flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography variant="body1" color="text.secondary">
+      {uniqueMessages.length === 0 && !isLoading && (
+        <Box sx={{ textAlign: 'center', my: 4 }}>
+          <Typography variant="body1" component="div" color="text.secondary">
             No messages yet. Start a conversation!
           </Typography>
         </Box>
       )}
-
-      {visibleMessages.map((message) => (
+      
+      {uniqueMessages.map((message) => (
         <MessageItem
-          key={message.id}
+          key={String(message.id)}
           message={message}
-          onEdit={onMessageEdit ? (content) => onMessageEdit(String(message.id), content) : undefined}
         />
       ))}
-
-      {isLoading && visibleMessages.length === 0 && (
+      
+      {thinkingMessage && (
+        <MessageItem
+          key="thinking-message"
+          message={thinkingMessage}
+        />
+      )}
+      
+      {isLoading && uniqueMessages.length === 0 && (
         <Box sx={{ textAlign: 'center', my: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Loading conversation...
+          <Typography component="div" color="text.secondary">
+            Loading...
           </Typography>
         </Box>
       )}
@@ -173,4 +116,6 @@ export const MessageList = ({
       <div ref={messagesEndRef} />
     </Box>
   );
-}; 
+};
+
+export default MessageList; 

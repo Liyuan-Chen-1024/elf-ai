@@ -1,9 +1,10 @@
 import axios from 'axios';
-type AxiosInstance = any;
-type AxiosError = any;
-type AxiosRequestConfig = any;
+import { createLogger } from '../../utils/logging';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+// Create a logger for the API client
+const logger = createLogger('ApiClient');
 
 /**
  * Base API client with common functionality like auth handling, 
@@ -16,6 +17,7 @@ export class ApiClient {
   constructor() {
     // Try to get the auth token from localStorage
     this.authToken = localStorage.getItem('authToken');
+    logger.debug('ApiClient initialized', { isAuthenticated: !!this.authToken });
   }
 
   /**
@@ -25,7 +27,10 @@ export class ApiClient {
     // Try both token keys for backward compatibility
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (token) {
+      logger.debug('Auth token found in localStorage');
       this.setAuthToken(token);
+    } else {
+      logger.debug('No auth token found in localStorage');
     }
   }
 
@@ -37,6 +42,7 @@ export class ApiClient {
     localStorage.setItem('authToken', token);
     // Reset axios instance to recreate with new token
     this._axiosInstance = null;
+    logger.debug('Auth token set');
   }
 
   public clearAuthToken(): void {
@@ -44,6 +50,7 @@ export class ApiClient {
     localStorage.removeItem('authToken');
     // Reset axios instance
     this._axiosInstance = null;
+    logger.debug('Auth token cleared');
   }
 
   /**
@@ -58,6 +65,7 @@ export class ApiClient {
    */
   protected ensureAuthenticated(): void {
     if (!this.authToken) {
+      logger.error('Authentication required but no token found');
       throw new Error('Authentication required');
     }
   }
@@ -77,19 +85,30 @@ export class ApiClient {
       try {
         return await fn();
       } catch (error: unknown) {
-        const axiosError = error as AxiosError;
+        const axiosError = error as any;
         if (axiosError.response?.status === 401) {
           // Handle authentication error
+          logger.error('Authentication failed', { status: axiosError.response?.status });
           this.clearAuthToken();
           throw new Error('Authentication failed');
         }
         if (axiosError.response?.status === 429 && retries < maxRetries) {
-          console.log(`Rate limited, retrying in ${delay}ms (${retries + 1}/${maxRetries})`);
+          logger.warn(`Rate limited, retrying in ${delay}ms (${retries + 1}/${maxRetries})`, {
+            status: axiosError.response?.status,
+            retryCount: retries + 1,
+            maxRetries,
+            delay
+          });
           await new Promise(resolve => setTimeout(resolve, delay));
           retries++;
           delay *= 2; // Exponential backoff
           return execute();
         }
+        logger.error('Request failed', {
+          status: axiosError.response?.status,
+          data: axiosError.response?.data,
+          url: axiosError.config?.url
+        });
         throw error;
       }
     };
@@ -100,8 +119,9 @@ export class ApiClient {
   /**
    * Get the axios instance for making requests
    */
-  protected getAxiosInstance(): AxiosInstance {
+  protected getAxiosInstance(): any {
     if (!this._axiosInstance) {
+      logger.debug('Creating new Axios instance');
       this._axiosInstance = axios.create({
         baseURL: API_BASE_URL,
         withCredentials: true, // Required for CSRF
@@ -113,7 +133,13 @@ export class ApiClient {
       if (this._axiosInstance) {
         // Add request interceptor to include auth token
         this._axiosInstance.interceptors.request.use(
-          (config) => {
+          (config: any) => {
+            logger.debug('Sending request', { 
+              method: config.method, 
+              url: config.url,
+              params: config.params
+            });
+            
             if (this.authToken) {
               config.headers = config.headers || {};
               config.headers.Authorization = `Token ${this.authToken}`;
@@ -128,7 +154,29 @@ export class ApiClient {
 
             return config;
           },
-          (error) => {
+          (error: any) => {
+            logger.error('Request interceptor error', { error });
+            return Promise.reject(error);
+          }
+        );
+        
+        // Add response interceptor for logging
+        this._axiosInstance.interceptors.response.use(
+          (response: any) => {
+            logger.debug('Response received', { 
+              status: response.status,
+              url: response.config.url,
+              method: response.config.method
+            });
+            return response;
+          },
+          (error: any) => {
+            logger.error('Response error', { 
+              status: error.response?.status,
+              url: error.config?.url,
+              method: error.config?.method,
+              data: error.response?.data
+            });
             return Promise.reject(error);
           }
         );
@@ -136,6 +184,7 @@ export class ApiClient {
     }
 
     if (!this._axiosInstance) {
+      logger.error('Failed to create Axios instance');
       throw new Error('Failed to create Axios instance');
     }
     
@@ -150,6 +199,7 @@ export class ApiClient {
   protected async throttleRequest<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
     // If there's already a pending request with this key, return that promise
     if (this.pendingRequests.has(key)) {
+      logger.debug('Reusing pending request', { key });
       const existingPromise = this.pendingRequests.get(key);
       if (existingPromise) {
         return existingPromise as Promise<T>;
@@ -157,6 +207,7 @@ export class ApiClient {
     }
 
     // Otherwise, create a new request and store the promise
+    logger.debug('Creating new request', { key });
     try {
       // Add retry logic with exponential backoff
       const promise = this.retryWithBackoff(requestFn);
@@ -165,10 +216,12 @@ export class ApiClient {
       // Wait a bit before allowing another request with the same key
       setTimeout(() => {
         this.pendingRequests.delete(key);
+        logger.debug('Removed pending request', { key });
       }, 500);
       return result;
     } catch (error) {
       this.pendingRequests.delete(key);
+      logger.error('Request failed, removed from pending', { key, error });
       throw error;
     }
   }
@@ -189,6 +242,7 @@ export class ApiClient {
         }
       }
     }
+    logger.debug('CSRF Token', { found: !!cookieValue });
     return cookieValue;
   }
 } 
