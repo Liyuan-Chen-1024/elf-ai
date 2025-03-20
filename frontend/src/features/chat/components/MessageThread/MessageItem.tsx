@@ -11,10 +11,11 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ReactMarkdown from 'react-markdown';
 import { Message } from '../../types';
+import { CircularProgress } from '@mui/material';
 
 // Modern styled message bubble with subtle shadow and rounded corners
 const MessageBubble = styled(Paper)(({ theme, ownerState }) => ({
-  padding: theme.spacing(2),
+  padding: theme.spacing(2, 3),
   borderRadius: theme.spacing(2),
   maxWidth: '100%',
   marginBottom: theme.spacing(1),
@@ -22,8 +23,8 @@ const MessageBubble = styled(Paper)(({ theme, ownerState }) => ({
   backgroundColor: ownerState.isUser 
     ? theme.palette.grey[100] 
     : ownerState.isThinking 
-      ? '#f2a1a1' // Pinkish for thinking state
-      : '#f2a1a1', // Keep the same color for finished state for consistency
+      ? 'rgba(144, 202, 249, 0.2)' // Light blue for thinking state
+      : 'rgba(144, 202, 249, 0.2)', // Same light blue for consistency
   color: theme.palette.text.primary,
   transition: 'all 0.2s ease',
   '& code': {
@@ -33,9 +34,27 @@ const MessageBubble = styled(Paper)(({ theme, ownerState }) => ({
   },
   '& pre': {
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    padding: theme.spacing(1),
+    padding: theme.spacing(1.5),
     borderRadius: '8px',
     overflow: 'auto',
+  },
+  '& ul, & ol': {
+    paddingLeft: theme.spacing(3),
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  },
+  '& li': {
+    marginBottom: theme.spacing(0.5),
+  },
+  '& p': {
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+    '&:first-of-type': {
+      marginTop: 0,
+    },
+    '&:last-of-type': {
+      marginBottom: 0,
+    }
   },
 }));
 
@@ -113,11 +132,11 @@ interface MessageItemProps {
 }
 
 const THINKING_WORDS = [
-  'analyzing',
-  'processing',
-  'evaluating',
-  'considering',
-  'thinking about'
+  'Analyzing',
+  'Processing',
+  'Evaluating',
+  'Considering',
+  'Thinking about'
 ];
 
 export const MessageItem = ({ 
@@ -149,7 +168,7 @@ export const MessageItem = ({
         if (thinkingStage === 1) {
           setTimeout(() => setThinkingStage(2), 2000);
         }
-      }, 1500);
+      }, 2000);
       
       return () => {
         if (intervalRef.current) clearInterval(intervalRef.current);
@@ -197,12 +216,45 @@ export const MessageItem = ({
   
   // Function to render the thinking part of the message
   const renderThinkingContent = () => {
-    // Content varies based on thinking stage
-    if (thinkingStage === 1) {
-      return `${thinkingWord} ${message.content.substring(0, 50)}...`;
-    } else {
-      return `${thinkingWord} ${message.content.substring(0, 100)}...\n\nalso hmm, maybe ${message.content.substring(50, 150)}...`;
-    }
+    // Split content into sentences
+    const sentences = message.content.replace(/<[^>]*>/g, '').split(/[.!?]+/).filter(s => s.trim());
+    const shortSentences = sentences.filter(s => s.trim().split(/\s+/).length >= 5 && s.trim().split(/\s+/).length <= 10);
+    const sentenceIndex = thinkingWord.length % Math.max(1, shortSentences.length);
+    const displayText = shortSentences.length > 0 ? shortSentences[sentenceIndex].replace(/[^a-zA-Z\s]/g, '') : message.content.replace(/<[^>]*>/g, '').split(/\s+/).slice(0, 10).join(' ').replace(/[^a-zA-Z\s]/g, '');
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2,
+        maxWidth: '100%',
+        overflow: 'hidden'
+      }}>
+        <CircularProgress size={16} sx={{ flexShrink: 0 }} />
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          <Typography component="span" sx={{ fontWeight: 'bold', flexShrink: 0 }}>
+            {thinkingWord}
+          </Typography>
+          <Typography 
+            component="span" 
+            sx={{ 
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            {displayText}
+          </Typography>
+        </Box>
+      </Box>
+    );
   };
   
   // Render the final state with solution and toggle button
