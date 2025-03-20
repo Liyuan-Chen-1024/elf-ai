@@ -164,11 +164,23 @@ export function MessageItem(props) {
                     thinkingContent);
         }
       }
+      
+      // Validate thinking content - don't use it if it's just empty or a placeholder
+      if (thinkingContent) {
+        // Check if thinking content is just empty or contains only the tag itself
+        if (thinkingContent.trim() === "" || 
+            thinkingContent.trim() === "<think>" ||
+            thinkingContent.match(/^\s*<think>\s*<\/think>\s*$/)) {
+          console.log('MessageItem: Discarding empty thinking content');
+          thinkingContent = "";
+        }
+      }
+
       // If no thinking tags but it's an assistant message, create a fallback thinking content
       if (!thinkingContent && message && message.role === 'assistant' && !message.isThinking) {
         // Use the first paragraph as thinking content
         const paragraphs = displayContent.split('\n\n');
-        if (paragraphs.length > 0) {
+        if (paragraphs.length > 0 && paragraphs[0].length > 10) { // Only use if it's meaningful
           thinkingContent = paragraphs[0];
           console.log('MessageItem: Created fallback thinking content');
         }
@@ -207,7 +219,11 @@ export function MessageItem(props) {
   };
   
   const { displayContent, thinkingContent } = processedContent;
-  const hasThinkingContent = thinkingContent && thinkingContent.length > 0;
+  // Check if thinking content is meaningful (not just <think> tags or empty)
+  const hasThinkingContent = thinkingContent && 
+                             thinkingContent.length > 0 && 
+                             !thinkingContent.match(/^\s*<think>\s*<\/think>\s*$/) &&
+                             thinkingContent !== "<think>";
   const isUser = message && message.role === 'user';
   
   // Handle copy to clipboard
@@ -263,14 +279,52 @@ export function MessageItem(props) {
           elevation={0}
         >
           {isUser ? (
-            <Typography component="div">
+            <Typography component="div" sx={{ 
+              '& hr': {
+                margin: '1.5rem 0',
+                border: 'none',
+                borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+              },
+              '& ul': {
+                paddingLeft: '2rem',
+                marginTop: '0.5rem',
+                marginBottom: '0.5rem',
+              },
+              '& ol': {
+                paddingLeft: '2rem',
+                marginTop: '0.5rem',
+                marginBottom: '0.5rem',
+              },
+              '& li': {
+                marginBottom: '0.25rem',
+              },
+            }}>
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </Typography>
           ) : message.isThinking || isThinking ? (
             renderThinkingAnimation()
           ) : (
             <Box>
-              <Typography component="div">
+              <Typography component="div" sx={{ 
+                '& hr': {
+                  margin: '1.5rem 0',
+                  border: 'none',
+                  borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+                },
+                '& ul': {
+                  paddingLeft: '2rem',
+                  marginTop: '0.5rem',
+                  marginBottom: '0.5rem',
+                },
+                '& ol': {
+                  paddingLeft: '2rem',
+                  marginTop: '0.5rem',
+                  marginBottom: '0.5rem',
+                },
+                '& li': {
+                  marginBottom: '0.25rem',
+                },
+              }}>
                 <ReactMarkdown>{displayContent}</ReactMarkdown>
               </Typography>
               
@@ -292,7 +346,26 @@ export function MessageItem(props) {
                       <Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 'medium' }}>
                         Thinking process:
                       </Typography>
-                      <Typography component="div">
+                      <Typography component="div" sx={{ 
+                        '& hr': {
+                          margin: '1.5rem 0',
+                          border: 'none',
+                          borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+                        },
+                        '& ul': {
+                          paddingLeft: '2rem',
+                          marginTop: '0.5rem',
+                          marginBottom: '0.5rem',
+                        },
+                        '& ol': {
+                          paddingLeft: '2rem',
+                          marginTop: '0.5rem',
+                          marginBottom: '0.5rem',
+                        },
+                        '& li': {
+                          marginBottom: '0.25rem',
+                        },
+                      }}>
                         <ReactMarkdown>{thinkingContent}</ReactMarkdown>
                       </Typography>
                     </ThinkingProcess>
