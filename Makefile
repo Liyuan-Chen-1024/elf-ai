@@ -1,8 +1,10 @@
-.PHONY: dev test lint clean
+.PHONY: dev test lint clean up down logs ps restart celery-restart
 
 # Development
 dev:
-	@echo "Starting development environment..."
+	@echo "Starting all services..."
+	@echo "View logs with: make logs"
+	@echo "Restart Celery with: make celery-restart"
 	@cp .env.base .env
 	docker compose down --remove-orphans
 	docker compose up -d
@@ -46,3 +48,21 @@ clean:
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 
 	rm -rf frontend/node_modules
 	rm -rf backend/venv
+
+up:
+	docker-compose up -d
+
+down:
+	docker-compose down
+
+logs:
+	docker-compose logs -f
+
+ps:
+	docker-compose ps
+
+restart:
+	docker-compose restart
+
+celery-restart:
+	docker-compose restart celery_worker celery_beat

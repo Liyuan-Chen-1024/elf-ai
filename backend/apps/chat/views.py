@@ -15,6 +15,7 @@ from rest_framework.response import Response
 import requests
 
 from apps.core.logging import get_logger
+from apps.core.tasks import update_knowledge_base_from_message
 from apps.core.services import KnowledgeBaseService
 
 from .models import Conversation, Message
@@ -155,11 +156,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
                         conversation=conversation, role="assistant", content=""
                     )
                 
-                # Update the user's knowledge base (in background - don't wait for response)
-                # This will analyze the new message and extract knowledge
-                KnowledgeBaseService.update_knowledge_base_from_message(
-                    user=conversation.user,
-                    message=user_message
+                # Update knowledge base asynchronously
+                update_knowledge_base_from_message.delay(
+                    user_id=conversation.user.id,
+                    message_id=user_message.id
                 )
 
                 # Get conversation history for context
@@ -174,16 +174,18 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 context = (
                     "You are Elf AI, a helpful AI assistant that personalizes responses based on the user's preferences and interests.\n\n"
                     f"{user_knowledge}\n\n"
-                    "When responding:\n"
-                    "1. Format your response in markdown\n"
-                    "2. For lists, use proper markdown list formatting:\n"
+                    "IMPORTANT INSTRUCTIONS:\n"
+                    "1. You MUST follow any commands in the 'Commands and Requirements' section above - these are non-negotiable\n"
+                    "2. You should adapt your responses based on the preferences listed, while still following commands\n"
+                    "3. Format your response in markdown\n"
+                    "4. For lists, use proper markdown list formatting:\n"
                     "   - Numbered lists should use '1. ', '2. ' etc.\n"
                     "   - Bullet points should use '- ' or '* '\n"
                     "   - Ensure each list item is on a new line\n"
-                    "3. Be helpful and concise\n"
-                    "4. Reference the user's known interests and preferences when relevant\n"
-                    "5. Don't explicitly mention that you know these details unless asked directly\n"
-                    "6. Use proper markdown spacing (blank lines between sections)\n\n"
+                    "5. Be helpful and concise\n"
+                    "6. Reference the user's known interests and preferences when relevant\n"
+                    "7. Don't explicitly mention that you know these details unless asked directly\n"
+                    "8. Use proper markdown spacing (blank lines between sections)\n\n"
                 )
                 
                 # Add conversation history

@@ -138,17 +138,25 @@ class KnowledgeBaseService:
         """Create initial knowledge text structure."""
         return """# User Knowledge Base
 
-## Personal Information
-- No personal information has been shared yet
+## Commands and Requirements
+- No specific commands or requirements set yet
+- This section tracks explicit instructions that must be followed (e.g. always respond in Spanish)
+
+## Preferences
+- No preferences set yet
+- This section tracks user preferences that should influence responses when appropriate
 
 ## Topics of Interest
 - No topics of interest identified yet
 
-## Additional Information
-- No additional information available yet
+## Personal Information
+- No personal information has been shared yet
 
-## New Information
-- No new information has been shared in this message
+## Communication Style
+- No communication style preferences identified yet
+
+## Additional Context
+- No additional context available yet
 
 Version: 1.0
 Last Updated: {}""".format(timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -158,22 +166,82 @@ Last Updated: {}""".format(timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
         """Update a user's knowledge base with information from a message."""
         knowledge_base = cls.get_or_create_knowledge_base(user)
         
-        # Update version and timestamp
-        current_version = round(float(knowledge_base.version), 1)  # Round to 1 decimal place
-        new_version = round(current_version + 0.1, 1)  # Round to 1 decimal place
-        knowledge_base.version = new_version
-        
-        # Update version and timestamp in knowledge text
-        knowledge_base.knowledge_text = knowledge_base.knowledge_text.replace(
-            f"Version: {current_version:.1f}",  # Format with exactly 1 decimal place
-            f"Version: {new_version:.1f}"  # Format with exactly 1 decimal place
-        ).replace(
-            "Last Updated: {}".format(knowledge_base.knowledge_text.split("Last Updated: ")[-1]),
-            "Last Updated: {}".format(timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
+        prompt = f"""Given the user's message and their current knowledge base, update the knowledge base with any new information.
+Keep the existing format but update or add sections as needed.
+
+Current Knowledge Base:
+{knowledge_base.knowledge_text}
+
+New Message:
+"{message.content}"
+
+Instructions:
+1. Analyze the message for:
+   - COMMANDS: Explicit instructions that MUST be followed (e.g. "always respond in Spanish", "never use emojis")
+   - PREFERENCES: User preferences that should influence responses (e.g. "I prefer technical explanations")
+   - TOPICS: Topics of interest or expertise
+   - PERSONAL INFO: Any personal information shared
+   - COMMUNICATION STYLE: How the user prefers to communicate
+   - CONTEXT: Any other relevant information
+
+2. Update the knowledge base sections:
+   - Commands section should be authoritative and clear
+   - Preferences should influence but not mandate responses
+   - Maintain all existing valid information
+   - Remove outdated or contradicted information
+   - Group related information together
+
+3. Format Requirements:
+   - Keep the markdown structure
+   - Use clear, actionable language
+   - Be specific and detailed
+   - Increment version by 0.1
+   - Update timestamp
+
+4. Special Handling:
+   - Commands are HIGHEST priority and must be prominently listed
+   - If a new command contradicts an old one, use the newest
+   - Merge similar preferences/commands
+   - Note any conflicts or ambiguities"""
+
+        response = requests.post(
+            settings.LLM_API_URL,
+            json={
+                "model": settings.LLM_MODEL_NAME,
+                "prompt": prompt,
+                "stream": True
+            },
+            stream=True
         )
         
-        # Save changes
+        if response.status_code != 200:
+            error_msg = f"Error from LLM API: {response.status_code} - {response.text}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        
+        new_knowledge_text = ""
+        for line in response.iter_lines():
+            if line:
+                try:
+                    json_response = json.loads(line.decode('utf-8'))
+                    token = json_response.get("response", "")
+                    new_knowledge_text += token
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to decode JSON response: {e}")
+                    continue
+        
+        if not new_knowledge_text or len(new_knowledge_text.strip()) < 10:
+            error_msg = f"No valid knowledge text generated for user {user.id}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        
+        logger.info(f"New knowledge text: {new_knowledge_text}")
+        knowledge_base.knowledge_text = new_knowledge_text
+        knowledge_base.version = round(float(knowledge_base.version) + 0.1, 1)
+        knowledge_base.last_analyzed_message_id = message.id
         knowledge_base.save()
+        logger.info(f"Updated knowledge base for user {user.id}")
+        
         return knowledge_base
 
     @classmethod

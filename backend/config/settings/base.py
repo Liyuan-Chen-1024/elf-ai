@@ -49,6 +49,8 @@ INSTALLED_APPS: List[str] = [
     "apps.dashboard",
     "apps.chat",
     "apps.agent",
+    'django_celery_results',
+    "django_celery_beat",
 ]
 
 
@@ -288,3 +290,19 @@ RATE_LIMIT_WINDOW: int = env.int("RATE_LIMIT_WINDOW", 10)  # window size in seco
 # LLM Configuration
 LLM_MODEL_NAME = env("LLM_MODEL_NAME")
 LLM_API_URL = env("LLM_API_URL")
+
+# Celery Configuration
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "django-cache"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_WORKER_CONCURRENCY = env.int('CELERY_WORKER_CONCURRENCY', default=2)
+CELERY_WORKER_MAX_TASKS_PER_CHILD = env.int('CELERY_WORKER_MAX_TASKS_PER_CHILD', default=100)
+
+# Celery Beat Settings (if you need scheduled tasks later)
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"

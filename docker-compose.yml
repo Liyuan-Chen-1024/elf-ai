@@ -82,6 +82,120 @@ services:
       backend:
         condition: service_healthy
 
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: ${APP_ENVIRONMENT}
+    restart: unless-stopped
+    networks:
+      - elfai-network
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - backend
+    environment:
+      - PYTHONPATH=/app
+      - DJANGO_SETTINGS_MODULE=config.settings.${APP_ENVIRONMENT}
+      - DJANGO_ENV=${APP_ENVIRONMENT}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - API_TITLE=${API_TITLE}
+      - API_DESCRIPTION=${API_DESCRIPTION}
+      - API_VERSION=${API_VERSION}
+      - LANGUAGE_CODE=${LANGUAGE_CODE}
+      - TIME_ZONE=${TIME_ZONE}
+      - STATIC_URL=${STATIC_URL}
+      - LLM_API_URL=${LLM_API_URL}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - MEDIA_ROOT=${MEDIA_ROOT}
+      - MEDIA_URL=${MEDIA_URL}
+      - STATIC_ROOT=${STATIC_ROOT}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
+    command: celery -A config worker -l INFO
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: ${APP_ENVIRONMENT}
+    restart: unless-stopped
+    networks:
+      - elfai-network
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - backend
+    environment:
+      - PYTHONPATH=/app
+      - DJANGO_SETTINGS_MODULE=config.settings.${APP_ENVIRONMENT}
+      - DJANGO_ENV=${APP_ENVIRONMENT}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - API_TITLE=${API_TITLE}
+      - API_DESCRIPTION=${API_DESCRIPTION}
+      - API_VERSION=${API_VERSION}
+      - LANGUAGE_CODE=${LANGUAGE_CODE}
+      - TIME_ZONE=${TIME_ZONE}
+      - STATIC_URL=${STATIC_URL}
+      - LLM_API_URL=${LLM_API_URL}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - MEDIA_ROOT=${MEDIA_ROOT}
+      - MEDIA_URL=${MEDIA_URL}
+      - STATIC_ROOT=${STATIC_ROOT}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
+    command: celery -A config beat -l INFO
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: ${APP_ENVIRONMENT}
+    restart: unless-stopped
+    networks:
+      - elfai-network
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - celery_worker
+    environment:
+      - PYTHONPATH=/app
+      - DJANGO_SETTINGS_MODULE=config.settings.${APP_ENVIRONMENT}
+      - DJANGO_ENV=${APP_ENVIRONMENT}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH:-admin:admin}
+      - FLOWER_URL_PREFIX=${FLOWER_URL_PREFIX:-}
+      - FLOWER_PERSISTENT=True
+      - FLOWER_PORT=5555
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4}
+      - LLM_API_URL=${LLM_API_URL:-https://api.openai.com/v1}
+    command: celery -A config flower --port=5555 --basic_auth=${FLOWER_BASIC_AUTH:-admin:admin}
+
   db:
     image: mysql:8.0
     restart: unless-stopped
@@ -102,15 +216,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
   redis:
-    image: redis:7.0
+    image: redis:7-alpine
     restart: unless-stopped
     networks:
       - elfai-network
     ports:
-      - "${REDIS_PORT}:${REDIS_INTERNAL_PORT}"
+      - "${REDIS_PORT}:6379"
     volumes:
       - redis-data:/data
     healthcheck:

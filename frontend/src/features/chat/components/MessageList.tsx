@@ -56,21 +56,6 @@ export const MessageList = ({
     isThinking: true
   } : null;
 
-  // Log unique messages for debugging
-  useEffect(() => {
-    if (uniqueMessages.length > 0) {
-      console.log(`MessageList: Rendering ${uniqueMessages.length} messages`);
-      
-      // Check for messages without <think> tags
-      const assistantMessages = uniqueMessages.filter(m => m.role === 'assistant' && !m.isThinking);
-      const messagesWithoutThinking = assistantMessages.filter(m => !m.content.includes('<think>'));
-      
-      if (messagesWithoutThinking.length > 0) {
-        console.log(`MessageList: ${messagesWithoutThinking.length} assistant messages without thinking tags`);
-      }
-    }
-  }, [uniqueMessages]);
-
   return (
     <Box
       sx={{
