@@ -67,9 +67,7 @@ services:
     command: npm run dev -- --debug
     volumes:
       - ./frontend:/app
-      - ${HOME}/docker_volumes/elfai/media:/app/media
       - ./.vscode-server:/root/.vscode-server
-      - ${PWD}/frontend/node_modules:/app/node_modules
     environment:
       - NODE_ENV=${APP_ENVIRONMENT}
       - PORT=${FRONTEND_PORT}

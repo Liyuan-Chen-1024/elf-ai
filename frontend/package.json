@@ -11,7 +11,7 @@
     "format": "prettier --write ."
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.13.11"
   },
   "browserslist": {
     "production": [
@@ -28,11 +28,23 @@
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "zustand": "^5.0.3"
+    "zustand": "^5.0.3",
+    "react-router-dom": "^7.4.0",
+    "@mui/material": "^6.4.8",
+    "@mui/icons-material": "^6.4.8",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "axios": "^1.8.4",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
-    "vite": "^6.2.1",
+    "vite": "^6.2.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react-swc": "^3.8.1",
     "typescript": "^5.8.2",
+    "@types/node": "^22.13.11",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
     "eslint": "^9.22.0",
     "@typescript-eslint/parser": "^8.27.0",
     "@typescript-eslint/eslint-plugin": "^8.27.0",

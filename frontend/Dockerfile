@@ -4,17 +4,20 @@ FROM node:22 AS development
 # Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies (cached if unchanged)
+# Install dependencies first (leverages Docker cache)
 COPY package*.json ./
+
+# Update npm to latest version and clear cache
+RUN npm install -g npm@latest && npm cache clean --force
 RUN npm install
 
 # Copy all source code into the image
 COPY . .
 
-# Expose port 3000 for the Vite dev server
-EXPOSE 3000
+# Expose port for the Vite dev server
+EXPOSE ${PORT:-3000}
 
-# Start the development server (Vite) by default
+# Start the development server (Vite)
 CMD ["npm", "run", "dev"]
 
 # Stage 2: Builder - installs dependencies and builds the app for production
@@ -22,26 +25,25 @@ FROM node:22 AS builder
 
 WORKDIR /app
 
-# Copy package files and install dependencies (leverages cache layers)
+# Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install  # Install all dependencies (including those needed to build)
+
+RUN npm install -g npm@latest && npm cache clean --force
+RUN npm install
 
 # Copy source code and build the application
 COPY . .
-RUN npm run build  # Generates static files in /app/dist
+RUN npm run build
 
 # Stage 3: Production - final stage with only the static build output
-FROM node:22-slim AS production
+FROM node:22 AS production
 
 WORKDIR /app
 
 # Copy the build artifacts from the builder stage
 COPY --from=builder /app/dist ./dist
 
-# (Optional) If any configuration files or assets are needed in production, copy them as well
-# COPY --from=builder /app/package.json ./  (for example, if needed for documentation)
-
-# Declare the dist/ directory as a volume to share with a web server container (e.g., Nginx)
+# Declare the dist/ directory as a volume
 VOLUME /app/dist
 
 # No need to expose ports or specify CMD – this image only contains static files for Nginx

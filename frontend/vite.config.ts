@@ -11,10 +11,11 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: parseInt(process.env.PORT || '3000'),
+    host: '0.0.0.0',  // Allow external connections
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_URL || 'http://localhost:8000',
         changeOrigin: true,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
@@ -32,13 +33,12 @@ export default defineConfig({
     hmr: {
       protocol: 'ws',
       host: 'localhost',
+      port: parseInt(process.env.PORT || '3000'),
     },
     watch: {
       usePolling: true,
     },
-    host: true,
     strictPort: true,
-    logLevel: 'info',
   },
   build: {
     outDir: 'build',
