@@ -4,21 +4,12 @@ FROM node:22 AS development
 # Set working directory
 WORKDIR /app
 
-# Install dependencies first (leverages Docker cache)
-COPY package*.json ./
-
 # Update npm to latest version and clear cache
-RUN npm install -g npm@latest && npm cache clean --force
-RUN npm install
-
-# Copy all source code into the image
-COPY . .
+RUN npm install -g npm@latest && \
+    npm cache clean --force
 
 # Expose port for the Vite dev server
 EXPOSE ${PORT:-3000}
-
-# Start the development server (Vite)
-CMD ["npm", "run", "dev"]
 
 # Stage 2: Builder - installs dependencies and builds the app for production
 FROM node:22 AS builder
@@ -28,8 +19,9 @@ WORKDIR /app
 # Copy package files and install dependencies
 COPY package*.json ./
 
-RUN npm install -g npm@latest && npm cache clean --force
-RUN npm install
+RUN npm install -g npm@latest && \
+    npm cache clean --force && \
+    npm install
 
 # Copy source code and build the application
 COPY . .

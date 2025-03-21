@@ -1,5 +1,5 @@
 # Use Python 3.11 with Debian bookworm (newer SQLite)
-FROM python:3.11-slim-bookworm as base
+FROM python:3.11-slim-bookworm AS base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
     graphviz \
     graphviz-dev \
     redis-tools \
+    libpq-dev \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
@@ -39,7 +41,7 @@ RUN poetry install --no-interaction --no-ansi --no-root
 COPY . .
 
 # Development stage
-FROM base as development
+FROM base AS development
 
 # Install debugpy
 RUN pip install debugpy==1.8.0
@@ -53,7 +55,7 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # Test stage
-FROM base as test
+FROM base AS test
 
 # Create entrypoint script
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
@@ -64,7 +66,7 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["pytest"]
 
 # Production stage
-FROM base as production
+FROM base AS production
 
 # Install production dependencies only
 RUN poetry install --no-interaction --no-ansi --no-root --only main
