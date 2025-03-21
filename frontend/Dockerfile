@@ -1,60 +1,48 @@
-# Use Node.js LTS
-FROM node:20.17.0-slim as base
-
-# Set environment variables
-ENV NODE_ENV=development \
-    PORT=3000
+# Stage 1: Development - includes dev dependencies and runs the Vite dev server
+FROM node:22 AS development
 
 # Set working directory
 WORKDIR /app
 
-# Development stage
-FROM base as development
-
-# Create and set permissions for node_modules
-RUN mkdir -p /app/node_modules && \
-    chown -R node:node /app
-
-# Switch to non-root user
-USER node
-
-# Copy package files
-COPY --chown=node:node package*.json ./
-
-# Install ALL dependencies, including devDependencies
+# Copy package files and install dependencies (cached if unchanged)
+COPY package*.json ./
 RUN npm install
 
-# Copy application code
-COPY --chown=node:node . .
+# Copy all source code into the image
+COPY . .
 
-# Start development server
+# Expose port 3000 for the Vite dev server
+EXPOSE 3000
+
+# Start the development server (Vite) by default
 CMD ["npm", "run", "dev"]
 
-# Production stage
-FROM base as production
+# Stage 2: Builder - installs dependencies and builds the app for production
+FROM node:22 AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies (leverages cache layers)
 COPY package*.json ./
+RUN npm install  # Install all dependencies (including those needed to build)
 
-# Install production dependencies only
-RUN npm ci --only=production
-
-# Copy application code
+# Copy source code and build the application
 COPY . .
+RUN npm run build  # Generates static files in /app/dist
 
-# Build the application
-RUN npm run build
+# Stage 3: Production - final stage with only the static build output
+FROM node:22-slim AS production
 
-CMD ["npm", "run", "preview"]
+WORKDIR /app
 
-# Nginx stage
-FROM nginx:alpine as nginx
+# Copy the build artifacts from the builder stage
+COPY --from=builder /app/dist ./dist
 
-COPY --from=production /app/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# (Optional) If any configuration files or assets are needed in production, copy them as well
+# COPY --from=builder /app/package.json ./  (for example, if needed for documentation)
 
-EXPOSE 80
+# Declare the dist/ directory as a volume to share with a web server container (e.g., Nginx)
+VOLUME /app/dist
 
-CMD ["nginx", "-g", "daemon off;"]
+# No need to expose ports or specify CMD – this image only contains static files for Nginx
+# (The Nginx container in Docker Compose will serve the files from this volume)
