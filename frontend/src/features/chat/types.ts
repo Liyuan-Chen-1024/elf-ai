@@ -24,9 +24,9 @@ export interface Message {
   is_deleted?: boolean;
   sender?: Sender;
   isEdited?: boolean;
-  thinkingContent?: string;
-  showThinking?: boolean;
   isThinking?: boolean;
+  displayContent?: string;  // Content after </think>
+  thinkingContent?: string; // Content between <think> tags
 }
 
 export interface Conversation {

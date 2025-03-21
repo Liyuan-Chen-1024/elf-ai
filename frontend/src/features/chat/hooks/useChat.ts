@@ -362,22 +362,53 @@ export const useChat = () => {
       let assistantResponse = '';
       
       const handleToken = (token: string) => {
-        assistantResponse += token;
-        
         if (currentConversationIdRef.current !== convId) return;
         
-        setCurrentConversation(prev => {
-          if (!prev || prev.id !== convId) return prev;
+        // Accumulate the response
+        assistantResponse += token;
+        
+        // Check if this is a message with thinking tags
+        const hasThinkingTags = assistantResponse.startsWith('<think>');
+        
+        // For messages without thinking tags, or after </think>, update UI immediately
+        if (!hasThinkingTags || (hasThinkingTags && assistantResponse.includes('</think>'))) {
+          let displayContent;
+          let thinkingContent = '';
           
-          return {
-            ...prev,
-            messages: prev.messages.map(msg => 
+          if (hasThinkingTags) {
+            // Extract thinking content and display content
+            const thinkMatch = assistantResponse.match(/<think>([\s\S]*?)<\/think>/);
+            if (thinkMatch) {
+              thinkingContent = thinkMatch[1].trim();
+              displayContent = assistantResponse.split('</think>')[1]?.trim() || '';
+            } else {
+              displayContent = assistantResponse;
+            }
+          } else {
+            displayContent = assistantResponse;
+          }
+          
+          setCurrentConversation(prev => {
+            if (!prev || prev.id !== convId) return prev;
+            
+            const updatedMessages = prev.messages.map(msg =>
               msg.id === assistantMessageId
-                ? { ...msg, content: assistantResponse, isThinking: true }
+                ? {
+                    ...msg,
+                    content: assistantResponse,
+                    displayContent: displayContent,
+                    thinkingContent: thinkingContent,
+                    isThinking: hasThinkingTags && !assistantResponse.includes('</think>')
+                  }
                 : msg
-            )
-          };
-        });
+            );
+            
+            return {
+              ...prev,
+              messages: updatedMessages
+            };
+          });
+        }
       };
       
       const handleError = (error: string) => {

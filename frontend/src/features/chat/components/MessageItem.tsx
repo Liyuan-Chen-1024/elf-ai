@@ -87,26 +87,11 @@ export function MessageItem(props) {
   const { message, isThinking = false } = props;
   const [showThinking, setShowThinking] = useState(false);
   const [thinkingWord, setThinkingWord] = useState(THINKING_WORDS[0]);
-  const [processedContent, setProcessedContent] = useState({ displayContent: '', thinkingContent: '' });
   const intervalRef = useRef(null);
-  
-  // Process the message content on mount and when message changes
-  useEffect(() => {
-    if (message && message.content) {
-      console.log(`Processing message: ${message.id.toString().substring(0, 8)}...`);
-      const { displayContent, thinkingContent } = processMessageContent(message.content);
-      setProcessedContent({ displayContent, thinkingContent });
-
-      // If we didn't find thinking content, log a more detailed message
-      if (!thinkingContent) {
-        console.log(`No thinking content in message: ${message.id} - Content preview: ${message.content.substring(0, 30)}...`);
-      }
-    }
-  }, [message]);
   
   // Rotate thinking words for animation
   useEffect(() => {
-    if (message?.isThinking || isThinking) {
+    if (isThinking) {
       intervalRef.current = setInterval(() => {
         setThinkingWord(prev => {
           const currentIndex = THINKING_WORDS.indexOf(prev);
@@ -119,89 +104,41 @@ export function MessageItem(props) {
         if (intervalRef.current) clearInterval(intervalRef.current);
       };
     }
-  }, [message?.isThinking, isThinking]);
+  }, [isThinking]);
   
   // Extract content from message
   const processMessageContent = (content) => {
-    // Default values
     let displayContent = content || '';
     let thinkingContent = '';
+    let hasThinkingTags = false;
     
     try {
-      // First, clean up any raw <think> tags at the beginning of the message
-      if (displayContent.startsWith('<think>')) {
-        console.log('MessageItem: Cleaning up raw think tag at beginning');
-        const thinkingSection = displayContent.match(/<think>([\s\S]*?)<\/think>/);
-        if (thinkingSection) {
-          thinkingContent = thinkingSection[1].trim();
-          displayContent = displayContent.replace(/<think>[\s\S]*?<\/think>/, '').trim();
-        }
-      }
+      // Check if message starts with thinking tags
+      hasThinkingTags = displayContent.startsWith('<think>');
       
-      // Look for <think> tags - handle both encoded and plain versions
-      // First check for encoded version (visible in UI)
-      if (displayContent.includes('&lt;think&gt;')) {
-        // Handle HTML encoded think tags
-        const thinkMatch = displayContent.match(/&lt;think&gt;([\s\S]*?)&lt;\/think&gt;/);
-        if (thinkMatch) {
-          thinkingContent = thinkMatch[1].trim();
-          // Remove think tags from display content
-          displayContent = displayContent.replace(/&lt;think&gt;[\s\S]*?&lt;\/think&gt;/, '').trim();
-          console.log('MessageItem: Found encoded thinking content');
-        }
-      }
-      // Then check for normal version
-      else if (displayContent.includes('<think>')) {
-        const thinkMatch = displayContent.match(/<think>([\s\S]*?)<\/think>/);
-        if (thinkMatch) {
-          thinkingContent = thinkMatch[1].trim();
-          // Remove think tags from display content
-          displayContent = displayContent.replace(/<think>[\s\S]*?<\/think>/, '').trim();
-          
-          console.log('MessageItem: Found thinking content:', 
-                    thinkingContent.length > 50 ? 
-                    thinkingContent.substring(0, 50) + '...' : 
-                    thinkingContent);
-        }
-      }
-      
-      // Validate thinking content - don't use it if it's just empty or a placeholder
-      if (thinkingContent) {
-        // Check if thinking content is just empty or contains only the tag itself
-        if (thinkingContent.trim() === "" || 
-            thinkingContent.trim() === "<think>" ||
-            thinkingContent.match(/^\s*<think>\s*<\/think>\s*$/)) {
-          console.log('MessageItem: Discarding empty thinking content');
-          thinkingContent = "";
-        }
-      }
-
-      // If no thinking tags but it's an assistant message, create a fallback thinking content
-      if (!thinkingContent && message && message.role === 'assistant' && !message.isThinking) {
-        // Use the first paragraph as thinking content
-        const paragraphs = displayContent.split('\n\n');
-        if (paragraphs.length > 0 && paragraphs[0].length > 10) { // Only use if it's meaningful
-          thinkingContent = paragraphs[0];
-          console.log('MessageItem: Created fallback thinking content');
-        }
+      // Look for <think> tags
+      const thinkMatch = displayContent.match(/<think>([\s\S]*?)<\/think>/);
+      if (thinkMatch) {
+        thinkingContent = thinkMatch[1].trim();
+        // Remove think tags from display content
+        displayContent = displayContent.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+      } else {
+        // If no thinking tags, use the display content as is
+        displayContent = content;
       }
     } catch (error) {
       console.error('Error processing message content:', error);
+      displayContent = content;
     }
     
-    // Extra thorough cleanup to ensure no think tags remain visible
-    displayContent = displayContent
-      .replace(/<think>/g, '')
-      .replace(/<\/think>/g, '')
-      .replace(/&lt;think&gt;/g, '')
-      .replace(/&lt;\/think&gt;/g, '')
-      .replace(/^<think>[\s\S]*?<\/think>\s*/g, '') // Remove any think tags at the beginning
-      .replace(/^\s*<think>\s*/, '') // Handle orphaned opening tag
-      .replace(/\s*<\/think>\s*/, '') // Handle orphaned closing tag
-      .trim();
-    
-    return { displayContent, thinkingContent };
+    return { displayContent, thinkingContent, hasThinkingTags };
   };
+  
+  // Use the message's processed content if available, otherwise process it
+  const displayContent = message.displayContent || processMessageContent(message.content).displayContent;
+  const thinkingContent = message.thinkingContent || processMessageContent(message.content).thinkingContent;
+  const hasThinkingContent = Boolean(thinkingContent && thinkingContent.length > 0);
+  const isUser = message.role === 'user';
   
   // Render the thinking animation
   const renderThinkingAnimation = () => {
@@ -217,14 +154,6 @@ export function MessageItem(props) {
       </Box>
     );
   };
-  
-  const { displayContent, thinkingContent } = processedContent;
-  // Check if thinking content is meaningful (not just <think> tags or empty)
-  const hasThinkingContent = thinkingContent && 
-                             thinkingContent.length > 0 && 
-                             !thinkingContent.match(/^\s*<think>\s*<\/think>\s*$/) &&
-                             thinkingContent !== "<think>";
-  const isUser = message && message.role === 'user';
   
   // Handle copy to clipboard
   const handleCopy = () => {
@@ -279,25 +208,15 @@ export function MessageItem(props) {
           elevation={0}
         >
           {isUser ? (
-            <Typography component="div" sx={{ 
-              '& hr': {
-                margin: '1.5rem 0',
-                border: 'none',
-                borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-              },
-              '& ul': {
-                paddingLeft: '2rem',
-                marginTop: '0.5rem',
-                marginBottom: '0.5rem',
-              },
-              '& ol': {
-                paddingLeft: '2rem',
+            <Typography component="div" sx={{
+              '& ul, & ol': {
+                paddingLeft: '1.5rem',
                 marginTop: '0.5rem',
                 marginBottom: '0.5rem',
               },
               '& li': {
                 marginBottom: '0.25rem',
-              },
+              }
             }}>
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </Typography>
@@ -305,25 +224,15 @@ export function MessageItem(props) {
             renderThinkingAnimation()
           ) : (
             <Box>
-              <Typography component="div" sx={{ 
-                '& hr': {
-                  margin: '1.5rem 0',
-                  border: 'none',
-                  borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-                },
-                '& ul': {
-                  paddingLeft: '2rem',
-                  marginTop: '0.5rem',
-                  marginBottom: '0.5rem',
-                },
-                '& ol': {
-                  paddingLeft: '2rem',
+              <Typography component="div" sx={{
+                '& ul, & ol': {
+                  paddingLeft: '1.5rem',
                   marginTop: '0.5rem',
                   marginBottom: '0.5rem',
                 },
                 '& li': {
                   marginBottom: '0.25rem',
-                },
+                }
               }}>
                 <ReactMarkdown>{displayContent}</ReactMarkdown>
               </Typography>
@@ -332,39 +241,28 @@ export function MessageItem(props) {
                 <>
                   <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
                     <ThinkingToggle
-                      startIcon={showThinking ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                      startIcon={showThinking ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       onClick={() => setShowThinking(!showThinking)}
                       size="small"
-                      variant="outlined"
                     >
                       {showThinking ? 'Hide thinking process' : 'Show thinking process'}
                     </ThinkingToggle>
                   </Box>
                   
-                  <Collapse in={showThinking} timeout="auto">
+                  <Collapse in={showThinking}>
                     <ThinkingProcess>
                       <Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 'medium' }}>
                         Thinking process:
                       </Typography>
-                      <Typography component="div" sx={{ 
-                        '& hr': {
-                          margin: '1.5rem 0',
-                          border: 'none',
-                          borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-                        },
-                        '& ul': {
-                          paddingLeft: '2rem',
-                          marginTop: '0.5rem',
-                          marginBottom: '0.5rem',
-                        },
-                        '& ol': {
-                          paddingLeft: '2rem',
+                      <Typography component="div" sx={{
+                        '& ul, & ol': {
+                          paddingLeft: '1.5rem',
                           marginTop: '0.5rem',
                           marginBottom: '0.5rem',
                         },
                         '& li': {
                           marginBottom: '0.25rem',
-                        },
+                        }
                       }}>
                         <ReactMarkdown>{thinkingContent}</ReactMarkdown>
                       </Typography>
