@@ -43,7 +43,8 @@ lint-frontend:
 	@echo "Running lint..."
 	@cat .env.base .env.test > .env.tmp
 	@mv .env.tmp .env
-	docker compose -f docker-compose.yml run --rm --build --entrypoint "npm" frontend run install && lint
+	docker compose -f docker-compose.yml run --rm --build --entrypoint "npm" frontend install
+	docker compose -f docker-compose.yml run --rm --entrypoint "npm" frontend run lint
 
 lint-backend:
 	@echo "Running lint..."
