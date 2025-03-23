@@ -20,6 +20,15 @@ COPY . .
 # Expose port for the Vite dev server
 EXPOSE ${PORT:-3000}
 
+# Stage 1.5: Test - used for running tests
+FROM development AS test
+
+# Use the same setup as development but set NODE_ENV to test
+ENV NODE_ENV=test
+
+# Working directory is already set to /app and all files already copied
+# The command to run tests will be provided by docker-compose/Makefile
+
 # Stage 2: Builder - installs dependencies and builds the app for production
 FROM node:22 AS builder
 

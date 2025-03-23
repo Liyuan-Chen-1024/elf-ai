@@ -15,14 +15,43 @@ dev:
 	@echo "Development environment is ready!"
 	docker compose logs -f
 
-# Testing
 test:
+	@echo "Running ALL tests..."
+	make test-backend
+	make test-frontend
+
+# Testing
+test-backend:
 	@echo "Running tests..."
 	@cat .env.base .env.test > .env.tmp
 	@mv .env.tmp .env
 	docker compose -f docker-compose.yml run --rm --build backend pytest -v --collect-only && \
 	docker compose -f docker-compose.yml run --rm backend pytest -v
-	docker-compose run --rm web npm test
+
+test-frontend:
+	@echo "Running tests..."
+	@cat .env.base .env.test > .env.tmp
+	@mv .env.tmp .env
+	docker compose -f docker-compose.yml run --rm --build --entrypoint "npm" frontend test
+
+lint:
+	@echo "Running ALL lint..."
+	make lint-frontend
+	make lint-backend
+
+lint-frontend:
+	@echo "Running lint..."
+	@cat .env.base .env.test > .env.tmp
+	@mv .env.tmp .env
+	docker compose -f docker-compose.yml run --rm --build --entrypoint "npm" frontend run lint
+
+lint-backend:
+	@echo "Running lint..."
+	@cat .env.base .env.test > .env.tmp
+	@mv .env.tmp .env
+	docker compose -f docker-compose.yml run --rm --build backend flake8 .
+	docker compose -f docker-compose.yml run --rm --build backend black . --check
+	docker compose -f docker-compose.yml run --rm --build backend isort . --check-only
 
 build:
 	docker build --target production -t elfai-web:latest .
