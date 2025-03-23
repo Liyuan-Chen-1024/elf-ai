@@ -23,6 +23,10 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
+# Create app directory and set permissions
+RUN mkdir -p /app && \
+    chown -R 1000:1000 /app
+
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
     poetry --version && \
@@ -32,13 +36,13 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 WORKDIR /app
 
 # Copy project files
-COPY pyproject.toml poetry.lock ./
+COPY --chown=1000:1000 pyproject.toml poetry.lock ./
 
 # Install dependencies
 RUN poetry install --no-interaction --no-ansi --no-root
 
 # Copy the rest of the application
-COPY . .
+COPY --chown=1000:1000 . .
 
 # Development stage
 FROM base AS development

@@ -1,42 +1,27 @@
+/// <reference types="vitest" />
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': __dirname + '/src',
     },
   },
   server: {
-    port: parseInt(process.env.PORT || '3000'),
-    host: '0.0.0.0',  // Allow external connections
+    port: parseInt(process.env['PORT'] || '3000'),
+    host: true, // Better than '0.0.0.0' for network access
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:8000',
+        target: process.env['VITE_API_URL'] || 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        configure: (proxy, _options) => {
-          proxy.on('error', (err) => {
-            console.error('Proxy error:', err instanceof Error ? err.message : 'Unknown error');
-          });
-
-          proxy.on('proxyReq', (_proxyReq, req) => {
-            console.debug('Sending request:', req.method, req.url);
-          });
-
-          proxy.on('proxyRes', (proxyRes, req) => {
-            console.debug('Received response:', proxyRes.statusCode, req.url);
-          });
-        },
       },
-    },
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: parseInt(process.env.PORT || '3000'),
     },
     watch: {
       usePolling: true,
@@ -46,9 +31,57 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: true,
+    target: ['esnext'],
+    minify: 'esbuild',
     rollupOptions: {
-      input: path.resolve(__dirname, 'src/App.tsx'),
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'mui-vendor': ['@mui/material', '@mui/icons-material'],
+        },
+      },
     },
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/setupTests.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/**',
+        'src/setupTests.ts',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/coverage/**',
+        'build/**',
+        'dist/**',
+        'html/**',
+      ],
+      thresholds: {
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
+      },
+    },
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    passWithNoTests: true,
+    reporters: ['default', 'html'],
+    pool: 'vmThreads',
+    poolOptions: {
+      vmThreads: {
+        useAtomics: true,
+      },
+    },
+  },
+  preview: {
+    port: 4173,
+    strictPort: true,
+    host: true,
+  },
+  appType: 'spa',
+  clearScreen: false,
   logLevel: 'info',
 });

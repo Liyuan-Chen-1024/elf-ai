@@ -8,6 +8,15 @@ WORKDIR /app
 RUN npm install -g npm@latest && \
     npm cache clean --force
 
+# Copy package files and install dependencies
+COPY package*.json ./
+COPY tsconfig.json ./
+
+RUN npm install
+
+# Copy source code
+COPY . .
+
 # Expose port for the Vite dev server
 EXPOSE ${PORT:-3000}
 
@@ -18,6 +27,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
+COPY tsconfig.json ./
 
 RUN npm install -g npm@latest && \
     npm cache clean --force && \

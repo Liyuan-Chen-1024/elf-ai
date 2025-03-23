@@ -23,7 +23,7 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["react", "react-dom", "node"],
+    "types": ["vitest/globals", "react", "react-dom", "node"],
     "allowJs": true,
     "checkJs": true,
     "esModuleInterop": true,
@@ -40,10 +40,5 @@
     "allowUnusedLabels": false,
     "allowUnreachableCode": false
   },
-  "include": ["src"],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
+  "include": ["src", "vite.config.ts"]
 }

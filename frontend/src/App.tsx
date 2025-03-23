@@ -1,8 +1,10 @@
+import type { FC } from 'react';
 
-const App = () => {
+const App: FC = () => {
   return (
-    <div>hello</div>
-
+    <main className="min-h-screen p-4">
+      <h1 className="text-2xl font-bold">Welcome to ElfAI</h1>
+    </main>
   );
 };
 

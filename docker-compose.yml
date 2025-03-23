@@ -113,6 +113,9 @@ services:
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
+      - C_FORCE_ROOT=false
+      - CELERY_SECURITY_ENABLED=true
+    user: "1000:1000"
     command: python celery_run.py
     # command: celery -A config worker -l INFO
     extra_hosts:
@@ -131,6 +134,7 @@ services:
     depends_on:
       - redis
       - backend
+    user: "1000:1000"
     environment:
       - PYTHONPATH=/app
       - DJANGO_SETTINGS_MODULE=config.settings.${APP_ENVIRONMENT}
@@ -154,6 +158,8 @@ services:
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
+      - C_FORCE_ROOT=false
+      - CELERY_SECURITY_ENABLED=true
     command: celery -A config beat -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
