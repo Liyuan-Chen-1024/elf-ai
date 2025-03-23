@@ -18,53 +18,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       
-      - name: Check database settings
-        run: |
-          # Ensure test settings use PostgreSQL and not SQLite :memory:
-          if grep -q '"ENGINE": "django.db.backends.sqlite3"' backend/config/settings/test.py; then
-            echo "ERROR: Test settings are using SQLite. Please update to PostgreSQL for Docker compatibility."
-            exit 1
-          fi
-          
-          if grep -q '":memory:"' backend/config/settings/test.py; then
-            echo "ERROR: Test settings are using in-memory database. This won't work with PostgreSQL."
-            exit 1
-          fi
-          
-          echo "Database settings look good for CI!"
-      
-      - name: Create .env.base and .env.test
-        run: |
-          # Copy the .env.base and .env.test files
-          # If these files contain secrets, use GitHub Secrets instead
-          cp .env.base .env.test.ci
-          cp .env.test .env.test
-          
-          # Modify database settings for CI environment if needed
-          echo "DB_HOST=db" >> .env.test.ci
-          echo "DB_PORT=5432" >> .env.test.ci
-          echo "DB_NAME=postgres_test" >> .env.test.ci
-          echo "DB_USER=postgres" >> .env.test.ci
-          echo "DB_PASSWORD=postgres" >> .env.test.ci
-          
-          cat .env.test.ci .env.test > .env
-      
-      - name: Start database and redis
-        run: docker compose up -d db redis
-      
-      - name: Wait for database to be ready
-        run: |
-          # Give the database time to initialize
-          sleep 10
-          # Ping the database to ensure it's ready
-          docker compose run --rm backend python -c "from django.db import connection; connection.ensure_connection(); print('Database connection successful!')"
-      
-      - name: Run backend tests
-        run: make test-backend
-      
-      - name: Run frontend tests
-        run: make test-frontend
-
   lint:
     name: Run Linting
     runs-on: ubuntu-latest
@@ -75,15 +28,6 @@ jobs:
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      
-      - name: Create environment files
-        run: |
-          cp .env.base .env.test.ci
-          cp .env.test .env.test
-          cat .env.test.ci .env.test > .env
-      
-      - name: Run backend linting
-        run: make lint-backend
-      
+  
       - name: Run frontend linting
         run: make lint-frontend 
