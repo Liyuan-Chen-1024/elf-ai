@@ -17,15 +17,18 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:8000',
         changeOrigin: true,
+        secure: false,
         configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
+          proxy.on('error', (err) => {
+            console.error('Proxy error:', err instanceof Error ? err.message : 'Unknown error');
           });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request:', req.method, req.url);
+
+          proxy.on('proxyReq', (_proxyReq, req) => {
+            console.debug('Sending request:', req.method, req.url);
           });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response:', proxyRes.statusCode, req.url);
+
+          proxy.on('proxyRes', (proxyRes, req) => {
+            console.debug('Received response:', proxyRes.statusCode, req.url);
           });
         },
       },
@@ -43,6 +46,9 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: true,
+    rollupOptions: {
+      input: path.resolve(__dirname, 'src/App.tsx'),
+    },
   },
   logLevel: 'info',
 });

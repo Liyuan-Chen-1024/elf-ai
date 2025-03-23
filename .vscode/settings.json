@@ -1,5 +1,7 @@
 {
     "cSpell.words": [
+        "appbar",
+        "Csvg",
         "deepseek",
         "elfai",
         "healthcheck",
@@ -7,6 +9,7 @@
         "mysqladmin",
         "PYTHONPATH",
         "runserver",
+        "Timestampable",
         "VITE"
     ]
 }

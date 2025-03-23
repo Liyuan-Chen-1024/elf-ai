@@ -94,8 +94,3 @@ class Command(BaseCommand):
             logger.info("\nThis was a dry run - no files were actually deleted")
 
         self.stdout.write("Done deleting unwanted files.")
-
-    def process_folder(self, folder: str):
-        """Process a folder."""
-        # Implementation here
-        pass

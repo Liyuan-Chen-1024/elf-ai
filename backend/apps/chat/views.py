@@ -185,7 +185,11 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     "5. Be helpful and concise\n"
                     "6. Reference the user's known interests and preferences when relevant\n"
                     "7. Don't explicitly mention that you know these details unless asked directly\n"
-                    "8. Use proper markdown spacing (blank lines between sections)\n\n"
+                    "8. Use proper markdown spacing (blank lines between sections)\n"
+                    "9. IMPORTANT: Only provide the direct response to the user's question. Do not include any knowledge base updates or internal processing information in your response.\n"
+                    "10. CRITICAL: Start your response with your thinking process wrapped in <think> tags. For example:\n"
+                    "    <think>First, I'll analyze the user's question. Then, I'll consider their preferences and provide a tailored response.</think>\n\n"
+                    "    Then provide your actual response after the think tags.\n\n"
                 )
                 
                 # Add conversation history
