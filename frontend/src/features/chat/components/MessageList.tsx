@@ -1,367 +1,494 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Avatar, Fade, Paper, alpha, CircularProgress, keyframes } from '@mui/material';
+import React, { useEffect, useRef } from 'react';
+import { Box, Typography, Avatar, CircularProgress, keyframes } from '@mui/material';
 import { Message } from '../../../types';
-import ReactMarkdown from 'react-markdown';
 
-// Keyframes for avatar thinking animation
-const pulse = keyframes`
-  0% {
-    box-shadow: 0 0 0 0 rgba(109, 90, 230, 0.4);
-    transform: scale(1);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(109, 90, 230, 0);
-    transform: scale(1.05);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(109, 90, 230, 0);
-    transform: scale(1);
-  }
-`;
+// Import avatars
+import userAvatar from '../../../assets/avatars/human-user.svg';
+import assistantAvatar from '../../../assets/avatars/elf-robot.svg';
 
-const float = keyframes`
-  0% {
-    transform: translateY(0px);
+// Constants
+const THEME = {
+  colors: {
+    primary: {
+      main: '#7C4DFF',
+      light: '#9D7FFF',
+      gradient: 'linear-gradient(135deg, #7C4DFF 0%, #9D7FFF 100%)',
+    },
+    text: {
+      primary: '#1C1C1E',
+      secondary: '#6C6C70',
+    },
+    background: {
+      user: 'linear-gradient(135deg, #7C4DFF 0%, #9D7FFF 100%)',
+      assistant: 'rgba(255, 255, 255, 0.7)',
+      container: '#FFFFFF',
+      header: 'linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 100%)',
+      headerBorder: 'linear-gradient(90deg, transparent, rgba(124, 77, 255, 0.08), transparent)',
+    }
+  },
+  avatars: {
+    user: userAvatar,
+    assistant: assistantAvatar,
+  },
+  animations: {
+    pulse: keyframes`
+      0% { box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.3); transform: scale(1); }
+      70% { box-shadow: 0 0 0 12px rgba(124, 77, 255, 0); transform: scale(1.05); }
+      100% { box-shadow: 0 0 0 0 rgba(124, 77, 255, 0); transform: scale(1); }
+    `,
+    float: keyframes`
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+      100% { transform: translateY(0px); }
+    `,
+    blink: keyframes`
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 0.2; }
+    `,
+    shimmer: keyframes`
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    `
   }
-  50% {
-    transform: translateY(-3px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-`;
+};
 
+// Types
+interface AgentResponseHeaderProps {
+  name: string;
+  avatar: string;
+  timestamp?: string;
+  status?: 'thinking' | 'streaming' | 'completed' | 'error';
+  reasoning?: string | null | undefined;
+}
+
+interface MessageItemComponentProps {
+  message: Message;
+}
+
+interface MessageBubbleProps {
+  isUser: boolean;
+  content: string;
+  isStreaming?: boolean;
+}
+
+interface EmptyStateProps {
+  message: string;
+  submessage: string;
+}
+
+// Styled components
+const MessageContainer = ({ _isUser, children }: { _isUser: boolean; children: React.ReactNode }) => (
+  <Box sx={{
+    display: 'flex',
+    flexDirection: 'column',
+    mb: 2,
+    width: '100%',
+    '&:last-child': {
+      mb: 0,
+    },
+  }}>
+    {children}
+  </Box>
+);
+
+const AgentResponseHeader: React.FC<AgentResponseHeaderProps> = ({ 
+  name, 
+  avatar, 
+  timestamp,
+  status = 'completed',
+  reasoning,
+}) => {
+  const isThinking = status === 'thinking';
+  const statusText = {
+    thinking: 'Thinking...',
+    streaming: 'Generating response...',
+    completed: 'Completed',
+    error: 'Error occurred',
+  }[status];
+
+  return (
+    <Box sx={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      mb: 1,
+      ml: 2,
+    }}>
+      <Box sx={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <Avatar 
+          alt={name}
+          src={avatar}
+          sx={{ 
+            width: 32,
+            height: 32,
+            backgroundColor: 'rgba(124, 77, 255, 0.04)',
+            border: '1.5px solid rgba(124, 77, 255, 0.12)',
+            ...(isThinking && {
+              animation: `${THEME.animations.pulse} 2s infinite, ${THEME.animations.float} 3s ease-in-out infinite`,
+            }),
+          }}
+        />
+        {isThinking && (
+          <CircularProgress 
+            size={40} 
+            thickness={1.5}
+            sx={{ 
+              position: 'absolute',
+              color: 'rgba(124, 77, 255, 0.12)',
+              animation: 'none',
+            }} 
+          />
+        )}
+      </Box>
+      <Box sx={{ flex: 1, ml: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <Typography 
+            variant="subtitle2" 
+            sx={{ 
+              color: '#1C1C1E',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {name}
+          </Typography>
+          {timestamp && (
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'rgba(28, 28, 30, 0.5)',
+                fontSize: '0.75rem',
+              }}
+            >
+              {new Date(timestamp).toLocaleTimeString()}
+            </Typography>
+          )}
+        </Box>
+        <Box sx={{ 
+          display: 'flex',
+          alignItems: 'center',
+          mt: 0.25,
+        }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: status === 'error' ? '#FF4D4D' : '#6C6C70',
+              fontStyle: 'italic',
+              fontSize: '0.75rem',
+              ...(isThinking && {
+                animation: `${THEME.animations.float} 3s ease-in-out infinite`,
+              }),
+            }}
+          >
+            {statusText}
+          </Typography>
+          {status === 'streaming' && (
+            <Box
+              component="span"
+              sx={{
+                display: 'inline-block',
+                width: '0.4em',
+                height: '0.8em',
+                backgroundColor: '#6C6C70',
+                marginLeft: 1,
+                animation: `${THEME.animations.blink} 1s step-end infinite`,
+              }}
+            />
+          )}
+        </Box>
+        {reasoning && (
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              display: 'block',
+              color: 'rgba(28, 28, 30, 0.65)',
+              fontSize: '0.75rem',
+              mt: 0.5,
+              fontStyle: 'italic',
+            }}
+          >
+            {reasoning.replace('#### Thinking Process:', '').trim()}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+const MessageBubble = ({ isUser, content = '', isStreaming = false }: MessageBubbleProps) => {
+  // Extract reasoning if present, but keep the main content intact
+  let messageContent = content;
+  let reasoningText: string | null = null;
+
+  if (messageContent?.startsWith('#### Thinking Process:')) {
+    const parts = messageContent.split(/^(?:#{4} .*\n)/m);
+    reasoningText = parts[0]?.trim() || null;
+    messageContent = parts[1] || '';
+  }
+
+  return (
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      pr: isUser ? { xs: 2, sm: 3 } : 0,
+    }}>
+      {!isUser && (
+        <AgentResponseHeader 
+          name="Elf Agent"
+          avatar={THEME.avatars.assistant}
+          status={isStreaming ? 'streaming' : 'completed'}
+          reasoning={reasoningText}
+          timestamp={new Date().toISOString()}
+        />
+      )}
+
+      {/* Message content */}
+      <Box sx={{
+        display: 'flex',
+        justifyContent: isUser ? 'flex-end' : 'flex-start',
+        width: '100%',
+        pl: !isUser ? 6 : 0,
+      }}>
+        <Box 
+          sx={{
+            wordBreak: 'break-word',
+            p: { xs: 2, sm: 2.5 },
+            background: isUser ? 'rgba(124, 77, 255, 0.1)' : 'rgba(248, 249, 250, 0.8)',
+            color: '#1C1C1E',
+            borderRadius: '12px',
+            width: isUser ? 'auto' : '100%',
+            maxWidth: '85%',
+            position: 'relative',
+            border: '1px solid',
+            borderColor: isUser ? 'rgba(124, 77, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+          }}
+        > 
+          <Typography 
+            component="div" 
+            sx={{ 
+              whiteSpace: 'pre-wrap',
+              fontFamily: isStreaming ? 'monospace' : 'inherit',
+              fontSize: '0.9375rem',
+              lineHeight: 1.6,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {messageContent}
+            {isStreaming && (
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-block',
+                  width: '0.5em',
+                  height: '1.2em',
+                  backgroundColor: 'currentColor',
+                  marginLeft: '2px',
+                  verticalAlign: 'middle',
+                  animation: `${THEME.animations.blink} 1s step-end infinite`,
+                }}
+              />
+            )}
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+const EmptyState = ({ message, submessage }: EmptyStateProps) => (
+  <Box sx={{ 
+    display: 'flex', 
+    flexDirection: 'column', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    flex: 1,
+    minHeight: 0,
+    py: 4,
+  }}>
+    <Typography 
+      variant="h5" 
+      sx={{ 
+        color: '#1C1C1E',
+        fontWeight: 600,
+        fontSize: '1.25rem',
+        letterSpacing: '-0.02em',
+        mb: 1,
+      }}
+    >
+      {message}
+    </Typography>
+    <Typography 
+      variant="body2" 
+      sx={{ 
+        color: '#6C6C70',
+        fontSize: '0.9375rem',
+      }}
+    >
+      {submessage}
+    </Typography>
+  </Box>
+);
+
+// Components
+const MessageItem = ({ message, isStreaming = false }: MessageItemComponentProps & { isStreaming?: boolean }) => {
+  if (!message) return null;
+
+  const isUser = message.role === 'user';
+
+  return (
+    <MessageContainer _isUser={isUser}>
+      <MessageBubble 
+        isUser={isUser} 
+        content={message.content} 
+        isStreaming={isStreaming}
+      />
+    </MessageContainer>
+  );
+};
+
+// Main component
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
   streamedResponse: string;
+  emptyStateMessage?: string;
+  emptyStateSubmessage?: string;
+  agentName?: string;
+  agentAvatar?: string;
 }
 
-function MessageList({ messages, isLoading, streamedResponse }: MessageListProps) {
+/**
+ * MessageList Component
+ * 
+ * Displays a list of messages in a chat-like interface with support for:
+ * - User and assistant messages
+ * - Loading/thinking state
+ * - Streamed responses
+ * - Empty state
+ * - Auto-scrolling
+ * 
+ * @param props MessageListProps
+ */
+function MessageList({ 
+  messages, 
+  isLoading, 
+  streamedResponse,
+  emptyStateMessage = 'Start a new conversation',
+  emptyStateSubmessage = 'Send a message to get started',
+  agentName = 'Elf Agent',
+  agentAvatar = THEME.avatars.assistant
+}: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isEmpty, setIsEmpty] = useState<boolean>(messages.length === 0);
+  const isEmpty = messages.length === 0;
   
-  // Update isEmpty when messages change
-  useEffect(() => {
-    setIsEmpty(messages.length === 0);
-  }, [messages]);
+  const isActivelyStreaming = streamedResponse && streamedResponse !== "Thinking...";
+  const showThinking = isLoading && !isActivelyStreaming;
 
-  // Log messages in development mode
+  // Scroll to bottom whenever messages, streaming, or loading state changes
+  useEffect(() => {
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        window.requestAnimationFrame(() => {
+          try {
+            messagesEndRef.current?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'end'
+            });
+          } catch (_error) {
+            // Fallback if smooth scroll fails
+            messagesEndRef.current?.scrollIntoView(false);
+          }
+        });
+      }
+    };
+
+    // Initial scroll
+    scrollToBottom();
+
+    // Set up a small delay to handle dynamic content
+    const timeoutId = window.setTimeout(scrollToBottom, 100);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [messages, streamedResponse, isLoading]);
+
+  // Development logging
   useEffect(() => {
     if (import.meta.env.DEV) {
-      window.console.log('Messages in MessageList render:', messages?.length || 0, {
+      window.console.log('Messages in MessageList:', {
+        count: messages?.length || 0,
         messageIds: messages?.map(m => m.id).join(', '),
-        firstMessageContent: messages?.[0]?.content?.substring(0, 30) || 'none'
+        firstMessage: messages?.[0]?.content?.substring(0, 30) || 'none'
       });
     }
   }, [messages]);
 
-  // Scroll to bottom when messages change or when streaming completes
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, streamedResponse]);
-
-  // Force clean render when messages change
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      window.console.log('MessageList received new messages');
-    }
-
-    // Force DOM refresh when messages array changes
-    const handler = window.requestAnimationFrame(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    });
-
-    return () => window.cancelAnimationFrame(handler);
-  }, [messages]);
-
-  // Handle message rendering with key based on id and content to force re-render when content changes
-  const renderMessage = (message: Message, index: number) => {
-    if (!message) {
-      if (import.meta.env.DEV) {
-        window.console.warn('Received undefined message in MessageList at index', index);
-      }
-      return null;
-    }
-
-    // Generate a stable key that forces re-render when content changes
-    const messageKey = `${message.id}-${message.content?.length || 0}`;
-    
-    // Some messages might not have all fields properly defined,
-    // so we'll set defaults to prevent rendering errors
-    const role = message.role || 'assistant';
-    const isUser = role === 'user';
-    const sender = message.sender || { 
-      name: isUser ? 'You' : 'Assistant', 
-      avatar: isUser ? 'https://i.pravatar.cc/150?img=1' : 'https://i.pravatar.cc/150?img=2' 
-    };
-    const content = message.content || '';
-
-    return (
-      <Box 
-        key={messageKey}
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          mb: 2.5,
-          alignItems: isUser ? 'flex-end' : 'flex-start',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            gap: 1,
-            mb: 0.5,
-          }}
-        >
-          {!isUser && (
-            <Avatar 
-              alt={sender.name}
-              src={sender.avatar}
-              sx={{ 
-                width: 32, 
-                height: 32,
-                border: '2px solid',
-                borderColor: alpha('#6D5AE6', 0.2),
-              }}
-            />
-          )}
-          <Typography variant="caption" color="text.secondary">
-            {sender.name}
-          </Typography>
-          {isUser && (
-            <Avatar 
-              alt={sender.name}
-              src={sender.avatar}
-              sx={{ 
-                width: 32, 
-                height: 32,
-                border: '2px solid',
-                borderColor: alpha('#6D5AE6', 0.2),
-              }}
-            />
-          )}
-        </Box>
-        
-        <Paper
-          elevation={0}
-          className={`message-bubble ${isUser ? 'user' : 'assistant'}`}
-          sx={{ 
-            maxWidth: '85%',
-            wordBreak: 'break-word',
-            p: 1.5,
-            backgroundColor: isUser ? '#6D5AE6' : alpha('#FFFFFF', 0.7),
-            color: isUser ? 'white' : '#1A1650',
-            borderRadius: isUser ? '16px 16px 0 16px' : '16px 16px 16px 0',
-            boxShadow: isUser 
-              ? `0 2px 8px ${alpha('#6D5AE6', 0.3)}` 
-              : `0 2px 8px ${alpha('#000', 0.05)}`,
-            position: 'relative',
-            '&::after': isUser ? {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              right: '-10px',
-              width: 10,
-              height: 16,
-              backgroundColor: '#6D5AE6',
-              borderBottomLeftRadius: 16,
-            } : {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: '-10px',
-              width: 10,
-              height: 16,
-              backgroundColor: alpha('#FFFFFF', 0.7),
-              borderBottomRightRadius: 16,
-            }
-          }}
-        >
-          <ReactMarkdown>{content}</ReactMarkdown>
-        </Paper>
-      </Box>
-    );
-  };
-
-  // Determine if we're in "thinking" mode
-  const isThinking = isLoading || (streamedResponse === "Thinking...");
-  // Show response bubble only if we have content beyond "Thinking..."
-  const showResponseBubble = streamedResponse && !isThinking;
-
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'auto',
-        px: { xs: 1, sm: 2 },
-        py: 2,
-        scrollBehavior: 'smooth'
-      }}
-    >
+    <Box sx={{ 
+      width: '100%',
+      flex: 1,
+      minHeight: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      overflowY: 'auto',
+    }}>
       {isEmpty && !isLoading && !streamedResponse && (
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            height: '100%',
-            opacity: 0.7,
-          }}
-        >
-          <Typography variant="h5" color="text.secondary" gutterBottom>
-            Start a new conversation
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Send a message to get started
-          </Typography>
-        </Box>
+        <EmptyState 
+          message={emptyStateMessage} 
+          submessage={emptyStateSubmessage} 
+        />
       )}
       
-      {/* Display existing messages */}
-      {messages.map((message, index) => renderMessage(message, index))}
-      
-      {/* Display thinking animation */}
-      {isThinking && (
-        <Box 
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            mb: 2.5,
-            ml: 1,
-          }}
-        >
-          <Box
-            sx={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+      <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+        {/* Show user messages immediately */}
+        {messages.map((message) => (
+          <MessageItem 
+            key={message.id}
+            message={message} 
+          />
+        ))}
+        
+        {/* Show streaming response */}
+        {isActivelyStreaming && (
+          <MessageItem 
+            message={{
+              id: 'stream',
+              role: 'agent',
+              content: streamedResponse,
+              sender: {
+                id: 'agent'
+              },
+              conversationId: 'stream',
+              timestamp: new Date().toISOString(),
+              isEdited: false
             }}
-          >
-            <Avatar 
-              alt="Elf Agent"
-              src="https://i.pravatar.cc/150?img=2"
-              sx={{ 
-                width: 38, 
-                height: 38,
-                border: '2px solid',
-                borderColor: alpha('#6D5AE6', 0.3),
-                animation: `${pulse} 2s infinite, ${float} 3s ease-in-out infinite`,
-                zIndex: 2,
-              }}
-            />
-            <Box
-              sx={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                backgroundColor: alpha('#6D5AE6', 0.05),
-                animation: `${pulse} 2s infinite`,
-                zIndex: 1,
-              }}
-            />
-            <CircularProgress 
-              size={50} 
-              thickness={2}
-              sx={{ 
-                position: 'absolute',
-                color: alpha('#6D5AE6', 0.4),
-                animation: 'none',
-              }} 
-            />
-          </Box>
-          <Typography 
-            variant="caption" 
-            color="text.secondary"
-            sx={{ 
-              ml: 2, 
-              fontStyle: 'italic',
-              animation: `${float} 2s ease-in-out infinite`,
-            }}
-          >
-            Thinking...
-          </Typography>
-        </Box>
-      )}
-      
-      {/* Display streamed response as it comes in */}
-      {showResponseBubble && (
-        <Fade in={true} timeout={300}>
-          <Box 
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              mb: 2.5,
-              alignItems: 'flex-start',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                gap: 1,
-                mb: 0.5,
-              }}
-            >
-              <Avatar 
-                alt="Elf Agent"
-                src="https://i.pravatar.cc/150?img=2"
-                sx={{ 
-                  width: 32, 
-                  height: 32,
-                  border: '2px solid',
-                  borderColor: alpha('#6D5AE6', 0.2),
-                }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Elf Agent
-              </Typography>
-            </Box>
-            
-            <Paper
-              elevation={0}
-              className="message-bubble assistant"
-              sx={{ 
-                maxWidth: '85%',
-                wordBreak: 'break-word',
-                p: 1.5,
-                backgroundColor: alpha('#FFFFFF', 0.7),
-                borderRadius: '16px 16px 16px 0',
-                boxShadow: `0 2px 8px ${alpha('#000', 0.05)}`,
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  bottom: 0,
-                  left: '-10px',
-                  width: 10,
-                  height: 16,
-                  backgroundColor: alpha('#FFFFFF', 0.7),
-                  borderBottomRightRadius: 16,
-                },
-                animation: 'fadeIn 0.5s'
-              }}
-            >
-              <ReactMarkdown>{streamedResponse}</ReactMarkdown>
-            </Paper>
-          </Box>
-        </Fade>
-      )}
-      
-      {/* Empty div for scrolling to bottom */}
-      <div ref={messagesEndRef} />
+            isStreaming={true}
+          />
+        )}
+        
+        {/* Show thinking state */}
+        {showThinking && (
+          <AgentResponseHeader 
+            name={agentName}
+            avatar={agentAvatar}
+            status="thinking"
+          />
+        )}
+
+        {/* Scroll anchor */}
+        <div ref={messagesEndRef} style={{ float: 'left', clear: 'both', height: 1 }} />
+      </Box>
     </Box>
   );
 }

@@ -9,9 +9,7 @@ export interface User {
 
 // Message related types
 export interface MessageSender {
-  id: string | number;
-  name: string;
-  avatar: string;
+  id: 'user' | 'agent';
 }
 
 export interface Message {
@@ -21,7 +19,7 @@ export interface Message {
   sender: MessageSender;
   timestamp: string;
   isEdited: boolean;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'agent' | 'system';
   is_deleted?: boolean;
 }
 

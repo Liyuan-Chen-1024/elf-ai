@@ -9,15 +9,9 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for User objects, formatted as expected by the frontend."""
 
-    avatar = serializers.SerializerMethodField()
-
     class Meta:
         model = User
-        fields = ("id", "username", "email", "name", "avatar")
-
-    def get_avatar(self, obj):
-        """Return a placeholder avatar URL."""
-        return f"https://i.pravatar.cc/150?img={obj.id}"
+        fields = ("id", "username", "email", "name")
 
     def get_name(self, obj):
         """Return the user's name or username if name is not available."""
@@ -55,14 +49,12 @@ class MessageSerializer(serializers.ModelSerializer):
             return {
                 "id": user.id,
                 "name": user.get_full_name() or user.username,
-                "avatar": f"https://i.pravatar.cc/150?img={user.id}",
             }
         else:
             # Assistant sender
             return {
                 "id": "assistant",  # Use string ID for consistency with frontend
                 "name": "Elf Agent",  # Use the consistent name
-                "avatar": "https://i.pravatar.cc/150?img=2",
             }
 
     def to_representation(self, instance):
@@ -106,12 +98,10 @@ class ConversationSerializer(serializers.ModelSerializer):
             {
                 "id": user.id,
                 "name": user.get_full_name() or user.username,
-                "avatar": f"https://i.pravatar.cc/150?img={user.id}",
             },
             {
                 "id": "assistant",  # Use string ID for consistency with frontend
                 "name": "Elf Agent",  # Use the consistent name
-                "avatar": "https://i.pravatar.cc/150?img=2",
             },
         ]
 

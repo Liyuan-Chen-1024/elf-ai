@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <circle cx="64" cy="64" r="64" fill="#6D5AE6" opacity="0.12"/>
+  
+  <!-- Soft glow effect -->
+  <circle cx="64" cy="64" r="56" fill="#6D5AE6" opacity="0.08"/>
+  
+  <!-- Body shape -->
+  <path 
+    d="M64 108C42 108 28 90 28 72V68C28 54 44 44 64 44C84 44 100 54 100 68V72C100 90 86 108 64 108Z" 
+    fill="#6D5AE6"
+  />
+  
+  <!-- Neck -->
+  <path 
+    d="M54 62C54 62 59 68 64 68C69 68 74 62 74 62" 
+    stroke="#5B4AC2" 
+    stroke-width="2"
+  />
+  
+  <!-- Head -->
+  <circle cx="64" cy="44" r="24" fill="#6D5AE6"/>
+  
+  <!-- Hair -->
+  <path 
+    d="M40 44C40 34 45 20 64 20C83 20 88 34 88 44" 
+    fill="#5B4AC2"
+  />
+  
+  <!-- Face highlights -->
+  <circle cx="56" cy="40" r="3" fill="#FFFFFF" opacity="0.5"/>
+  <circle cx="72" cy="40" r="3" fill="#FFFFFF" opacity="0.5"/>
+  
+  <!-- Subtle shine -->
+  <circle cx="64" cy="35" r="12" fill="#7C6BED" opacity="0.3"/>
+</svg> 
