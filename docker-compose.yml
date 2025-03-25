@@ -174,8 +174,6 @@ services:
       - elfai-network
     ports:
       - "5555:5555"
-    volumes:
-      - ./backend:/app
     depends_on:
       - redis
       - celery_worker

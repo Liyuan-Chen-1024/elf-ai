@@ -89,12 +89,44 @@ class ConversationViewSet(viewsets.ModelViewSet):
         conversation.save()
         return Response(self.get_serializer(conversation).data)
 
-    @action(detail=True, methods=["get"])
+    @action(detail=True, methods=["get", "post"])
     def messages(self, request: Request, pk=None) -> Response:
         conversation = self.get_object()
-        messages = conversation.messages.filter(is_deleted=False).order_by("created_at")
-        return Response(MessageSerializer(messages, many=True).data)
-    
+        
+        # GET method - retrieve messages
+        if request.method == "GET":
+            messages = conversation.messages.filter(is_deleted=False).order_by("created_at")
+            return Response(MessageSerializer(messages, many=True).data)
+        
+        # POST method - create a new message
+        elif request.method == "POST":
+            serializer = MessageCreateSerializer(data=request.data)
+            
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+            content = serializer.validated_data["content"]
+            
+            # Create user message
+            message = Message.objects.create(
+                conversation=conversation,
+                role="user",
+                content=content
+            )
+            
+            # Also create an initial assistant message
+            assistant_message = Message.objects.create(
+                conversation=conversation,
+                role="assistant", 
+                content=""  # Start with empty content, will be filled by AI response
+            )
+            
+            # Optional: Trigger any async processing or response generation here
+            # You might want to call a task or service to generate a response
+            
+            # Return the created message
+            return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+
     def _stream_tokens(
         self, tokens: List[str], assistant_message: Message
     ) -> Generator[str, None, None]:

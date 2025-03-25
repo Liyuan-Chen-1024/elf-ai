@@ -1,0 +1,96 @@
+/* Global styles for the ElfAI application */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #F9FAFC;
+  color: #121828;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Chat bubble styles */
+.message-bubble {
+  border-radius: 12px;
+  padding: 12px 16px;
+  max-width: 80%;
+  margin-bottom: 8px;
+  position: relative;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.message-bubble.user {
+  background-color: #5048E5;
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 0;
+}
+
+.message-bubble.assistant {
+  background-color: #F3F4F6;
+  color: #121828;
+  margin-right: auto;
+  border-bottom-left-radius: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Code block styling for markdown */
+pre {
+  background-color: #292929;
+  color: #f8f8f2;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  margin: 12px 0;
+}
+
+code {
+  font-family: 'Fira Code', monospace;
+  padding: 2px 4px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+} 
