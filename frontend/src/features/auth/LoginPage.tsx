@@ -115,8 +115,8 @@ function LoginPage({ onRegisterClick }: LoginPageProps) {
   const handleTestLogin = () => {
     if (import.meta.env.DEV) {
       setUsername('admin');
-      setPassword('admin');
-      login({ username: 'admin', password: 'admin' });
+      setPassword('password');
+      login({ username: 'admin', password: 'password' });
     }
   };
 
@@ -135,6 +135,11 @@ function LoginPage({ onRegisterClick }: LoginPageProps) {
           {errorMessage && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {errorMessage}
+              {import.meta.env.DEV && (
+                <Box sx={{ mt: 1, fontSize: '0.9em' }}>
+                  <strong>Hint:</strong> Try using username <code>admin</code> and password <code>password</code>
+                </Box>
+              )}
             </Alert>
           )}
           
@@ -239,7 +244,7 @@ function LoginPage({ onRegisterClick }: LoginPageProps) {
                     onClick={handleTestLogin} 
                     sx={{ mt: 1, fontSize: '0.75rem' }}
                   >
-                    Test Login (admin/admin)
+                    Test Login (admin/password)
                   </Button>
                 )}
               </Box>

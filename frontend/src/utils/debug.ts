@@ -57,6 +57,24 @@ export const initDebug = () => {
     debug.log('Initializing debug tools');
     checkApiConfig();
     
+    // Add listener for localStorage changes to detect token issues
+    const originalSetItem = window.localStorage.setItem;
+    window.localStorage.setItem = function(key, value) {
+      if (key === 'authToken') {
+        debug.log(`Auth token being set: ${value.substring(0, 5)}...`);
+      }
+      originalSetItem.call(this, key, value);
+    };
+    
+    const originalRemoveItem = window.localStorage.removeItem;
+    window.localStorage.removeItem = function(key) {
+      if (key === 'authToken') {
+        debug.log(`Auth token being removed. Current URL: ${window.location.pathname}`);
+        console.trace('Auth token removal stack trace');
+      }
+      originalRemoveItem.call(this, key);
+    };
+    
     // Add global debug object for console access
     (window as any).__elfai_debug = {
       checkApiConfig,
@@ -67,6 +85,16 @@ export const initDebug = () => {
       getAuthToken: () => {
         return window.localStorage.getItem('authToken');
       },
+      checkToken: () => {
+        const token = window.localStorage.getItem('authToken');
+        if (token) {
+          debug.log(`Auth token exists: ${token.substring(0, 5)}...`);
+          return true;
+        } else {
+          debug.log('No auth token found');
+          return false;
+        }
+      }
     };
     
     debug.log('Debug tools initialized. Use window.__elfai_debug to access them');

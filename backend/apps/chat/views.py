@@ -166,188 +166,171 @@ class ConversationViewSet(viewsets.ModelViewSet):
         # Force a CSRF cookie to be set
         get_token(request)
         
-        conversation = self.get_object()
-        serializer = MessageCreateSerializer(data=request.data)
+        try:
+            conversation = self.get_object()
+            serializer = MessageCreateSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                logger.error(f"Invalid data for stream_message: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        content = serializer.validated_data["content"]
-        logger.info(f"Starting stream for conversation {pk} with content: {content}")
-        logger.info(f"Request headers: {request.headers}")
-        logger.info(f"CSRF cookie set: {request.COOKIES.get('csrftoken', 'Not found')}")
+            content = serializer.validated_data["content"]
+            logger.info(f"Starting stream for conversation {pk} with content: {content}")
+            logger.info(f"Request headers: {request.headers}")
+            logger.info(f"CSRF cookie set: {request.COOKIES.get('csrftoken', 'Not found')}")
 
-        def stream_response():
-            try:
-                # Create user message and initial assistant message
-                with transaction.atomic():
-                    user_message = Message.objects.create(
-                        conversation=conversation, role="user", content=content
-                    )
-                    assistant_message = Message.objects.create(
-                        conversation=conversation, role="assistant", content=""
-                    )
-                
-                # Update knowledge base asynchronously
-                update_knowledge_base_from_message.delay(
-                    user_id=conversation.user.id,
-                    message_id=user_message.id
-                )
-
-                # Get conversation history for context
-                history = conversation.messages.filter(is_deleted=False).order_by(
-                    "-created_at"
-                )[:5][::-1]  # Last 5 messages in chronological order
-
-                # Get user knowledge base for personalization
-                user_knowledge = KnowledgeBaseService.get_knowledge_as_context(user=conversation.user)
-                
-                # Build conversation context with personalized knowledge
-                context = (
-                    "You are Elf AI, a helpful AI assistant that personalizes responses based on the user's preferences and interests.\n\n"
-                    f"{user_knowledge}\n\n"
-                    "IMPORTANT INSTRUCTIONS:\n"
-                    "1. You MUST follow any commands in the 'Commands and Requirements' section above - these are non-negotiable\n"
-                    "2. You should adapt your responses based on the preferences listed, while still following commands\n"
-                    "3. Format your response in markdown\n"
-                    "4. For lists, use proper markdown list formatting:\n"
-                    "   - Numbered lists should use '1. ', '2. ' etc.\n"
-                    "   - Bullet points should use '- ' or '* '\n"
-                    "   - Ensure each list item is on a new line\n"
-                    "5. Be helpful and concise\n"
-                    "6. Reference the user's known interests and preferences when relevant\n"
-                    "7. Don't explicitly mention that you know these details unless asked directly\n"
-                    "8. Use proper markdown spacing (blank lines between sections)\n"
-                    "9. IMPORTANT: Only provide the direct response to the user's question. Do not include any knowledge base updates or internal processing information in your response.\n"
-                    "10. CRITICAL: Start your response with your thinking process wrapped in <think> tags. For example:\n"
-                    "    <think>First, I'll analyze the user's question. Then, I'll consider their preferences and provide a tailored response.</think>\n\n"
-                    "    Then provide your actual response after the think tags.\n\n"
-                )
-                
-                # Add conversation history
-                for msg in history:
-                    context += f"{msg.role}: {msg.content}\n"
-                context += f"user: {content}\nassistant:"
-
-                logger.info(f"Sending initial SSE message for conversation {pk}")
-                # Initial response to establish connection
-                yield f"data: {json.dumps({'type': 'start', 'message_id': str(assistant_message.id)})}\n\n"
-
-                # Make streaming request to LLM
-                logger.info(f"Making LLM request to {settings.LLM_API_URL}")
-                response = requests.post(
-                    settings.LLM_API_URL,
-                    json={
-                        "model": settings.LLM_MODEL_NAME,
-                        "prompt": context,
-                        "stream": True,
-                    },
-                    stream=True,
-                    timeout=30,
-                )
-
-                if response.status_code == 200:
-                    full_response = ""
-                    token_buffer = ""
-                    last_save_time = time.time()
+            def stream_response():
+                try:
+                    # Create user message and initial assistant message
+                    with transaction.atomic():
+                        user_message = Message.objects.create(
+                            conversation=conversation, role="user", content=content
+                        )
+                        assistant_message = Message.objects.create(
+                            conversation=conversation, role="assistant", content=""
+                        )
                     
-                    # Send initial message to indicate we're starting content streaming
-                    yield f"data: {json.dumps({'type': 'start_content'})}\n\n"
+                    logger.info(f"Created messages: user_message={user_message.id}, assistant_message={assistant_message.id}")
                     
-                    for line in response.iter_lines():
-                        if line:
-                            try:
-                                json_response = json.loads(line.decode("utf-8"))
-                                token = json_response.get("response", "")
+                    # Update knowledge base asynchronously
+                    update_knowledge_base_from_message.delay(
+                        user_id=conversation.user.id,
+                        message_id=user_message.id
+                    )
 
-                                if token:
-                                    # Add token to buffer
-                                    token_buffer += token
-                                    current_time = time.time()
-                                    
-                                    # Check if we have a complete markdown element
-                                    complete_chunk = (
-                                        # End of line for list items and paragraphs
-                                        token_buffer.endswith("\n") or
-                                        # Complete sentence
-                                        any(token_buffer.rstrip().endswith(c) for c in ".!?") or
-                                        # Complete phrase
-                                        any(token_buffer.rstrip().endswith(c) for c in ",;:") or
-                                        # Complete markdown list item
-                                        (token_buffer.strip().startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.", "-", "*")) and
-                                         token_buffer.endswith("\n"))
-                                    )
-                                    
-                                    # Time or size-based threshold with markdown awareness
-                                    should_send = (
-                                        # Time threshold reached
-                                        (current_time - last_save_time >= 1 and 
-                                         (token_buffer.endswith((" ", "\n")) or complete_chunk)) or
-                                        # Size threshold reached
-                                        (len(token_buffer) >= 30 and 
-                                         (token_buffer.endswith((" ", "\n")) or complete_chunk)) or
-                                        # Complete markdown element
-                                        complete_chunk
-                                    )
-                                    
-                                    if should_send and token_buffer:
-                                        chunk = token_buffer
-                                        if chunk:
-                                            # Preserve exact markdown formatting
-                                            full_response += chunk
+                    # Get conversation history for context
+                    history = conversation.messages.filter(is_deleted=False).order_by(
+                        "-created_at"
+                    )[:5][::-1]  # Last 5 messages in chronological order
+
+                    # Get user knowledge base for personalization
+                    user_knowledge = KnowledgeBaseService.get_knowledge_as_context(user=conversation.user)
+                    
+                    # Build conversation context with personalized knowledge
+                    context = (
+                        "You are Elf AI, a helpful AI assistant that personalizes responses based on the user's preferences and interests. Think step by step and provide a detailed response.\n\n"
+                        f"{user_knowledge}\n\n"
+                        "IMPORTANT INSTRUCTIONS:\n"
+                        
+                        "1. You MUST follow any commands in the 'Commands and Requirements' section above - these are non-negotiable\n"
+                        "2. You should adapt your responses based on the preferences listed, while still following commands\n"
+                        "3. Format your response in markdown\n"
+                        "4. For lists, use proper markdown list formatting:\n"
+                        "   - Numbered lists should use '1. ', '2. ' etc.\n"
+                        "   - Bullet points should use '- ' or '* '\n"
+                        "   - Ensure each list item is on a new line\n"
+                        "5. Be helpful and concise\n"
+                        "6. Reference the user's known interests and preferences when relevant\n"
+                        "7. Don't explicitly mention that you know these details unless asked directly\n"
+                        "8. Use proper markdown spacing (blank lines between sections)\n"
+                        "9. IMPORTANT: Only provide the direct response to the user's question. Do not include any knowledge base updates or internal processing information in your response.\n"
+                        "10. CRITICAL: Start your response with your thinking process wrapped in <think> tags. For example:\n"
+                        "    <think>First, I'll analyze the user's question. Then, I'll consider their preferences and provide a tailored response.</think>\n\n"
+                        "    Then provide your actual response after the think tags.\n\n"
+                    )
+                    
+                    # Add conversation history
+                    for msg in history:
+                        context += f"{msg.role}: {msg.content}\n"
+                    context += f"user: {content}\nassistant:"
+
+                    logger.info(f"Sending initial SSE message for conversation {pk}")
+                    # Initial response to establish connection
+                    yield f"data: {json.dumps({'type': 'start', 'message_id': str(assistant_message.id)})}\n\n"
+
+                    # Make streaming request to LLM
+                    logger.info(f"Making LLM request to {settings.LLM_API_URL}")
+                    try:
+                        response = requests.post(
+                            settings.LLM_API_URL,
+                            json={
+                                "model": settings.LLM_MODEL_NAME,
+                                "prompt": context,
+                                "stream": True,
+                            },
+                            stream=True,
+                            timeout=30,
+                        )
+                        logger.info(f"LLM response status: {response.status_code}")
+
+                        if response.status_code == 200:
+                            full_response = ""
+                            
+                            # Send initial message to indicate we're starting content streaming
+                            yield f"data: {json.dumps({'type': 'start_content'})}\n\n"
+                            
+                            for line in response.iter_lines():
+                                if line:
+                                    try:
+                                        json_response = json.loads(line.decode("utf-8"))
+                                        logger.debug(f"LLM raw response: {json_response}")
+                                        token = json_response.get("response", "")
+
+                                        if token:
+                                            # Update the full response
+                                            full_response += token
                                             assistant_message.content = full_response
                                             assistant_message.save(update_fields=["content", "updated_at"])
                                             
-                                            logger.debug(f"Sending chunk: {chunk}")
-                                            yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
-                                        
-                                        token_buffer = ""
-                                        last_save_time = current_time
-                            except json.JSONDecodeError as e:
-                                logger.error(f"Error decoding LLM response: {e}, line: {line}")
-                                continue
-                    
-                    # Send completion message to show thinking toggle
-                    yield f"data: {json.dumps({'type': 'content_complete'})}\n\n"
-                else:
-                    error_msg = f"Error from LLM API: {response.status_code}"
-                    logger.error(error_msg)
+                                            # Send each token immediately without buffering
+                                            logger.debug(f"Sending token: {token}")
+                                            yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
+                                    except json.JSONDecodeError as e:
+                                        logger.error(f"Error decoding LLM response: {e}, line: {line}")
+                                        continue
+                            
+                            # Send completion message to show thinking toggle - IMPORTANT
+                            yield f"data: {json.dumps({'type': 'content_complete'})}\n\n"
+                        else:
+                            error_msg = f"Error from LLM API: {response.status_code}"
+                            logger.error(error_msg)
+                            yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+                    except requests.RequestException as e:
+                        error_msg = f"Request error to LLM API: {str(e)}"
+                        logger.exception(error_msg)
+                        yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+
+                except Exception as e:
+                    error_msg = f"Error in message streaming: {str(e)}"
+                    logger.exception(error_msg)
                     yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
 
-            except Exception as e:
-                error_msg = f"Error in message streaming: {str(e)}"
-                logger.exception(error_msg)
-                yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+                finally:
+                    # Always send a done event
+                    logger.info(f"Completing stream for conversation {pk}")
+                    yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
-            finally:
-                # Always send a done event
-                logger.info(f"Completing stream for conversation {pk}")
-                yield f"data: {json.dumps({'type': 'done'})}\n\n"
-
-        # Create and configure the streaming response
-        response = StreamingHttpResponse(
-            stream_response(),
-            content_type='text/event-stream',
-            status=200
-        )
-        
-        # Add required headers for SSE
-        response['Cache-Control'] = 'no-cache'
-        response['X-Accel-Buffering'] = 'no'
-        
-        # Add CORS headers
-        if 'HTTP_ORIGIN' in request.META:
-            origin = request.META['HTTP_ORIGIN']
-            response['Access-Control-Allow-Origin'] = origin
-            response['Access-Control-Allow-Credentials'] = 'true'
-            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-CSRFToken, Accept'
-            response['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-            response['Access-Control-Expose-Headers'] = 'Content-Type'
-        
-        # Set Vary header to avoid caching issues
-        response['Vary'] = 'Accept, Cookie, Origin'
-        
-        return response
+            # Create and configure the streaming response
+            response = StreamingHttpResponse(
+                stream_response(),
+                content_type='text/event-stream',
+                status=200
+            )
+            
+            # Add required headers for SSE
+            response['Cache-Control'] = 'no-cache'
+            response['X-Accel-Buffering'] = 'no'
+            
+            # Add CORS headers
+            if 'HTTP_ORIGIN' in request.META:
+                origin = request.META['HTTP_ORIGIN']
+                response['Access-Control-Allow-Origin'] = origin
+                response['Access-Control-Allow-Credentials'] = 'true'
+                response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-CSRFToken, Accept'
+                response['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+                response['Access-Control-Expose-Headers'] = 'Content-Type'
+            
+            # Set Vary header to avoid caching issues
+            response['Vary'] = 'Accept, Cookie, Origin'
+            
+            return response
+            
+        except Exception as e:
+            logger.exception(f"Unhandled exception in stream_message view: {str(e)}")
+            return Response(
+                {"error": f"Internal server error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class MessageViewSet(viewsets.ModelViewSet):

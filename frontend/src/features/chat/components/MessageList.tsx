@@ -229,6 +229,23 @@ const MessageBubble = ({ isUser, content = '', isStreaming = false }: MessageBub
   let messageContent = content;
   let reasoningText: string | null = null;
 
+  // In streaming mode, ensure we keep and display the full content
+  useEffect(() => {
+    if (isStreaming && content) {
+      window.console.log("Streaming content:", content.substring(0, 30));
+    }
+  }, [isStreaming, content]);
+
+  // Handle case when content is empty or just contains "Completed"
+  if (!messageContent || messageContent.trim() === '' || messageContent === 'Completed') {
+    if (!isUser) {
+      // For non-user (agent) messages, show a helpful message
+      messageContent = isStreaming 
+        ? 'Generating response...' 
+        : 'The agent is responding...';
+    }
+  }
+
   if (messageContent?.startsWith('#### Thinking Process:')) {
     const parts = messageContent.split(/^(?:#{4} .*\n)/m);
     reasoningText = parts[0]?.trim() || null;
@@ -263,41 +280,37 @@ const MessageBubble = ({ isUser, content = '', isStreaming = false }: MessageBub
           sx={{
             wordBreak: 'break-word',
             p: { xs: 2, sm: 2.5 },
-            background: isUser ? 'rgba(124, 77, 255, 0.1)' : 'rgba(248, 249, 250, 0.8)',
+            background: isUser ? 'rgba(124, 77, 255, 0.1)' : 'transparent',
             color: '#1C1C1E',
-            borderRadius: '12px',
+            borderRadius: isUser ? '12px' : 'none',
             width: isUser ? 'auto' : '100%',
             maxWidth: '85%',
             position: 'relative',
-            border: '1px solid',
-            borderColor: isUser ? 'rgba(124, 77, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+            border: isUser ? '1px solid rgba(124, 77, 255, 0.1)' : 'none',
+            pl: !isUser ? 0 : undefined,
           }}
         > 
           <Typography 
             component="div" 
             sx={{ 
               whiteSpace: 'pre-wrap',
-              fontFamily: isStreaming ? 'monospace' : 'inherit',
+              fontFamily: 'inherit',
               fontSize: '0.9375rem',
               lineHeight: 1.6,
               letterSpacing: '-0.01em',
+              ...(isStreaming && {
+                '&::after': {
+                  content: '"|"',
+                  display: 'inline-block',
+                  marginLeft: '2px',
+                  animation: `${THEME.animations.blink} 1s step-end infinite`,
+                  color: 'rgba(28, 28, 30, 0.6)',
+                  fontWeight: 200,
+                }
+              })
             }}
           >
             {messageContent}
-            {isStreaming && (
-              <Box
-                component="span"
-                sx={{
-                  display: 'inline-block',
-                  width: '0.5em',
-                  height: '1.2em',
-                  backgroundColor: 'currentColor',
-                  marginLeft: '2px',
-                  verticalAlign: 'middle',
-                  animation: `${THEME.animations.blink} 1s step-end infinite`,
-                }}
-              />
-            )}
           </Typography>
         </Box>
       </Box>
@@ -341,6 +354,7 @@ const EmptyState = ({ message, submessage }: EmptyStateProps) => (
 
 // Components
 const MessageItem = ({ message, isStreaming = false }: MessageItemComponentProps & { isStreaming?: boolean }) => {
+  // No complex state management, keep it simple
   if (!message) return null;
 
   const isUser = message.role === 'user';
@@ -393,7 +407,13 @@ function MessageList({
   
   const isActivelyStreaming = streamedResponse && streamedResponse !== "Thinking...";
   const showThinking = isLoading && !isActivelyStreaming;
+  
+  // Don't show empty state if we're loading or streaming
+  const showEmptyState = isEmpty && !isLoading && !streamedResponse;
 
+  // Simplified streaming logic - no need for complex state
+  const showStreamingMessage = isActivelyStreaming;
+  
   // Scroll to bottom whenever messages, streaming, or loading state changes
   useEffect(() => {
     const scrollToBottom = () => {
@@ -412,16 +432,15 @@ function MessageList({
       }
     };
 
-    // Initial scroll
-    scrollToBottom();
-
-    // Set up a small delay to handle dynamic content
-    const timeoutId = window.setTimeout(scrollToBottom, 100);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [messages, streamedResponse, isLoading]);
+    // Scroll immediately for streaming responses
+    if (isActivelyStreaming) {
+      scrollToBottom();
+    } else {
+      // For non-streaming updates, add a small delay
+      const timeoutId = window.setTimeout(scrollToBottom, 100);
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [messages, streamedResponse, isLoading, isActivelyStreaming]);
 
   // Development logging
   useEffect(() => {
@@ -443,7 +462,7 @@ function MessageList({
       flexDirection: 'column',
       overflowY: 'auto',
     }}>
-      {isEmpty && !isLoading && !streamedResponse && (
+      {showEmptyState && (
         <EmptyState 
           message={emptyStateMessage} 
           submessage={emptyStateSubmessage} 
@@ -459,8 +478,8 @@ function MessageList({
           />
         ))}
         
-        {/* Show streaming response */}
-        {isActivelyStreaming && (
+        {/* Show streaming response only when appropriate */}
+        {showStreamingMessage && (
           <MessageItem 
             message={{
               id: 'stream',
@@ -487,7 +506,7 @@ function MessageList({
         )}
 
         {/* Scroll anchor */}
-        <div ref={messagesEndRef} style={{ float: 'left', clear: 'both', height: 1 }} />
+        <div ref={messagesEndRef} style={{ float: 'left', clear: 'both' }} />
       </Box>
     </Box>
   );

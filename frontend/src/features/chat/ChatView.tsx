@@ -96,13 +96,27 @@ function ChatView() {
     if (!message.trim()) return;
     
     try {
+      // Clear any previous error messages
+      setDebugInfo(null);
+      
       // If we don't have a conversation ID, create a new conversation first
       if (!conversationId) {
-        const newConversation = await createConversation({ title: message.substring(0, 30) + '...' });
+        let newConversation;
+        try {
+          // Try to create a new conversation
+          newConversation = await createConversation({ title: message.substring(0, 30) + '...' });
+          
+          if (import.meta.env.DEV) {
+            window.console.log('Successfully created conversation:', newConversation);
+          }
+        } catch (createError) {
+          window.console.error('Error creating conversation:', createError);
+          throw new Error('Failed to create new conversation');
+        }
         
         // Verify we have a valid conversation object
         if (!newConversation?.id) {
-          throw new Error('Failed to create new conversation');
+          throw new Error('Failed to create new conversation - invalid ID');
         }
 
         // Navigate to the new conversation
@@ -128,15 +142,30 @@ function ChatView() {
           }
         );
 
+        // Wait a moment for the navigation to complete
+        await new Promise(resolve => window.setTimeout(resolve, 100));
+
         // Now stream the message to the new conversation
         try {
+          if (import.meta.env.DEV) {
+            window.console.log('Streaming to new conversation with ID:', newConversation.id);
+          }
+          
           await streamMessage({ 
             conversationId: newConversation.id, 
             content: message 
           });
-        } catch (_streamError) {
-          // If streaming fails immediately, wait a bit longer and try again
+        } catch (streamError) {
+          window.console.error('Error streaming to new conversation:', streamError);
+          
+          // If streaming fails, try again after a delay
           await new Promise(resolve => window.setTimeout(resolve, 500));
+          
+          // Log the retry attempt
+          if (import.meta.env.DEV) {
+            window.console.log('Retrying stream to conversation:', newConversation.id);
+          }
+          
           await streamMessage({ 
             conversationId: newConversation.id, 
             content: message 
@@ -347,7 +376,24 @@ function ChatView() {
           </Alert>
         )}
         
-        {debugInfo && (
+        {debugInfo && !conversationId && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3,
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 59, 48, 0.12)',
+              flexShrink: 0,
+              '& .MuiAlert-icon': {
+                color: '#FF3B30',
+              },
+            }}
+          >
+            {debugInfo}
+          </Alert>
+        )}
+        
+        {debugInfo && conversationId && (
           <Alert 
             severity="info" 
             sx={{ 

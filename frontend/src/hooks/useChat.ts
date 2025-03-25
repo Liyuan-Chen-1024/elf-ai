@@ -220,6 +220,7 @@ export function useConversations() {
 export function useConversation(id?: string) {
   const queryClient = useQueryClient();
   const [streamedResponse, setStreamedResponse] = useState('');
+  const [isStreamError, setIsStreamError] = useState(false);
 
   const {
     data: conversation,
@@ -276,19 +277,60 @@ export function useConversation(id?: string) {
   const streamMessageMutation = useMutation({
     mutationFn: ({ conversationId, content }: { conversationId: string; content: string }) => {
       setStreamedResponse('');
+      setIsStreamError(false);
+      
       return chatApi.streamMessage({
         conversationId,
         content,
         onChunk: (chunk) => {
-          setStreamedResponse(prev => prev + chunk);
+          // Check if the chunk is an error message
+          if (chunk.startsWith("\n\nError:")) {
+            setIsStreamError(true);
+          }
+          
+          if (chunk === "Thinking...") {
+            // Initial state - just set to "Thinking..."
+            setStreamedResponse("Thinking...");
+          } else if (chunk === "") {
+            // Clear "Thinking..." when we get first real token
+            setStreamedResponse("");
+          } else {
+            // Append new token to the current response
+            setStreamedResponse(prev => {
+              // If previous was "Thinking..." or empty, replace it
+              if (prev === "Thinking..." || prev === "") {
+                return chunk;
+              }
+              // Otherwise append the new token
+              return prev + chunk;
+            });
+          }
         },
+      }).catch((error) => {
+        window.console.error("Stream message error:", error);
+        setIsStreamError(true);
+        setStreamedResponse(prev => 
+          prev === "Thinking..." 
+            ? "Error: Unable to generate response. Please try again." 
+            : prev + "\n\nError: Connection failed. Please try again."
+        );
+        throw error;
       });
     },
     onSuccess: () => {
-      // After streaming is complete, refetch the conversation to get the updated messages
-      refetch();
-      setStreamedResponse('');
+      if (!isStreamError) {
+        // After streaming is complete, refetch the conversation to get the updated messages
+        refetch();
+        // Immediately clear the streamed response to avoid duplicates
+        setStreamedResponse('');
+      }
     },
+    onSettled: () => {
+      // Clear any streaming state
+      if (!isStreamError) {
+        setStreamedResponse('');
+      }
+    }
   });
 
   // Delete a message
