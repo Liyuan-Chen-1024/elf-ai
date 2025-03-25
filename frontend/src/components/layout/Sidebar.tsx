@@ -8,18 +8,17 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Divider,
   IconButton,
-  Toolbar,
-  Typography,
-  Badge,
   Tooltip,
+  Typography,
+  Paper,
+  InputBase,
+  alpha
 } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
-import NewspaperIcon from '@mui/icons-material/Newspaper';
-import PersonIcon from '@mui/icons-material/Person';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 import { useConversations } from '../../hooks/useChat';
 import { Conversation } from '../../types';
 
@@ -31,7 +30,7 @@ interface SidebarProps {
   onTabChange: (tab: 'chat' | 'news' | 'profile') => void;
 }
 
-function Sidebar({ open, activeTab, onTabChange }: SidebarProps) {
+function Sidebar({ open, activeTab }: SidebarProps) {
   const navigate = useNavigate();
   const { conversationId } = useParams<{ conversationId?: string }>();
   
@@ -42,17 +41,6 @@ function Sidebar({ open, activeTab, onTabChange }: SidebarProps) {
     isCreating,
     isDeleting
   } = useConversations();
-
-  // Main navigation tabs
-  const mainTabs = [
-    { id: 'chat' as const, label: 'Chat', icon: <ChatIcon />, count: conversations.length },
-    { id: 'news' as const, label: 'News', icon: <NewspaperIcon />, count: 0 },
-    { id: 'profile' as const, label: 'Profile', icon: <PersonIcon />, count: 0 },
-  ];
-
-  const handleTabClick = (tabId: 'chat' | 'news' | 'profile') => {
-    onTabChange(tabId);
-  };
 
   const handleConversationClick = (conversation: Conversation) => {
     navigate(`/chat/${conversation.id}`);
@@ -85,121 +73,200 @@ function Sidebar({ open, activeTab, onTabChange }: SidebarProps) {
     });
   };
 
+  // Only render the sidebar if we're on the chat tab
+  if (activeTab !== 'chat') {
+    return null;
+  }
+
+  if (!open) {
+    return null;
+  }
+
   return (
     <Drawer
-      variant="persistent"
+      variant="permanent"
       open={open}
       sx={{
         width: DRAWER_WIDTH,
         flexShrink: 0,
+        height: '100%',
         '& .MuiDrawer-paper': {
+          position: 'relative',
           width: DRAWER_WIDTH,
+          height: '100%',
           boxSizing: 'border-box',
+          border: 'none',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          boxShadow: 'none',
+          overflow: 'hidden'
         },
       }}
     >
-      <Toolbar /> {/* Spacer to position below app bar */}
-      
-      {/* Main navigation */}
-      <Box sx={{ overflow: 'auto', mt: 2 }}>
-        <List>
-          {mainTabs.map((tab) => (
-            <ListItem key={tab.id} disablePadding>
-              <ListItemButton 
-                selected={activeTab === tab.id}
-                onClick={() => handleTabClick(tab.id)}
-              >
-                <ListItemIcon>
-                  {tab.count > 0 ? (
-                    <Badge badgeContent={tab.count} color="primary">
-                      {tab.icon}
-                    </Badge>
-                  ) : (
-                    tab.icon
-                  )}
-                </ListItemIcon>
-                <ListItemText primary={tab.label} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        height: '100%', 
+        py: 1,
+        px: 1.5,
+        overflow: 'hidden'
+      }}>
+        {/* Search and New Chat */}
+        <Paper
+          component="form"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: theme => alpha(theme.palette.primary.main, 0.04),
+            borderRadius: 2,
+            p: '2px 8px',
+            mb: 1.5,
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <IconButton sx={{ p: '4px' }} aria-label="search">
+            <SearchIcon fontSize="small" />
+          </IconButton>
+          <InputBase
+            sx={{ ml: 1, flex: 1, fontSize: '0.85rem' }}
+            placeholder="Search conversations"
+            inputProps={{ 'aria-label': 'search conversations' }}
+          />
+          <Tooltip title="New conversation">
+            <IconButton 
+              color="primary" 
+              size="small" 
+              aria-label="new chat"
+              onClick={handleNewChat}
+              disabled={isCreating}
+              sx={{
+                p: '4px',
+                borderRadius: '50%',
+                '&:hover': {
+                  backgroundColor: theme => alpha(theme.palette.primary.main, 0.15),
+                }
+              }}
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Paper>
         
-        <Divider sx={{ my: 2 }} />
+        {/* Conversations Header */}
+        <Typography 
+          variant="subtitle2" 
+          sx={{ 
+            px: 1, 
+            mb: 0.5, 
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}
+        >
+          Recent Conversations
+        </Typography>
         
-        {/* Chat section - only visible when Chat tab is active */}
-        {activeTab === 'chat' && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, mb: 1 }}>
-              <Typography variant="h6">Conversations</Typography>
-              <IconButton 
-                color="primary" 
-                size="small" 
-                aria-label="new chat"
-                onClick={handleNewChat}
-                disabled={isCreating}
-              >
-                <AddIcon />
-              </IconButton>
-            </Box>
-            
-            <List>
-              {conversations.length === 0 ? (
-                <ListItem>
+        {/* Conversations List */}
+        <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+          <List disablePadding dense>
+            {conversations.length === 0 ? (
+              <ListItem sx={{ py: 1.5, px: 1 }}>
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 1.5, 
+                    width: '100%',
+                    backgroundColor: theme => alpha(theme.palette.background.paper, 0.5),
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 1.5
+                  }}
+                >
                   <ListItemText 
                     primary="No conversations yet" 
                     secondary="Start a new chat to begin" 
-                    primaryTypographyProps={{ variant: 'body2' }}
+                    primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
                     secondaryTypographyProps={{ variant: 'caption' }}
                   />
-                </ListItem>
-              ) : (
-                conversations.map((conversation) => (
-                  <ListItem 
-                    key={conversation.id} 
-                    disablePadding
-                    secondaryAction={
-                      <Tooltip title="Delete conversation">
-                        <IconButton 
-                          edge="end" 
-                          aria-label="delete" 
-                          size="small"
-                          onClick={(e) => handleDeleteClick(conversation.id, e)}
-                          disabled={isDeleting}
-                          sx={{ opacity: 0.7 }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    }
-                    sx={{ pr: 6 }} // Add padding for the delete button
+                </Paper>
+              </ListItem>
+            ) : (
+              conversations.map((conversation) => (
+                <ListItem 
+                  key={conversation.id} 
+                  disablePadding
+                  sx={{ mb: 0.5 }}
+                >
+                  <ListItemButton 
+                    dense
+                    selected={conversationId === conversation.id}
+                    onClick={() => handleConversationClick(conversation)}
+                    sx={{
+                      borderRadius: 1.5,
+                      py: 0.5,
+                      '&.Mui-selected': {
+                        backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
+                        '&:hover': {
+                          backgroundColor: theme => alpha(theme.palette.primary.main, 0.15),
+                        }
+                      }
+                    }}
                   >
-                    <ListItemButton 
-                      selected={conversationId === conversation.id}
-                      onClick={() => handleConversationClick(conversation)}
-                    >
-                      <ListItemIcon>
-                        <ChatIcon color={conversation.archived ? 'disabled' : 'primary'} />
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary={conversation.title} 
-                        secondary={conversation.lastMessage?.content?.substring(0, 20) + '...'}
-                        primaryTypographyProps={{
-                          noWrap: true,
-                          color: conversation.archived ? 'text.disabled' : 'text.primary',
-                        }}
-                        secondaryTypographyProps={{
-                          noWrap: true,
-                          variant: 'caption',
-                          color: 'text.secondary',
-                        }}
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <ChatIcon 
+                        color={conversation.archived ? 'disabled' : 'primary'} 
+                        fontSize="small"
                       />
-                    </ListItemButton>
-                  </ListItem>
-                ))
-              )}
-            </List>
-          </>
-        )}
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={conversation.title} 
+                      secondary={
+                        conversation.lastMessage?.content 
+                          ? conversation.lastMessage.content.substring(0, 25) + (conversation.lastMessage.content.length > 25 ? '...' : '') 
+                          : 'New conversation'
+                      }
+                      primaryTypographyProps={{
+                        noWrap: true,
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        color: conversation.archived ? 'text.disabled' : 'text.primary',
+                      }}
+                      secondaryTypographyProps={{
+                        noWrap: true,
+                        variant: 'caption',
+                        fontSize: '0.75rem',
+                        color: 'text.secondary',
+                      }}
+                      sx={{ my: 0 }}
+                    />
+                    <Tooltip title="Delete conversation">
+                      <IconButton 
+                        edge="end" 
+                        aria-label="delete" 
+                        size="small"
+                        onClick={(e) => handleDeleteClick(conversation.id, e)}
+                        disabled={isDeleting}
+                        sx={{ 
+                          opacity: 0.7,
+                          padding: '2px',
+                          '&:hover': { 
+                            opacity: 1,
+                            color: 'error.main' 
+                          }
+                        }}
+                      >
+                        <DeleteIcon sx={{ fontSize: '1rem' }} />
+                      </IconButton>
+                    </Tooltip>
+                  </ListItemButton>
+                </ListItem>
+              ))
+            )}
+          </List>
+        </Box>
       </Box>
     </Drawer>
   );

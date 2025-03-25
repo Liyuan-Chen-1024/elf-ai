@@ -14,42 +14,54 @@ body,
 }
 
 body {
-  font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-family: 'Poppins', 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #F9FAFC;
-  color: #121828;
+  background-color: #F8F9FE;
+  color: #1A1650;
 }
 
 a {
   text-decoration: none;
   color: inherit;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #6D5AE6;
 }
 
 /* Chat bubble styles */
 .message-bubble {
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-radius: 16px;
+  padding: 16px;
   max-width: 80%;
   margin-bottom: 8px;
   position: relative;
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.message-bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(29, 22, 179, 0.1);
 }
 
 .message-bubble.user {
-  background-color: #5048E5;
+  background-color: #6D5AE6;
   color: white;
   margin-left: auto;
   border-bottom-right-radius: 0;
 }
 
 .message-bubble.assistant {
-  background-color: #F3F4F6;
-  color: #121828;
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #1A1650;
   margin-right: auto;
   border-bottom-left-radius: 0;
+  backdrop-filter: blur(10px);
 }
 
 /* Scrollbar styling */
@@ -59,38 +71,84 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(248, 249, 254, 0.5);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+  background: rgba(109, 90, 230, 0.3);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: rgba(109, 90, 230, 0.5);
 }
 
 /* Code block styling for markdown */
 pre {
-  background-color: #292929;
+  background-color: #2D2A4A;
   color: #f8f8f2;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 12px;
   overflow-x: auto;
   font-family: 'Fira Code', monospace;
   font-size: 14px;
-  margin: 12px 0;
+  margin: 16px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 code {
   font-family: 'Fira Code', monospace;
-  padding: 2px 4px;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
+  padding: 3px 6px;
+  background-color: rgba(109, 90, 230, 0.1);
+  border-radius: 6px;
+  font-size: 0.9em;
+  color: #6D5AE6;
 }
 
 pre code {
   background-color: transparent;
   padding: 0;
+  color: inherit;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Playful elements */
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 } 

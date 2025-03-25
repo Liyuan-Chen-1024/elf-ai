@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, Typography, IconButton, Alert, Menu, MenuItem } from '@mui/material';
+import { Box, Paper, Typography, IconButton, Alert, Menu, MenuItem, alpha, useTheme } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import MessageList from './components/MessageList';
 import MessageInput from './components/MessageInput';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useConversations, useConversation } from '../../hooks/useChat';
-import { Conversation, Message } from '../../types';
+import type { Message } from '../../types';
 
 function ChatView() {
   const navigate = useNavigate();
-  const { conversationId } = useParams<{ conversationId: string }>();
+  const theme = useTheme();
+  const { conversationId } = useParams<{ conversationId?: string }>();
   
   const { 
     conversations, 
-    createConversation, 
     deleteConversation,
-    isCreating,
-    isDeleting 
+    isDeleting: isConversationDeleting 
   } = useConversations();
   
   // Menu state for conversation options
@@ -26,11 +25,11 @@ function ChatView() {
   
   const {
     conversation: activeConversation,
+    error: conversationError,
+    streamedResponse,
     streamMessage,
     isSending,
     isStreaming,
-    streamedResponse,
-    error: conversationError,
     refetch
   } = useConversation(conversationId);
 
@@ -39,7 +38,7 @@ function ChatView() {
 
   // Force refetch when conversationId changes
   useEffect(() => {
-    if (conversationId) {
+    if (conversationId && refetch) {
       if (import.meta.env.DEV) {
         window.console.log(`Selected conversation changed to ${conversationId}, refetching...`);
       }
@@ -68,45 +67,33 @@ function ChatView() {
 
   // Handle sending a message
   const handleSendMessage = (content: string) => {
-    if (conversationId) {
-      // If there's an active conversation, use it
-      if (import.meta.env.DEV) {
-        window.console.log('Sending message to existing conversation:', conversationId);
-      }
-      streamMessage({ conversationId, content });
-    } else {
-      // Otherwise, create a new conversation first
-      if (import.meta.env.DEV) {
-        window.console.log('Creating new conversation for message');
-      }
-      
-      try {
-        createConversation({ title: 'New conversation' }, {
-          onSuccess: (newConversation: Conversation) => {
-            if (import.meta.env.DEV) {
-              window.console.log('New conversation created:', newConversation);
-            }
-            
-            const newId = newConversation.id;
-            // Navigate to the new conversation instead of just selecting it
-            navigate(`/chat/${newId}`);
-            
-            // Send the message to the new conversation after a short delay
-            window.setTimeout(() => {
-              if (import.meta.env.DEV) {
-                window.console.log('Sending message to new conversation:', newId);
-              }
-              streamMessage({ conversationId: newId, content });
-            }, 100);
-          }
-        });
-      } catch (err) {
-        if (import.meta.env.DEV) {
-          window.console.error('Error creating conversation:', err);
-          setDebugInfo('Error creating conversation: ' + (err instanceof Error ? err.message : String(err)));
-        }
-      }
+    if (!content.trim()) return;
+
+    // Debug loading state
+    if (import.meta.env.DEV) {
+      window.console.log(`Sending message to conversation ${conversationId || 'new'}`);
     }
+
+    // If we don't have a conversation yet (user on /chat), create one with first message
+    if (!conversationId) {
+      if (import.meta.env.DEV) {
+        window.console.log('No active conversation, streaming first message...');
+        setDebugInfo('Creating new conversation with first message...');
+      }
+
+      // Stream the message to a new conversation (will create conversation as a side effect)
+      streamMessage({
+        conversationId: 'new',
+        content,
+      });
+      return;
+    }
+
+    // Stream the message
+    streamMessage({
+      conversationId,
+      content,
+    });
   };
   
   // Handle menu open
@@ -149,12 +136,19 @@ function ChatView() {
     }
   }, [conversations, conversationId, navigate]);
 
+  // Show loading state while creating conversation 
+  const isCreatingConversation = !conversationId && (isSending || isStreaming);
+
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 64px)', // Adjust for app bar height
+        height: '100%',
+        overflow: 'hidden',
+        borderRadius: theme.shape.borderRadius / 2,
+        backgroundColor: alpha(theme.palette.background.paper, 0.5),
+        boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.05)}`,
       }}
     >
       {/* Chat header */}
@@ -179,7 +173,7 @@ function ChatView() {
               aria-haspopup="true"
               aria-expanded={menuOpen ? 'true' : undefined}
               onClick={handleMenuOpen}
-              disabled={isDeleting}
+              disabled={isConversationDeleting}
             >
               <MoreVertIcon />
             </IconButton>
@@ -192,7 +186,7 @@ function ChatView() {
                 'aria-labelledby': 'conversation-options-button',
               }}
             >
-              <MenuItem onClick={handleDeleteConversation} disabled={isDeleting}>
+              <MenuItem onClick={handleDeleteConversation} disabled={isConversationDeleting}>
                 <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
                 Delete Conversation
               </MenuItem>
@@ -201,16 +195,16 @@ function ChatView() {
         </Paper>
       )}
       
-      {/* Debug info (only in development) */}
+      {/* Debug info (DEV only) */}
       {import.meta.env.DEV && debugInfo && (
-        <Alert severity="warning" onClose={() => setDebugInfo(null)} sx={{ mb: 2 }}>
+        <Alert severity="warning" onClose={() => setDebugInfo(null)} sx={{ m: 2, mt: 0 }}>
           {debugInfo}
         </Alert>
       )}
       
       {/* Conversation error */}
       {conversationError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ m: 2, mt: 0 }}>
           Error loading conversation: {
             conversationError instanceof Error 
               ? conversationError.message 
@@ -220,7 +214,14 @@ function ChatView() {
       )}
       
       {/* Chat body */}
-      <Box sx={{ flexGrow: 1, mb: 2, overflow: 'auto' }}>
+      <Box 
+        sx={{ 
+          flexGrow: 1, 
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <MessageList 
           key={`messages-${conversationId || 'none'}`}
           messages={activeConversation?.messages || []}
@@ -230,15 +231,17 @@ function ChatView() {
       </Box>
       
       {/* Chat input */}
-      <MessageInput 
-        onSendMessage={handleSendMessage}
-        isDisabled={isSending || isStreaming || isCreating || isDeleting}
-        placeholder={
-          !activeConversation
-            ? 'Type a message to start a new conversation...'
-            : 'Type a message...'
-        }
-      />
+      <Box sx={{ px: { xs: 0.5, sm: 1, md: 2 }, pb: { xs: 0.5, sm: 1, md: 2 }, pt: 0 }}>
+        <MessageInput 
+          onSendMessage={handleSendMessage}
+          isDisabled={isSending || isStreaming || isCreatingConversation || isConversationDeleting}
+          placeholder={
+            !activeConversation
+              ? 'Type a message to start a new conversation...'
+              : 'Type a message...'
+          }
+        />
+      </Box>
     </Box>
   );
 }

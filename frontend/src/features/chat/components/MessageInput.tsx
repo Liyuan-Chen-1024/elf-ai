@@ -1,5 +1,5 @@
 import React, { useState, KeyboardEvent } from 'react';
-import { Box, TextField, IconButton, Paper } from '@mui/material';
+import { Box, TextField, IconButton, Paper, alpha } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 
 interface MessageInputProps {
@@ -31,18 +31,24 @@ function MessageInput({
 
   return (
     <Paper
-      elevation={2}
+      elevation={3}
       sx={{
-        p: 2,
-        borderRadius: 2,
-        position: 'sticky',
-        bottom: 0,
+        p: { xs: 1, sm: 1.5 },
+        borderRadius: 2.5,
+        backdropFilter: 'blur(10px)',
+        backgroundColor: theme => alpha(theme.palette.background.paper, 0.9),
+        transition: 'all 0.2s ease',
+        transform: 'translateY(0)',
+        '&:hover': {
+          boxShadow: theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
+        }
       }}
     >
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
+          gap: 1,
         }}
       >
         <TextField
@@ -54,12 +60,16 @@ function MessageInput({
           onKeyDown={handleKeyPress}
           placeholder={placeholder}
           disabled={isDisabled}
-          variant="outlined"
+          variant="standard"
           InputProps={{
+            disableUnderline: true,
             sx: {
-              borderRadius: 5,
-              '& fieldset': {
-                borderWidth: '1px',
+              p: { xs: '6px', sm: '8px' },
+              borderRadius: 2,
+              fontSize: '0.95rem',
+              backgroundColor: theme => alpha(theme.palette.background.default, 0.5),
+              '&:hover': {
+                backgroundColor: theme => alpha(theme.palette.background.default, 0.7),
               },
             },
           }}
@@ -68,9 +78,26 @@ function MessageInput({
           color="primary"
           onClick={handleSend}
           disabled={isDisabled || !message.trim()}
-          sx={{ ml: 1 }}
+          sx={{ 
+            width: { xs: 40, sm: 44 }, 
+            height: { xs: 40, sm: 44 },
+            flexShrink: 0,
+            backgroundColor: 'primary.main',
+            color: 'white',
+            boxShadow: theme => `0 2px 6px ${alpha(theme.palette.primary.main, 0.4)}`,
+            transition: 'all 0.2s',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+              transform: 'scale(1.05)',
+            },
+            '&:disabled': {
+              backgroundColor: 'action.disabledBackground',
+              color: 'action.disabled',
+              boxShadow: 'none',
+            }
+          }}
         >
-          <SendIcon />
+          <SendIcon fontSize="small" />
         </IconButton>
       </Box>
     </Paper>

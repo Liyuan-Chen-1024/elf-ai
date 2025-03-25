@@ -11,7 +11,9 @@ import {
   Divider,
   Menu,
   MenuItem,
-  ListItemIcon
+  ListItemIcon,
+  Tabs,
+  Tab
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -19,6 +21,9 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ChatIcon from '@mui/icons-material/Chat';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
+import PersonIcon from '@mui/icons-material/Person';
 import { User } from '../../types';
 
 interface NavbarProps {
@@ -28,6 +33,8 @@ interface NavbarProps {
   onLogout?: () => void;
   isDarkMode?: boolean;
   onToggleTheme?: () => void;
+  activeTab: 'chat' | 'news' | 'profile';
+  onTabChange: (tab: 'chat' | 'news' | 'profile') => void;
 }
 
 function Navbar({ 
@@ -36,7 +43,9 @@ function Navbar({
   user,
   onLogout,
   isDarkMode = false,
-  onToggleTheme
+  onToggleTheme,
+  activeTab,
+  onTabChange
 }: NavbarProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
@@ -55,26 +64,104 @@ function Navbar({
   };
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-      <Toolbar>
-        <IconButton
-          color="inherit"
-          aria-label="open drawer"
-          edge="start"
-          onClick={toggleSidebar}
-          sx={{ mr: 2 }}
-        >
-          <MenuIcon />
-        </IconButton>
+    <AppBar 
+      position="static" 
+      sx={{ 
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        background: 'linear-gradient(90deg, #5048E5 0%, #8E84FF 100%)',
+        boxShadow: '0 2px 10px rgba(80, 72, 229, 0.2)',
+        height: '64px'
+      }}
+    >
+      <Toolbar 
+        variant="dense" 
+        sx={{ 
+          minHeight: '64px', 
+          px: { xs: 1, sm: 2 },
+          gap: 1
+        }}
+      >
+        {activeTab === 'chat' && (
+          <IconButton
+            color="inherit"
+            aria-label="toggle sidebar"
+            edge="start"
+            onClick={toggleSidebar}
+            sx={{ mr: { xs: 0.5, sm: 1 } }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
         
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          {title}
+        <Typography 
+          variant="h6" 
+          component="div" 
+          sx={{ 
+            fontWeight: 700,
+            fontFamily: '"Poppins", sans-serif',
+            letterSpacing: -0.5,
+            background: 'linear-gradient(90deg, #FFFFFF 0%, #E0E0FF 100%)',
+            backgroundClip: 'text',
+            textFillColor: 'transparent',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+            mr: { xs: 1, sm: 2 }
+          }}
+        >
+          ✨ {title}
         </Typography>
+        
+        <Tabs 
+          value={activeTab}
+          onChange={(_, value) => onTabChange(value)}
+          textColor="inherit"
+          indicatorColor="secondary"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{ 
+            flexGrow: 1,
+            minHeight: '64px',
+            '& .MuiTab-root': {
+              minWidth: { xs: 'auto', sm: 100 },
+              minHeight: '64px',
+              px: { xs: 1, sm: 2 },
+              py: 0,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              textTransform: 'none',
+            },
+            '& .MuiTabs-indicator': {
+              height: 3,
+              borderRadius: '3px 3px 0 0'
+            }
+          }}
+        >
+          <Tab 
+            icon={<ChatIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.4rem' } }} />} 
+            label="Chat" 
+            value="chat"
+            iconPosition="start"
+          />
+          <Tab 
+            icon={<NewspaperIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.4rem' } }} />} 
+            label="News" 
+            value="news"
+            iconPosition="start"
+          />
+          <Tab 
+            icon={<PersonIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.4rem' } }} />} 
+            label="Profile" 
+            value="profile"
+            iconPosition="start"
+          />
+        </Tabs>
         
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {onToggleTheme && (
             <Tooltip title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}>
-              <IconButton color="inherit" onClick={onToggleTheme} sx={{ ml: 1 }}>
+              <IconButton color="inherit" onClick={onToggleTheme} sx={{ ml: 0.5 }}>
                 {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
               </IconButton>
             </Tooltip>
@@ -88,12 +175,16 @@ function Navbar({
                   aria-controls={menuOpen ? 'account-menu' : undefined}
                   aria-haspopup="true"
                   aria-expanded={menuOpen ? 'true' : undefined}
-                  sx={{ ml: 1 }}
+                  sx={{ ml: 0.5 }}
                 >
                   <Avatar 
                     {...(user.avatar ? { src: user.avatar } : {})}
                     alt={user.name || 'User avatar'}
-                    sx={{ width: 32, height: 32 }}
+                    sx={{ 
+                      width: 32, 
+                      height: 32,
+                      border: '2px solid white'
+                    }}
                   />
                 </IconButton>
               </Tooltip>
@@ -127,7 +218,23 @@ function Navbar({
               </Menu>
             </>
           ) : (
-            <Button color="inherit">Login</Button>
+            <Button 
+              color="inherit" 
+              variant="outlined" 
+              size="small"
+              sx={{ 
+                borderRadius: '20px',
+                borderColor: 'rgba(255,255,255,0.5)',
+                ml: 0.5,
+                py: 0.5,
+                '&:hover': {
+                  borderColor: 'white',
+                  backgroundColor: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              Login
+            </Button>
           )}
         </Box>
       </Toolbar>

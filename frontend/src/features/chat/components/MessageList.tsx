@@ -1,7 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Avatar, LinearProgress } from '@mui/material';
+import { Box, Typography, Avatar, Fade, Paper, alpha, CircularProgress, keyframes } from '@mui/material';
 import { Message } from '../../../types';
 import ReactMarkdown from 'react-markdown';
+
+// Keyframes for avatar thinking animation
+const pulse = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(109, 90, 230, 0.4);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(109, 90, 230, 0);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(109, 90, 230, 0);
+    transform: scale(1);
+  }
+`;
+
+const float = keyframes`
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+`;
 
 interface MessageListProps {
   messages: Message[];
@@ -12,7 +40,7 @@ interface MessageListProps {
 function MessageList({ messages, isLoading, streamedResponse }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isEmpty, setIsEmpty] = useState<boolean>(messages.length === 0);
-
+  
   // Update isEmpty when messages change
   useEffect(() => {
     setIsEmpty(messages.length === 0);
@@ -72,62 +100,100 @@ function MessageList({ messages, isLoading, streamedResponse }: MessageListProps
       avatar: isUser ? 'https://i.pravatar.cc/150?img=1' : 'https://i.pravatar.cc/150?img=2' 
     };
     const content = message.content || '';
-    
+
     return (
       <Box 
         key={messageKey}
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          mb: 3,
+          mb: 2.5,
           alignItems: isUser ? 'flex-end' : 'flex-start',
         }}
       >
         <Box
           sx={{
             display: 'flex',
-            flexDirection: isUser ? 'row-reverse' : 'row',
+            flexDirection: 'row',
             alignItems: 'flex-start',
             gap: 1,
-            mb: 1,
+            mb: 0.5,
           }}
         >
-          <Avatar 
-            alt={sender.name}
-            src={sender.avatar}
-            sx={{ width: 36, height: 36 }}
-          />
+          {!isUser && (
+            <Avatar 
+              alt={sender.name}
+              src={sender.avatar}
+              sx={{ 
+                width: 32, 
+                height: 32,
+                border: '2px solid',
+                borderColor: alpha('#6D5AE6', 0.2),
+              }}
+            />
+          )}
           <Typography variant="caption" color="text.secondary">
             {sender.name}
           </Typography>
-        </Box>
-        
-        <Box
-          className={`message-bubble ${isUser ? 'user' : 'assistant'}`}
-          sx={{ 
-            maxWidth: '80%',
-            wordBreak: 'break-word',
-            backgroundColor: isUser ? 'primary.light' : 'grey.100',
-            color: isUser ? 'white' : 'text.primary',
-            borderRadius: 2,
-            p: 2,
-          }}
-        >
-          {role === 'assistant' ? (
-            <ReactMarkdown>{content}</ReactMarkdown>
-          ) : (
-            content
+          {isUser && (
+            <Avatar 
+              alt={sender.name}
+              src={sender.avatar}
+              sx={{ 
+                width: 32, 
+                height: 32,
+                border: '2px solid',
+                borderColor: alpha('#6D5AE6', 0.2),
+              }}
+            />
           )}
         </Box>
         
-        {message.isEdited && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-            (edited)
-          </Typography>
-        )}
+        <Paper
+          elevation={0}
+          className={`message-bubble ${isUser ? 'user' : 'assistant'}`}
+          sx={{ 
+            maxWidth: '85%',
+            wordBreak: 'break-word',
+            p: 1.5,
+            backgroundColor: isUser ? '#6D5AE6' : alpha('#FFFFFF', 0.7),
+            color: isUser ? 'white' : '#1A1650',
+            borderRadius: isUser ? '16px 16px 0 16px' : '16px 16px 16px 0',
+            boxShadow: isUser 
+              ? `0 2px 8px ${alpha('#6D5AE6', 0.3)}` 
+              : `0 2px 8px ${alpha('#000', 0.05)}`,
+            position: 'relative',
+            '&::after': isUser ? {
+              content: '""',
+              position: 'absolute',
+              bottom: 0,
+              right: '-10px',
+              width: 10,
+              height: 16,
+              backgroundColor: '#6D5AE6',
+              borderBottomLeftRadius: 16,
+            } : {
+              content: '""',
+              position: 'absolute',
+              bottom: 0,
+              left: '-10px',
+              width: 10,
+              height: 16,
+              backgroundColor: alpha('#FFFFFF', 0.7),
+              borderBottomRightRadius: 16,
+            }
+          }}
+        >
+          <ReactMarkdown>{content}</ReactMarkdown>
+        </Paper>
       </Box>
     );
   };
+
+  // Determine if we're in "thinking" mode
+  const isThinking = isLoading || (streamedResponse === "Thinking...");
+  // Show response bubble only if we have content beyond "Thinking..."
+  const showResponseBubble = streamedResponse && !isThinking;
 
   return (
     <Box 
@@ -136,7 +202,9 @@ function MessageList({ messages, isLoading, streamedResponse }: MessageListProps
         flexDirection: 'column',
         height: '100%',
         overflow: 'auto',
-        px: 2,
+        px: { xs: 1, sm: 2 },
+        py: 2,
+        scrollBehavior: 'smooth'
       }}
     >
       {isEmpty && !isLoading && !streamedResponse && (
@@ -162,52 +230,134 @@ function MessageList({ messages, isLoading, streamedResponse }: MessageListProps
       {/* Display existing messages */}
       {messages.map((message, index) => renderMessage(message, index))}
       
-      {/* Display streamed response as it comes in */}
-      {streamedResponse && (
+      {/* Display thinking animation */}
+      {isThinking && (
         <Box 
           sx={{
             display: 'flex',
-            flexDirection: 'column',
-            mb: 3,
-            alignItems: 'flex-start',
+            alignItems: 'center',
+            mb: 2.5,
+            ml: 1,
           }}
         >
           <Box
             sx={{
+              position: 'relative',
               display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-              gap: 1,
-              mb: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <Avatar 
               alt="Elf Agent"
               src="https://i.pravatar.cc/150?img=2"
-              sx={{ width: 36, height: 36 }}
+              sx={{ 
+                width: 38, 
+                height: 38,
+                border: '2px solid',
+                borderColor: alpha('#6D5AE6', 0.3),
+                animation: `${pulse} 2s infinite, ${float} 3s ease-in-out infinite`,
+                zIndex: 2,
+              }}
             />
-            <Typography variant="caption" color="text.secondary">
-              Elf Agent
-            </Typography>
+            <Box
+              sx={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                backgroundColor: alpha('#6D5AE6', 0.05),
+                animation: `${pulse} 2s infinite`,
+                zIndex: 1,
+              }}
+            />
+            <CircularProgress 
+              size={50} 
+              thickness={2}
+              sx={{ 
+                position: 'absolute',
+                color: alpha('#6D5AE6', 0.4),
+                animation: 'none',
+              }} 
+            />
           </Box>
-          
-          <Box
-            className="message-bubble assistant"
+          <Typography 
+            variant="caption" 
+            color="text.secondary"
             sx={{ 
-              maxWidth: '80%',
-              wordBreak: 'break-word',
+              ml: 2, 
+              fontStyle: 'italic',
+              animation: `${float} 2s ease-in-out infinite`,
             }}
           >
-            <ReactMarkdown>{streamedResponse}</ReactMarkdown>
-          </Box>
+            Thinking...
+          </Typography>
         </Box>
       )}
       
-      {/* Loading indicator */}
-      {isLoading && (
-        <Box sx={{ width: '100%', mt: 2 }}>
-          <LinearProgress />
-        </Box>
+      {/* Display streamed response as it comes in */}
+      {showResponseBubble && (
+        <Fade in={true} timeout={300}>
+          <Box 
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              mb: 2.5,
+              alignItems: 'flex-start',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 1,
+                mb: 0.5,
+              }}
+            >
+              <Avatar 
+                alt="Elf Agent"
+                src="https://i.pravatar.cc/150?img=2"
+                sx={{ 
+                  width: 32, 
+                  height: 32,
+                  border: '2px solid',
+                  borderColor: alpha('#6D5AE6', 0.2),
+                }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Elf Agent
+              </Typography>
+            </Box>
+            
+            <Paper
+              elevation={0}
+              className="message-bubble assistant"
+              sx={{ 
+                maxWidth: '85%',
+                wordBreak: 'break-word',
+                p: 1.5,
+                backgroundColor: alpha('#FFFFFF', 0.7),
+                borderRadius: '16px 16px 16px 0',
+                boxShadow: `0 2px 8px ${alpha('#000', 0.05)}`,
+                position: 'relative',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: 0,
+                  left: '-10px',
+                  width: 10,
+                  height: 16,
+                  backgroundColor: alpha('#FFFFFF', 0.7),
+                  borderBottomRightRadius: 16,
+                },
+                animation: 'fadeIn 0.5s'
+              }}
+            >
+              <ReactMarkdown>{streamedResponse}</ReactMarkdown>
+            </Paper>
+          </Box>
+        </Fade>
       )}
       
       {/* Empty div for scrolling to bottom */}

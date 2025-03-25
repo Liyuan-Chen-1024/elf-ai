@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Box, AppBar, Toolbar, IconButton, Typography, Avatar } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { Box } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Navbar from './Navbar';
 import { User } from '../../types';
 
 interface LayoutProps {
@@ -30,53 +30,59 @@ function Layout({ children, user }: LayoutProps) {
     navigate(`/${tab}`);
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const DRAWER_WIDTH = 280;
+  const showSidebar = activeTab === 'chat' && sidebarOpen;
+
   return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed">
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open sidebar"
-            edge="start"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            ElfAI
-          </Typography>
-          {user && (
-            <Avatar 
-              alt={user.username} 
-              {...(user.avatar ? { src: user.avatar } : {})}
-              sx={{ width: 36, height: 36 }}
-            />
-          )}
-        </Toolbar>
-      </AppBar>
-      
-      <Sidebar 
-        open={sidebarOpen} 
-        activeTab={activeTab} 
+    <Box sx={{ 
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      overflow: 'hidden',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #eef1f5 100%)',
+    }}>
+      <Navbar 
+        toggleSidebar={toggleSidebar}
+        user={user}
+        activeTab={activeTab}
         onTabChange={handleTabChange}
       />
       
-      <Box 
-        component="main" 
-        sx={{ 
-          flexGrow: 1, 
-          p: 3, 
-          pt: 10, 
-          width: { sm: `calc(100% - ${sidebarOpen ? 280 : 0}px)` }, 
-          ml: { sm: sidebarOpen ? '280px' : 0 },
-          transition: theme => theme.transitions.create(['width', 'margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-        }}
-      >
-        {children}
+      <Box sx={{ 
+        display: 'flex', 
+        flexGrow: 1,
+        height: 'calc(100vh - 64px)',
+        overflow: 'hidden',
+      }}>
+        {activeTab === 'chat' && (
+          <Sidebar 
+            open={sidebarOpen} 
+            activeTab={activeTab} 
+            onTabChange={handleTabChange}
+          />
+        )}
+        
+        <Box 
+          component="main" 
+          sx={{ 
+            flexGrow: 1,
+            p: { xs: 1, md: 2 },
+            pt: { xs: 2, md: 3 },
+            width: showSidebar ? `calc(100% - ${DRAWER_WIDTH}px)` : '100%',
+            height: '100%',
+            overflow: 'auto',
+            transition: theme => theme.transitions.create(['width', 'margin'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.leavingScreen,
+            }),
+          }}
+        >
+          {children}
+        </Box>
       </Box>
     </Box>
   );
