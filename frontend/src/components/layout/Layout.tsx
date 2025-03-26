@@ -70,8 +70,6 @@ function Layout({ children, user }: LayoutProps) {
           component="main" 
           sx={{ 
             flexGrow: 1,
-            p: { xs: 1, md: 2 },
-            pt: { xs: 2, md: 3 },
             width: showSidebar ? `calc(100% - ${DRAWER_WIDTH}px)` : '100%',
             height: '100%',
             overflow: 'auto',

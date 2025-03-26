@@ -151,7 +151,7 @@ class MessageAdmin(admin.ModelAdmin):
     def role_badge(self, obj):
         colors = {
             "user": "#6e56cf",  # Purple
-            "assistant": "#10a37f",  # Green
+            "agent": "#10a37f",  # Green
             "system": "#f97316",  # Orange
         }
         color = colors.get(obj.role, "#6b7280")  # Default gray

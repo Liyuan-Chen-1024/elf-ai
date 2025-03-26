@@ -268,14 +268,14 @@ export const chatApi = {
     }
   },
 
-  // Stream a message response (for ChatGPT-like experience)
-  streamMessage: async (
+  // Stream a response from the AI assistant (renamed from streamMessage)
+  streamResponse: async (
     { conversationId, content, onChunk }: 
     { conversationId: string; content: string; onChunk: (chunk: string) => void }
   ): Promise<void> => {
     try {
       if (import.meta.env.DEV) {
-        window.console.log(`Streaming message to conversation ${conversationId}`);
+        window.console.log(`Streaming response for conversation ${conversationId}`);
       }
       
       // Basic validation to prevent obvious errors
@@ -287,7 +287,7 @@ export const chatApi = {
       // First send the message normally to ensure it's saved
       try {
         await chatApi.sendMessage({ conversationId, content });
-        window.console.log("Message sent successfully, now streaming response");
+        window.console.log("Message sent successfully, now streaming AI response");
       } catch (sendError) {
         window.console.error("Failed to send message:", sendError);
         // Continue with streaming anyway - the conversation may still exist
@@ -303,7 +303,7 @@ export const chatApi = {
       try {
         // Try with JSON content type first
         await fetchClient.stream<SSEMessage>(
-          `/chat/conversations/${conversationId}/stream_message/`,
+          `/chat/conversations/${conversationId}/responses/stream/`,
           { content },
           {
             headers: {
@@ -342,7 +342,7 @@ export const chatApi = {
           formData.append('content', content);
           
           await fetchClient.stream<SSEMessage>(
-            `/chat/conversations/${conversationId}/stream_message/`,
+            `/chat/conversations/${conversationId}/responses/stream/`,
             formData,
             {
               headers: {
@@ -372,7 +372,7 @@ export const chatApi = {
         }
       }
     } catch (error) {
-      window.console.error('Error streaming message:', error);
+      window.console.error('Error streaming response:', error);
       onChunk("\n\nError: Unable to stream response. Please try again.");
     }
   },

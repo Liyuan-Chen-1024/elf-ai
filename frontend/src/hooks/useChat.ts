@@ -203,7 +203,7 @@ export function useConversations() {
     isLoading,
     error,
     refetch,
-    createConversation: createMutation.mutate,
+    createConversation: createMutation.mutateAsync,
     archiveConversation: archiveMutation.mutate,
     unarchiveConversation: unarchiveMutation.mutate,
     deleteConversation: deleteMutation.mutate,
@@ -273,13 +273,13 @@ export function useConversation(id?: string) {
     },
   });
 
-  // Stream a message
-  const streamMessageMutation = useMutation({
+  // Stream an AI response to a user message
+  const streamResponseMutation = useMutation({
     mutationFn: ({ conversationId, content }: { conversationId: string; content: string }) => {
       setStreamedResponse('');
       setIsStreamError(false);
       
-      return chatApi.streamMessage({
+      return chatApi.streamResponse({
         conversationId,
         content,
         onChunk: (chunk) => {
@@ -307,7 +307,7 @@ export function useConversation(id?: string) {
           }
         },
       }).catch((error) => {
-        window.console.error("Stream message error:", error);
+        window.console.error("Stream response error:", error);
         setIsStreamError(true);
         setStreamedResponse(prev => 
           prev === "Thinking..." 
@@ -384,11 +384,12 @@ export function useConversation(id?: string) {
     refetch,
     streamedResponse,
     sendMessage: sendMessageMutation.mutate,
-    streamMessage: streamMessageMutation.mutate,
+    streamMessage: streamResponseMutation.mutate,
+    streamResponse: streamResponseMutation.mutate,
     deleteMessage: deleteMessageMutation.mutate,
     updateMessage: updateMessageMutation.mutate,
     isSending: sendMessageMutation.isPending,
-    isStreaming: streamMessageMutation.isPending,
+    isStreaming: streamResponseMutation.isPending,
     isDeleting: deleteMessageMutation.isPending,
     isUpdating: updateMessageMutation.isPending,
   };

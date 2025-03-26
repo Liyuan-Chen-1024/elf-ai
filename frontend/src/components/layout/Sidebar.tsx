@@ -12,13 +12,12 @@ import {
   Tooltip,
   Typography,
   Paper,
-  InputBase,
+  Button,
   alpha
 } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SearchIcon from '@mui/icons-material/Search';
 import { useConversations } from '../../hooks/useChat';
 import { Conversation } from '../../types';
 
@@ -107,58 +106,53 @@ function Sidebar({ open, activeTab }: SidebarProps) {
         display: 'flex', 
         flexDirection: 'column', 
         height: '100%', 
-        py: 1,
-        px: 1.5,
+        py: 1.5,
+        px: 2,
         overflow: 'hidden'
       }}>
-        {/* Search and New Chat */}
-        <Paper
-          component="form"
+        {/* New Chat Button */}
+        <Button
+          variant="contained"
+          startIcon={<AddIcon fontSize="small" />}
+          onClick={handleNewChat}
+          disabled={isCreating}
+          fullWidth
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: theme => alpha(theme.palette.primary.main, 0.04),
-            borderRadius: 2,
-            p: '2px 8px',
             mb: 1.5,
-            border: '1px solid',
-            borderColor: 'divider',
+            borderRadius: 1.5,
+            padding: '4px 12px',
+            height: '32px',
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '0.8rem',
+            background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, #FF7597 100%)`,
+            boxShadow: '0 2px 8px rgba(124, 77, 255, 0.2)',
+            '&:hover': {
+              boxShadow: '0 4px 12px rgba(124, 77, 255, 0.3)',
+              background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, #FF7597 100%)`,
+              opacity: 0.9,
+            },
           }}
         >
-          <IconButton sx={{ p: '4px' }} aria-label="search">
-            <SearchIcon fontSize="small" />
-          </IconButton>
-          <InputBase
-            sx={{ ml: 1, flex: 1, fontSize: '0.85rem' }}
-            placeholder="Search conversations"
-            inputProps={{ 'aria-label': 'search conversations' }}
-          />
-          <Tooltip title="New conversation">
-            <IconButton 
-              color="primary" 
-              size="small" 
-              aria-label="new chat"
-              onClick={handleNewChat}
-              disabled={isCreating}
-              sx={{
-                p: '4px',
-                borderRadius: '50%',
-                '&:hover': {
-                  backgroundColor: theme => alpha(theme.palette.primary.main, 0.15),
-                }
-              }}
-            >
-              <AddIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Paper>
+          New Chat
+        </Button>
+        
+        {/* Separator */}
+        <Box 
+          sx={{ 
+            height: '1px', 
+            width: '100%',
+            mb: 1.5,
+            background: 'linear-gradient(90deg, rgba(124, 77, 255, 0.08) 0%, rgba(255, 117, 151, 0.08) 100%)',
+          }} 
+        />
         
         {/* Conversations Header */}
         <Typography 
           variant="subtitle2" 
           sx={{ 
-            px: 1, 
-            mb: 0.5, 
+            px: 1.5, 
+            mb: 1,
             fontWeight: 600,
             fontSize: '0.75rem',
             color: 'text.secondary',
@@ -198,7 +192,7 @@ function Sidebar({ open, activeTab }: SidebarProps) {
                 <ListItem 
                   key={conversation.id} 
                   disablePadding
-                  sx={{ mb: 0.5 }}
+                  sx={{ mb: 0.75 }}
                 >
                   <ListItemButton 
                     dense
@@ -206,7 +200,8 @@ function Sidebar({ open, activeTab }: SidebarProps) {
                     onClick={() => handleConversationClick(conversation)}
                     sx={{
                       borderRadius: 1.5,
-                      py: 0.5,
+                      py: 1,
+                      pl: 1.5,
                       '&.Mui-selected': {
                         backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
                         '&:hover': {
@@ -231,7 +226,7 @@ function Sidebar({ open, activeTab }: SidebarProps) {
                       primaryTypographyProps={{
                         noWrap: true,
                         fontWeight: 600,
-                        fontSize: '0.85rem',
+                        fontSize: '0.9rem',
                         color: conversation.archived ? 'text.disabled' : 'text.primary',
                       }}
                       secondaryTypographyProps={{

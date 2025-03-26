@@ -284,7 +284,7 @@ HEALTH_CHECK: Dict[str, Union[int, float]] = {
 # Rate limiting
 RATE_LIMIT_ENABLED: bool = env.bool("RATE_LIMIT_ENABLED", True)
 RATE_LIMIT_REQUESTS: int = env.int("RATE_LIMIT_REQUESTS", 500000)  # requests per window
-RATE_LIMIT_WINDOW: int = env.int("RATE_LIMIT_WINDOW", 10)  # window size in seconds
+RATE_LIMIT_WINDOW: int = env.int("RATE_LIMIT_WINDOW", 1)  # window size in seconds
 
 
 # LLM Configuration

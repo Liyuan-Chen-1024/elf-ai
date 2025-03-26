@@ -53,7 +53,7 @@ class MessageSerializer(serializers.ModelSerializer):
         else:
             # Assistant sender
             return {
-                "id": "assistant",  # Use string ID for consistency with frontend
+                "id": "agent",  # Use string ID for consistency with frontend
                 "name": "Elf Agent",  # Use the consistent name
             }
 
@@ -100,7 +100,7 @@ class ConversationSerializer(serializers.ModelSerializer):
                 "name": user.get_full_name() or user.username,
             },
             {
-                "id": "assistant",  # Use string ID for consistency with frontend
+                "id": "agent",  # Use string ID for consistency with frontend
                 "name": "Elf Agent",  # Use the consistent name
             },
         ]

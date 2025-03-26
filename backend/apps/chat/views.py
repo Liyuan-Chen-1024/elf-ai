@@ -107,60 +107,25 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 
             content = serializer.validated_data["content"]
             
-            # Create user message
-            message = Message.objects.create(
+            user_message = Message.objects.create(
                 conversation=conversation,
                 role="user",
                 content=content
             )
-            
-            # Also create an initial assistant message
-            assistant_message = Message.objects.create(
-                conversation=conversation,
-                role="assistant", 
-                content=""  # Start with empty content, will be filled by AI response
+
+            update_knowledge_base_from_message.delay(
+                user_id=conversation.user.id,
+                message_id=user_message.id
             )
             
-            # Optional: Trigger any async processing or response generation here
-            # You might want to call a task or service to generate a response
-            
-            # Return the created message
-            return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+            return Response(MessageSerializer([user_message], many=True).data, status=status.HTTP_201_CREATED)
 
-    def _stream_tokens(
-        self, tokens: List[str], assistant_message: Message
-    ) -> Generator[str, None, None]:
+    @action(detail=True, methods=["post"], url_path="responses/stream")
+    def stream_response(self, request: Request, pk=None) -> StreamingHttpResponse:
         """
-        Stream tokens with a natural typing rhythm.
-        Updates the assistant message with each token.
-        
-        Args:
-            tokens: List of tokens to stream
-            assistant_message: Message object to update
-            
-        Yields:
-            SSE formatted data strings
+        Stream AI response tokens in real-time using Server-Sent Events (SSE).
+        This endpoint streams the agent's response to a user message.
         """
-        full_response = ""
-        for token in tokens:
-            # Add a small delay for more natural typing (20-30ms per token)
-            time.sleep(0.02)
-            
-            # Add space before token if not punctuation and not first token
-            if full_response and not token.startswith((",", ".", "!", "?", ";", ":")):
-                token = " " + token
-                
-            full_response += token
-            
-            # Update the message in the database
-            assistant_message.content = full_response.strip()
-            assistant_message.save(update_fields=["content", "updated_at"])
-            
-            # Yield the token for streaming
-            yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
-
-    @action(detail=True, methods=["post"])
-    def stream_message(self, request: Request, pk=None) -> StreamingHttpResponse:
         from django.middleware.csrf import get_token
         
         # Force a CSRF cookie to be set
@@ -170,34 +135,26 @@ class ConversationViewSet(viewsets.ModelViewSet):
             conversation = self.get_object()
             serializer = MessageCreateSerializer(data=request.data)
 
+            agent_message = Message.objects.create(
+                conversation=conversation,
+                role="agent", 
+                content=""
+            )
+
             if not serializer.is_valid():
-                logger.error(f"Invalid data for stream_message: {serializer.errors}")
+                logger.error(f"Invalid data for stream_response: {serializer.errors}")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             content = serializer.validated_data["content"]
-            logger.info(f"Starting stream for conversation {pk} with content: {content}")
+
+            #print("UHIDSUFHDISUHF", content)
+            
+            logger.info(f"Starting response stream for conversation {pk} with content: {content}")
             logger.info(f"Request headers: {request.headers}")
             logger.info(f"CSRF cookie set: {request.COOKIES.get('csrftoken', 'Not found')}")
 
             def stream_response():
                 try:
-                    # Create user message and initial assistant message
-                    with transaction.atomic():
-                        user_message = Message.objects.create(
-                            conversation=conversation, role="user", content=content
-                        )
-                        assistant_message = Message.objects.create(
-                            conversation=conversation, role="assistant", content=""
-                        )
-                    
-                    logger.info(f"Created messages: user_message={user_message.id}, assistant_message={assistant_message.id}")
-                    
-                    # Update knowledge base asynchronously
-                    update_knowledge_base_from_message.delay(
-                        user_id=conversation.user.id,
-                        message_id=user_message.id
-                    )
-
                     # Get conversation history for context
                     history = conversation.messages.filter(is_deleted=False).order_by(
                         "-created_at"
@@ -208,35 +165,20 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     
                     # Build conversation context with personalized knowledge
                     context = (
-                        "You are Elf AI, a helpful AI assistant that personalizes responses based on the user's preferences and interests. Think step by step and provide a detailed response.\n\n"
-                        f"{user_knowledge}\n\n"
-                        "IMPORTANT INSTRUCTIONS:\n"
-                        
-                        "1. You MUST follow any commands in the 'Commands and Requirements' section above - these are non-negotiable\n"
-                        "2. You should adapt your responses based on the preferences listed, while still following commands\n"
-                        "3. Format your response in markdown\n"
-                        "4. For lists, use proper markdown list formatting:\n"
-                        "   - Numbered lists should use '1. ', '2. ' etc.\n"
-                        "   - Bullet points should use '- ' or '* '\n"
-                        "   - Ensure each list item is on a new line\n"
-                        "5. Be helpful and concise\n"
-                        "6. Reference the user's known interests and preferences when relevant\n"
-                        "7. Don't explicitly mention that you know these details unless asked directly\n"
-                        "8. Use proper markdown spacing (blank lines between sections)\n"
-                        "9. IMPORTANT: Only provide the direct response to the user's question. Do not include any knowledge base updates or internal processing information in your response.\n"
-                        "10. CRITICAL: Start your response with your thinking process wrapped in <think> tags. For example:\n"
-                        "    <think>First, I'll analyze the user's question. Then, I'll consider their preferences and provide a tailored response.</think>\n\n"
-                        "    Then provide your actual response after the think tags.\n\n"
+                        "You are Elf AI, a helpful AI Agent that personalizes responses based on the user's preferences and interests. Wrap thinking process in <think> tags.\n\n"
                     )
+
+                    context = context
+                    #context += f"{user_knowledge}\n\n"
                     
                     # Add conversation history
-                    for msg in history:
-                        context += f"{msg.role}: {msg.content}\n"
-                    context += f"user: {content}\nassistant:"
+#                    for msg in history:
+#                        context += f"{msg.role}: {msg.content}\n"
+#                    context += f"user: {content}\nagent:"
 
                     logger.info(f"Sending initial SSE message for conversation {pk}")
                     # Initial response to establish connection
-                    yield f"data: {json.dumps({'type': 'start', 'message_id': str(assistant_message.id)})}\n\n"
+                    yield f"data: {json.dumps({'type': 'start', 'message_id': str(conversation.messages.last().id)})}\n\n"
 
                     # Make streaming request to LLM
                     logger.info(f"Making LLM request to {settings.LLM_API_URL}")
@@ -245,7 +187,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
                             settings.LLM_API_URL,
                             json={
                                 "model": settings.LLM_MODEL_NAME,
-                                "prompt": context,
+                                "prompt": content,
                                 "stream": True,
                             },
                             stream=True,
@@ -259,6 +201,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
                             # Send initial message to indicate we're starting content streaming
                             yield f"data: {json.dumps({'type': 'start_content'})}\n\n"
                             
+                            buffer = []
                             for line in response.iter_lines():
                                 if line:
                                     try:
@@ -267,18 +210,22 @@ class ConversationViewSet(viewsets.ModelViewSet):
                                         token = json_response.get("response", "")
 
                                         if token:
-                                            # Update the full response
-                                            full_response += token
-                                            assistant_message.content = full_response
-                                            assistant_message.save(update_fields=["content", "updated_at"])
-                                            
+                                            full_response += token        
                                             # Send each token immediately without buffering
-                                            logger.debug(f"Sending token: {token}")
-                                            yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
+                                            #logger.debug(f"Sending token: {token}")
+                                            if len(buffer) > 3:
+                                                yield f"data: {json.dumps({'type': 'token', 'content': ''.join(buffer)})}\n\n"
+                                                buffer = []
+                                            buffer.append(token)
                                     except json.JSONDecodeError as e:
                                         logger.error(f"Error decoding LLM response: {e}, line: {line}")
                                         continue
+    
+                            if buffer:
+                                yield f"data: {json.dumps({'type': 'token', 'content': ''.join(buffer)})}\n\n"
                             
+                            agent_message.content = full_response                
+                            agent_message.save(update_fields=["content", "updated_at"])
                             # Send completion message to show thinking toggle - IMPORTANT
                             yield f"data: {json.dumps({'type': 'content_complete'})}\n\n"
                         else:
@@ -326,12 +273,11 @@ class ConversationViewSet(viewsets.ModelViewSet):
             return response
             
         except Exception as e:
-            logger.exception(f"Unhandled exception in stream_message view: {str(e)}")
+            logger.exception(f"Unhandled exception in stream_response view: {str(e)}")
             return Response(
                 {"error": f"Internal server error: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
