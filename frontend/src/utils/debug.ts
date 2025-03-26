@@ -2,26 +2,41 @@
  * Debugging utility functions
  */
 
+/* global console */
+
+type ElfAIDebug = {
+  checkApiConfig: () => boolean;
+  clearAuth: () => void;
+  getAuthToken: () => string | null;
+  checkToken: () => boolean;
+};
+
+declare global {
+  interface Window {
+    __elfai_debug: ElfAIDebug;
+  }
+}
+
 /**
  * Log messages only in development mode
  */
 export const debug = {
-  log: (...args: any[]) => {
+  log: (...args: Parameters<typeof console.log>) => {
     if (import.meta.env.DEV) {
       window.console.log('[ElfAI]', ...args);
     }
   },
-  error: (...args: any[]) => {
+  error: (...args: Parameters<typeof console.error>) => {
     if (import.meta.env.DEV) {
       window.console.error('[ElfAI]', ...args);
     }
   },
-  warn: (...args: any[]) => {
+  warn: (...args: Parameters<typeof console.warn>) => {
     if (import.meta.env.DEV) {
       window.console.warn('[ElfAI]', ...args);
     }
   },
-  info: (...args: any[]) => {
+  info: (...args: Parameters<typeof console.info>) => {
     if (import.meta.env.DEV) {
       window.console.info('[ElfAI]', ...args);
     }
@@ -76,7 +91,7 @@ export const initDebug = () => {
     };
     
     // Add global debug object for console access
-    (window as any).__elfai_debug = {
+    window.__elfai_debug = {
       checkApiConfig,
       clearAuth: () => {
         window.localStorage.removeItem('authToken');
