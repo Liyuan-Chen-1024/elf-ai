@@ -78,27 +78,11 @@ INSTALLED_APPS += [  # noqa
     "django_extensions",
 ]
 
-# Add custom middleware
-MIDDLEWARE.insert(
-    0, "config.middleware.cors.CustomCorsMiddleware"
-)  # Add custom CORS middleware
-
 # Disable security settings in development
 SECURE_SSL_REDIRECT: bool = False
 
 # Email backend for development
-EMAIL_BACKEND: str = "django.core.mail.backends.console.EmailBackend"
-
-# Increased rate limits for development
-RATE_LIMIT_ENABLED: bool = True
-RATE_LIMIT_REQUESTS: int = 180  # 3 requests per second
-RATE_LIMIT_WINDOW: int = 60  # window size in seconds
-
-# Also increase REST Framework rate limits
-REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa
-    "anon": "1000/day",  # Increased from 100/day
-    "user": "5000/day",  # Increased from 1000/day
-}
+EMAIL_BACKEND: str = "django.core.mail.backends.console.ConsoleBackend"
 
 # Redis configuration
 REDIS_URL = "redis://redis:6379/0"

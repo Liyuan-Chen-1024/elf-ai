@@ -394,27 +394,43 @@ interface MessageListProps {
  * @param props MessageListProps
  */
 function MessageList({ 
-  messages, 
-  isLoading, 
-  streamedResponse,
+  messages = [], 
+  isLoading = false, 
+  streamedResponse = '',
   emptyStateMessage = 'Start a new conversation',
   emptyStateSubmessage = 'Send a message to get started',
   agentName = 'Elf Agent',
   agentAvatar = THEME.avatars.assistant
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isEmpty = messages.length === 0;
+  
+  // Track conversation ID to detect changes
+  const conversationIdRef = useRef<string | null>(null);
+  
+  // Get conversation ID from first message if available
+  const currentConversationId = messages.length > 0 && messages[0]?.conversationId 
+    ? messages[0].conversationId 
+    : null;
+  
+  // Reset scroll position when conversation changes
+  useEffect(() => {
+    if (conversationIdRef.current !== currentConversationId) {
+      conversationIdRef.current = currentConversationId;
+      
+      // Reset scroll to top on conversation change
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+    }
+  }, [currentConversationId]);
   
   const isActivelyStreaming = streamedResponse && streamedResponse !== "Thinking...";
-  const showThinking = isLoading && !isActivelyStreaming;
   
-  // Don't show empty state if we're loading or streaming
+  // Determine if the list is empty
+  const isEmpty = !messages.length;
   const showEmptyState = isEmpty && !isLoading && !streamedResponse;
-
-  // Simplified streaming logic - no need for complex state
-  const showStreamingMessage = isActivelyStreaming;
   
-  // Scroll to bottom whenever messages, streaming, or loading state changes
+  // Scroll to bottom when messages change or when streaming
   useEffect(() => {
     const scrollToBottom = () => {
       if (messagesEndRef.current) {
@@ -479,7 +495,7 @@ function MessageList({
         ))}
         
         {/* Show streaming response only when appropriate */}
-        {showStreamingMessage && (
+        {isActivelyStreaming && (
           <MessageItem 
             message={{
               id: 'stream',
@@ -497,7 +513,7 @@ function MessageList({
         )}
         
         {/* Show thinking state */}
-        {showThinking && (
+        {isLoading && !isActivelyStreaming && (
           <AgentResponseHeader 
             name={agentName}
             avatar={agentAvatar}

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authApi, AuthResponse } from '../services/api';
+import { authApi, AuthResponse } from '../services/authApi';
 import { AxiosError } from 'axios';
 
 export const AUTH_QUERY_KEYS = {

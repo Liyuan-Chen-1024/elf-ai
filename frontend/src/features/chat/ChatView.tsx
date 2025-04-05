@@ -3,7 +3,8 @@ import { Box, Typography, Alert } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import MessageList from './components/MessageList';
 import MessageInput from './components/MessageInput';
-import { useConversations, useConversation } from '../../hooks/useChat';
+import { useConversations, useMessage } from '../../hooks/useChat';
+import fetchClient from '../../services/fetchClient';
 
 const THEME = {
   colors: {
@@ -48,11 +49,9 @@ function ChatView() {
     conversation: activeConversation,
     error: conversationError,
     streamedResponse,
-    streamResponse,
     isSending,
-    isStreaming,
     refetch
-  } = useConversation(conversationId);
+  } = useMessage(conversationId);
 
   // Force refetch when conversationId changes
   useEffect(() => {
@@ -60,6 +59,8 @@ function ChatView() {
       if (import.meta.env.DEV) {
         window.console.log(`Selected conversation changed to ${conversationId}, refetching...`);
       }
+      // Abort any active streams when changing conversations
+      fetchClient.abortStreamsByUrl('/chat/conversations/');
       refetch();
     }
   }, [conversationId, refetch]);

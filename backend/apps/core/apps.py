@@ -2,7 +2,6 @@
 
 from django.apps import AppConfig
 
-
 class CoreConfig(AppConfig):
     """Configuration for the core app."""
 
@@ -10,7 +9,3 @@ class CoreConfig(AppConfig):
     label = "core"
     verbose_name = "Core"
 
-    def ready(self) -> None:
-        """Perform initialization when Django starts."""
-        # Import signal handlers
-        from . import signals  # noqa

@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { chatApi } from '../services/api';
-import { useState } from 'react';
+import { chatApi } from '../services/chatApi';
+import { useState, useEffect } from 'react';
 import { Conversation, Message } from '../types';
+import fetchClient from '../services/fetchClient';
 
 export const CHAT_QUERY_KEYS = {
   conversations: ['conversations'],
@@ -22,33 +23,7 @@ export function useConversations() {
   } = useQuery({
     queryKey: CHAT_QUERY_KEYS.conversations,
     queryFn: async () => {
-      try {
-        const result = await chatApi.getConversations();
-        
-        // Ensure we always return an array
-        if (Array.isArray(result)) {
-          return result;
-        } else if (result && typeof result === 'object') {
-          // Handle case where API returns an object with results inside
-          if ('results' in result && Array.isArray((result as { results: Conversation[] }).results)) {
-            return (result as { results: Conversation[] }).results;
-          }
-          
-          // If it's another type of object, log it and return empty array
-          if (import.meta.env.DEV) {
-            window.console.warn('Unexpected conversations data format:', result);
-          }
-          return [];
-        }
-        
-        // Handle unexpected cases
-        return [];
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          window.console.error('Error fetching conversations:', error);
-        }
-        throw error;
-      }
+      return await chatApi.getConversations();
     },
     staleTime: 1000 * 60 * 10, // 10 minutes
     refetchOnWindowFocus: false,
@@ -61,7 +36,7 @@ export function useConversations() {
   const conversations = Array.isArray(data) ? data : [];
 
   // Create a new conversation
-  const createMutation = useMutation({
+  const createConversation = useMutation({
     mutationFn: chatApi.createConversation,
     onSuccess: (newConversation: Conversation) => {
       if (import.meta.env.DEV) {
@@ -80,67 +55,12 @@ export function useConversations() {
       );
     },
     onError: (error: Error) => {
-      if (import.meta.env.DEV) {
-        const axiosError = error as { 
-          response?: { 
-            status?: number; 
-            statusText?: string; 
-            data?: unknown 
-          } 
-        };
-        window.console.error('❌ Failed to create conversation:', {
-          message: error.message,
-          status: axiosError.response?.status,
-          statusText: axiosError.response?.statusText,
-          data: axiosError.response?.data,
-          token: window.localStorage.getItem('authToken') ? 'Token exists' : 'No token',
-        });
-      }
+      window.console.log("ERROR creationg conversation", error);
     }
   });
 
-  // Archive a conversation
-  const archiveMutation = useMutation({
-    mutationFn: chatApi.archiveConversation,
-    onSuccess: (updatedConversation: Conversation) => {
-      // Update the conversation in the query cache
-      queryClient.setQueryData(
-        CHAT_QUERY_KEYS.conversation(updatedConversation.id),
-        updatedConversation
-      );
-      // Update the conversation in the conversations list
-      queryClient.setQueryData(
-        CHAT_QUERY_KEYS.conversations,
-        (oldData: Conversation[] | undefined) => 
-          oldData?.map((conv: Conversation) => 
-            conv.id === updatedConversation.id ? updatedConversation : conv
-          )
-      );
-    },
-  });
-
-  // Unarchive a conversation
-  const unarchiveMutation = useMutation({
-    mutationFn: chatApi.unarchiveConversation,
-    onSuccess: (updatedConversation: Conversation) => {
-      // Update the conversation in the query cache
-      queryClient.setQueryData(
-        CHAT_QUERY_KEYS.conversation(updatedConversation.id),
-        updatedConversation
-      );
-      // Update the conversation in the conversations list
-      queryClient.setQueryData(
-        CHAT_QUERY_KEYS.conversations,
-        (oldData: Conversation[] | undefined) => 
-          oldData?.map((conv: Conversation) => 
-            conv.id === updatedConversation.id ? updatedConversation : conv
-          )
-      );
-    },
-  });
-
   // Delete a conversation
-  const deleteMutation = useMutation({
+  const deleteConversation = useMutation({
     mutationFn: (id: string, options?: { onSuccess?: () => void }) => {
       return chatApi.deleteConversation(id).then(() => {
         // Call onSuccess callback if provided
@@ -155,26 +75,6 @@ export function useConversations() {
       queryClient.setQueryData(
         CHAT_QUERY_KEYS.conversations,
         (oldData: Conversation[] | undefined) => oldData?.filter((conv: Conversation) => conv.id !== id)
-      );
-    },
-  });
-
-  // Update a conversation
-  const updateMutation = useMutation({
-    mutationFn: chatApi.updateConversation,
-    onSuccess: (updatedConversation: Conversation) => {
-      // Update the conversation in the query cache
-      queryClient.setQueryData(
-        CHAT_QUERY_KEYS.conversation(updatedConversation.id),
-        updatedConversation
-      );
-      // Update the conversation in the conversations list
-      queryClient.setQueryData(
-        CHAT_QUERY_KEYS.conversations,
-        (oldData: Conversation[] | undefined) => 
-          oldData?.map((conv: Conversation) => 
-            conv.id === updatedConversation.id ? updatedConversation : conv
-          )
       );
     },
   });
@@ -203,24 +103,30 @@ export function useConversations() {
     isLoading,
     error,
     refetch,
-    createConversation: createMutation.mutateAsync,
-    archiveConversation: archiveMutation.mutate,
-    unarchiveConversation: unarchiveMutation.mutate,
-    deleteConversation: deleteMutation.mutate,
-    updateConversation: updateMutation.mutate,
+    createConversation: createConversation.mutateAsync,
+    deleteConversation: deleteConversation.mutate,
     selectConversation,
-    isCreating: createMutation.isPending,
-    isArchiving: archiveMutation.isPending,
-    isUnarchiving: unarchiveMutation.isPending,
-    isDeleting: deleteMutation.isPending,
-    isUpdating: updateMutation.isPending,
+    isCreating: createConversation.isPending,
+    isDeleting: deleteConversation.isPending,
   };
 }
 
-export function useConversation(id?: string) {
+export function useMessage(id?: string) {
   const queryClient = useQueryClient();
   const [streamedResponse, setStreamedResponse] = useState('');
-  const [isStreamError, setIsStreamError] = useState(false);
+
+  // Clean up streaming state when conversation ID changes
+  useEffect(() => {
+    setStreamedResponse('');
+    
+    // Abort any existing streams for the previous conversation
+    fetchClient.abortStreamsByUrl('/chat/conversations/');
+    
+    // Cleanup function to abort streams when component unmounts
+    return () => {
+      fetchClient.abortStreamsByUrl('/chat/conversations/');
+    };
+  }, [id]);
 
   const {
     data: conversation,
@@ -258,6 +164,10 @@ export function useConversation(id?: string) {
         updatedConversation
       );
 
+
+      window.console.log("HELLO");
+      window.console.log(queryClient.getQueryData(CHAT_QUERY_KEYS.conversations));
+
       // Update the conversation in the conversations list
       queryClient.setQueryData(
         CHAT_QUERY_KEYS.conversations,
@@ -273,109 +183,6 @@ export function useConversation(id?: string) {
     },
   });
 
-  // Stream an AI response to a user message
-  const streamResponseMutation = useMutation({
-    mutationFn: ({ conversationId, content }: { conversationId: string; content: string }) => {
-      setStreamedResponse('');
-      setIsStreamError(false);
-      
-      return chatApi.streamResponse({
-        conversationId,
-        content,
-        onChunk: (chunk) => {
-          // Check if the chunk is an error message
-          if (chunk.startsWith("\n\nError:")) {
-            setIsStreamError(true);
-          }
-          
-          if (chunk === "Thinking...") {
-            // Initial state - just set to "Thinking..."
-            setStreamedResponse("Thinking...");
-          } else if (chunk === "") {
-            // Clear "Thinking..." when we get first real token
-            setStreamedResponse("");
-          } else {
-            // Append new token to the current response
-            setStreamedResponse(prev => {
-              // If previous was "Thinking..." or empty, replace it
-              if (prev === "Thinking..." || prev === "") {
-                return chunk;
-              }
-              // Otherwise append the new token
-              return prev + chunk;
-            });
-          }
-        },
-      }).catch((error) => {
-        window.console.error("Stream response error:", error);
-        setIsStreamError(true);
-        setStreamedResponse(prev => 
-          prev === "Thinking..." 
-            ? "Error: Unable to generate response. Please try again." 
-            : prev + "\n\nError: Connection failed. Please try again."
-        );
-        throw error;
-      });
-    },
-    onSuccess: () => {
-      if (!isStreamError) {
-        // After streaming is complete, refetch the conversation to get the updated messages
-        refetch();
-        // Immediately clear the streamed response to avoid duplicates
-        setStreamedResponse('');
-      }
-    },
-    onSettled: () => {
-      // Clear any streaming state
-      if (!isStreamError) {
-        setStreamedResponse('');
-      }
-    }
-  });
-
-  // Delete a message
-  const deleteMessageMutation = useMutation({
-    mutationFn: chatApi.deleteMessage,
-    onSuccess: (_: unknown, id: string) => {
-      if (!conversation) return;
-      
-      // Mark the message as deleted in the conversation
-      const updatedConversation = {
-        ...conversation,
-        messages: conversation.messages.map((msg: Message) => 
-          msg.id === id ? { ...msg, is_deleted: true } : msg
-        ),
-      };
-
-      // Update the conversation in the query cache
-      queryClient.setQueryData(
-        CHAT_QUERY_KEYS.conversation(conversation.id),
-        updatedConversation
-      );
-    },
-  });
-
-  // Update a message
-  const updateMessageMutation = useMutation({
-    mutationFn: chatApi.updateMessage,
-    onSuccess: (updatedMessage: Message) => {
-      if (!conversation) return;
-      
-      // Update the message in the conversation
-      const updatedConversation = {
-        ...conversation,
-        messages: conversation.messages.map((msg: Message) => 
-          msg.id === updatedMessage.id ? updatedMessage : msg
-        ),
-      };
-
-      // Update the conversation in the query cache
-      queryClient.setQueryData(
-        CHAT_QUERY_KEYS.conversation(conversation.id),
-        updatedConversation
-      );
-    },
-  });
 
   return {
     conversation,
@@ -384,13 +191,6 @@ export function useConversation(id?: string) {
     refetch,
     streamedResponse,
     sendMessage: sendMessageMutation.mutate,
-    streamMessage: streamResponseMutation.mutate,
-    streamResponse: streamResponseMutation.mutate,
-    deleteMessage: deleteMessageMutation.mutate,
-    updateMessage: updateMessageMutation.mutate,
     isSending: sendMessageMutation.isPending,
-    isStreaming: streamResponseMutation.isPending,
-    isDeleting: deleteMessageMutation.isPending,
-    isUpdating: updateMessageMutation.isPending,
   };
-} 
+}

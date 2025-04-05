@@ -45,33 +45,23 @@ INSTALLED_APPS: List[str] = [
     "health_check.contrib.redis",
     # Local apps
     "apps.core",
-    "apps.shows",
-    "apps.dashboard",
+    "apps.core.user",
     "apps.chat",
-    "apps.agent",
     'django_celery_results',
     "django_celery_beat",
 ]
 
 
 MIDDLEWARE: List[str] = [
-    # Security and core middleware first
     "django.middleware.security.SecurityMiddleware",
-    "config.middleware.SecurityHeadersMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    # Rate limiting before session/auth
-    "config.middleware.RateLimitMiddleware",
-    # Session and authentication
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Logging and tracing last
-    "config.middleware.RequestIDMiddleware",
-    "config.middleware.StructLogMiddleware",
 ]
 
 ROOT_URLCONF: str = "config.urls"
@@ -94,7 +84,6 @@ TEMPLATES: List[Dict[str, Any]] = [
     },
 ]
 
-WSGI_APPLICATION: str = "config.wsgi.application"
 
 # Database
 DATABASES: Dict[str, Dict[str, Any]] = {
@@ -165,8 +154,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
-    ],
-    "DEFAULT_CONTENT_NEGOTIATION_CLASS": "apps.core.negotiation.SSEContentNegotiation",
+    ]
 }
 
 # Spectacular settings
@@ -290,6 +278,7 @@ RATE_LIMIT_WINDOW: int = env.int("RATE_LIMIT_WINDOW", 1)  # window size in secon
 # LLM Configuration
 LLM_MODEL_NAME = env("LLM_MODEL_NAME")
 LLM_API_URL = env("LLM_API_URL")
+# LLM_API_URL = 'http://host.docker.internal:7777/api/generate'
 
 # Celery Configuration
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")

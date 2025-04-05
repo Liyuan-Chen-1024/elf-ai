@@ -10,11 +10,11 @@ services:
     ports:
       - "${API_PORT}:${API_PORT}"
     entrypoint: ["/docker-entrypoint.sh"]
-    command: python manage.py runserver 0.0.0.0:${API_PORT}
+    command: python -Xfrozen_modules=off -m debugpy --listen 0.0.0.0:5678 --configure-subProcess true manage.py runserver 0.0.0.0:${API_PORT}
     volumes:
       - ./backend:/app
       - ${HOME}/docker_volumes/elfai/media:/app/media
-      - ./.vscode-server:/root/.vscode-server
+      - ./backend/.vscode-server:/root/.vscode-server
     depends_on:
       db:
         condition: service_healthy
@@ -45,6 +45,7 @@ services:
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
+      - PYDEVD_DISABLE_FILE_VALIDATION=1
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -64,6 +65,7 @@ services:
       - elfai-network
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+      - "9222:9222"  # Add Chrome debugging port
     entrypoint: sh -c "cd /app && npm install && npm run dev -- --host 0.0.0.0 --port ${FRONTEND_PORT}"
     volumes:
       - ./frontend:/app
@@ -76,7 +78,7 @@ services:
       - DEBUG=vite:*
       - VITE_DEBUG=true
       - VITE_VERBOSE=true
-
+      - CHROME_REMOTE_DEBUGGING_PORT=9222
   celery_worker:
     build:
       context: ./backend
@@ -115,8 +117,9 @@ services:
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
       - C_FORCE_ROOT=false
       - CELERY_SECURITY_ENABLED=true
+      - PYDEVD_DISABLE_FILE_VALIDATION=1
     user: "1000:1000"
-    command: python celery_run.py
+    command: python -Xfrozen_modules=off celery_run.py
     # command: celery -A config worker -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -160,6 +163,7 @@ services:
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
       - C_FORCE_ROOT=false
       - CELERY_SECURITY_ENABLED=true
+      - PYDEVD_DISABLE_FILE_VALIDATION=1
     command: celery -A config beat -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -194,6 +198,7 @@ services:
       - FLOWER_PORT=5555
       - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4}
       - LLM_API_URL=${LLM_API_URL:-https://api.openai.com/v1}
+      - PYDEVD_DISABLE_FILE_VALIDATION=1
     command: celery -A config flower --port=5555 --basic_auth=${FLOWER_BASIC_AUTH:-admin:admin}
 
   db:

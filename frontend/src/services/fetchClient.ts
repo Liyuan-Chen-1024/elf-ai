@@ -20,11 +20,12 @@ if (import.meta.env.DEV) {
   window.console.log('📝 Base URL already includes /api/v1:', BASE_URL_HAS_PREFIX);
 }
 
-class FetchClient {
+export class FetchClient {
   private baseURL: string;
   private apiPrefix: string;
   private requestInterceptors: RequestInterceptor[] = [];
   private responseInterceptors: ResponseInterceptor[] = [];
+  private activeStreamControllers: Map<string, AbortController> = new Map();
 
   constructor(baseURL: string, apiPrefix: string) {
     this.baseURL = baseURL;
@@ -319,6 +320,13 @@ class FetchClient {
     onChunk?: (chunk: T) => void
   ): Promise<ReadableStream<Uint8Array> | null> {
     try {
+      // Create a unique key for this stream request
+      const streamKey = `${url}-${Date.now()}`;
+      
+      // Create an AbortController for this request
+      const abortController = new AbortController();
+      this.activeStreamControllers.set(streamKey, abortController);
+      
       const processedConfig = await this.applyRequestInterceptors({
         url,
         method: 'POST',
@@ -327,7 +335,8 @@ class FetchClient {
           ...options,
           headers: {
             ...options?.headers,
-            'Accept': 'text/event-stream',
+            'Accept': 'text/event-stream, application/json, */*',
+            ...(!(data instanceof FormData) && { 'Content-Type': 'application/json' }),
           }
         }
       });
@@ -404,6 +413,7 @@ class FetchClient {
         headers,
         body: body as BodyInit | null,
         credentials,
+        signal: abortController.signal,
         ...fetchOptions,
       });
       
@@ -506,6 +516,7 @@ class FetchClient {
         })();
       }
       
+      // When done or error, remove the controller
       return response.body;
     } catch (error) {
       if (import.meta.env.DEV) {
@@ -513,6 +524,36 @@ class FetchClient {
       }
       throw error;
     }
+  }
+
+  // Method to abort all active streams
+  public abortAllStreams(): void {
+    this.activeStreamControllers.forEach((controller) => {
+      try {
+        controller.abort();
+      } catch (e) {
+        if (import.meta.env.DEV) {
+          window.console.error('Error aborting stream:', e);
+        }
+      }
+    });
+    this.activeStreamControllers.clear();
+  }
+  
+  // Method to abort a specific stream by URL
+  public abortStreamsByUrl(urlPrefix: string): void {
+    this.activeStreamControllers.forEach((controller, key) => {
+      if (key.startsWith(urlPrefix)) {
+        try {
+          controller.abort();
+          this.activeStreamControllers.delete(key);
+        } catch (e) {
+          if (import.meta.env.DEV) {
+            window.console.error(`Error aborting stream for ${urlPrefix}:`, e);
+          }
+        }
+      }
+    });
   }
 
   // HTTP method wrappers

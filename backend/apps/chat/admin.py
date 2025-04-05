@@ -10,7 +10,7 @@ from .models import Conversation, Message
 
 class MessageInline(admin.TabularInline):
     model = Message
-    fields = ("role", "content", "created_at", "is_deleted")
+    fields = ("role", "content", "created_at")
     readonly_fields = ("created_at",)
     extra = 0
     can_delete = False
@@ -35,14 +35,12 @@ class ConversationAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
         "message_count",
-        "is_archived",
     )
-    list_filter = ("is_archived", "created_at", "updated_at")
+    list_filter = ("created_at", "updated_at")
     search_fields = ("title", "user__username")
     readonly_fields = ("created_at", "updated_at")
     inlines = [MessageInline]
     date_hierarchy = "created_at"
-    actions = ["archive_conversations", "unarchive_conversations"]
 
     def get_urls(self):
         urls = super().get_urls()
@@ -63,20 +61,20 @@ class ConversationAdmin(admin.ModelAdmin):
     def dashboard_view(self, request):
         # Get statistics
         total_conversations = Conversation.objects.count()
-        active_conversations = Conversation.objects.filter(is_archived=False).count()
+        active_conversations = Conversation.objects.filter().count()
         total_messages = Message.objects.count()
-        active_messages = Message.objects.filter(is_deleted=False).count()
+        active_messages = Message.objects.filter().count()
 
         # Messages by role
         messages_by_role = (
-            Message.objects.filter(is_deleted=False)
+            Message.objects.filter()
             .values("role")
             .annotate(count=Count("id"))
             .order_by("role")
         )
 
         # Recent conversations
-        recent_conversations = Conversation.objects.filter(is_archived=False).order_by(
+        recent_conversations = Conversation.objects.filter().order_by(
             "-updated_at"
         )[:10]
 
@@ -105,18 +103,18 @@ class ConversationAdmin(admin.ModelAdmin):
         return TemplateResponse(request, "admin/chat/dashboard.html", context)
 
     def message_count(self, obj):
-        return obj.messages.filter(is_deleted=False).count()
+        return obj.messages.filter().count()
 
     message_count.short_description = "Messages"
 
     def archive_conversations(self, request, queryset):
-        updated = queryset.update(is_archived=True)
+        updated = queryset.update()
         self.message_user(request, f"{updated} conversations archived.")
 
     archive_conversations.short_description = "Archive selected conversations"
 
     def unarchive_conversations(self, request, queryset):
-        updated = queryset.update(is_archived=False)
+        updated = queryset.update()
         self.message_user(request, f"{updated} conversations unarchived.")
 
     unarchive_conversations.short_description = "Unarchive selected conversations"
@@ -130,9 +128,8 @@ class MessageAdmin(admin.ModelAdmin):
         "role_badge",
         "short_content",
         "created_at",
-        "is_deleted",
     )
-    list_filter = ("role", "is_deleted", "created_at")
+    list_filter = ("role", "created_at")
     search_fields = ("content", "conversation__title")
     readonly_fields = (
         "created_at",
@@ -172,15 +169,3 @@ class MessageAdmin(admin.ModelAdmin):
         return content
 
     short_content.short_description = "Content"
-
-    def mark_as_deleted(self, request, queryset):
-        updated = queryset.update(is_deleted=True)
-        self.message_user(request, f"{updated} messages marked as deleted.")
-
-    mark_as_deleted.short_description = "Mark selected messages as deleted"
-
-    def restore_messages(self, request, queryset):
-        updated = queryset.update(is_deleted=False)
-        self.message_user(request, f"{updated} messages restored.")
-
-    restore_messages.short_description = "Restore selected messages"
