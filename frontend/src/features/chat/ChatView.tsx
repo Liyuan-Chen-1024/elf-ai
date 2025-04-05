@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Alert } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import MessageList from './components/MessageList';
@@ -35,7 +35,7 @@ const THEME = {
 
 function ChatView() {
   const navigate = useNavigate();
-  const { conversationId } = useParams<{ conversationId?: string }>();
+  const { conversationId } = useParams<{ conversationId: string }>();
   
   const { 
     conversations, 
@@ -43,6 +43,31 @@ function ChatView() {
     isDeleting: isConversationDeleting
   } = useConversations();
   
+  // Create conversation if entering the /chat page
+  useEffect(() => {
+    const createNewConversation = async () => {
+      // Only create if we're at /chat (no conversationId) and have no conversations
+      // and haven't already created a conversation in this session
+      if (!conversationId && conversations.length === 0) {
+        const newConversation = await createConversation({ 
+          title: 'New Conversation' 
+        });
+        navigate(`/chat/${newConversation.id}`);
+      }
+    };
+    createNewConversation();
+  }, [conversationId, navigate, createConversation, conversations]);
+
+  useEffect(() => {
+    if (conversations.length > 0 && !conversationId && !isConversationDeleting) {
+      if (import.meta.env.DEV) {
+        window.console.log('Auto-navigating to first conversation:', conversations[0].id);
+      }
+      navigate(`/chat/${conversations[0].id}`);
+    }
+  }, [conversations, conversationId, navigate, isConversationDeleting]);
+
+
   const [debugInfo, _setDebugInfo] = useState<string | null>(null);
 
   const {
@@ -51,7 +76,7 @@ function ChatView() {
     streamedResponse,
     isSending,
     refetch
-  } = useMessage(conversationId);
+  } = useMessage(conversationId || '');
 
   // Force refetch when conversationId changes
   useEffect(() => {
@@ -68,43 +93,19 @@ function ChatView() {
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;
     
-    try {
-      if (!conversationId) {
-        // Create new conversation
-        const newConversation = await createConversation({ 
-          title: message.substring(0, 30) + '...' 
-        });
-        
-        // Navigate to new conversation
-        navigate(`/chat/${newConversation.id}`);
-        
-        // Stream response in the new conversation
-        return streamResponse({ 
-          conversationId: newConversation.id, 
-          content: message 
-        });
-      }
-      
-      // Stream response in existing conversation
-      return streamResponse({ 
-        conversationId, 
-        content: message 
+    if (!conversationId) {
+      // Create new conversation
+      const newConversation = await createConversation({ 
+        title: message.substring(0, 30) + '...' 
       });
-    } catch (error) {
-      window.console.error('Error in message flow:', error);
-      // We're not using _setDebugInfo, but in a real app we might want to show an error
+      
+      // Navigate to new conversation
+      navigate(`/chat/${newConversation.id}`);
     }
+
+    console.log("handleSendMessage", message);
   };
 
-  // Navigate to first conversation if none selected
-  useEffect(() => {
-    if (conversations.length > 0 && !conversationId && !isConversationDeleting) {
-      if (import.meta.env.DEV) {
-        window.console.log('Auto-navigating to first conversation:', conversations[0].id);
-      }
-      navigate(`/chat/${conversations[0].id}`);
-    }
-  }, [conversations, conversationId, navigate, isConversationDeleting]);
 
   return (
     <Box sx={{
@@ -226,7 +227,7 @@ function ChatView() {
         
         <MessageList
           messages={activeConversation?.messages || []}
-          isLoading={isSending || isStreaming}
+          isLoading={isSending }
           streamedResponse={streamedResponse || ''}
         />
       </Box>
@@ -258,7 +259,7 @@ function ChatView() {
           <MessageInput
             onSendMessage={handleSendMessage}
             conversationId={conversationId}
-            isLoading={isSending || isStreaming || isConversationDeleting}
+            isLoading={isSending || isConversationDeleting}
             placeholder="Ask me anything..."
           />
         </Box>

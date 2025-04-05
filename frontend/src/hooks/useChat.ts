@@ -35,14 +35,12 @@ export function useConversations() {
   // Ensure conversations is always an array
   const conversations = Array.isArray(data) ? data : [];
 
-  // Create a new conversation
   const createConversation = useMutation({
     mutationFn: chatApi.createConversation,
     onSuccess: (newConversation: Conversation) => {
       if (import.meta.env.DEV) {
         window.console.log('✅ Successfully created conversation:', newConversation);
       }
-      
       // Add the new conversation to the query cache
       queryClient.setQueryData(
         CHAT_QUERY_KEYS.conversations,
@@ -53,25 +51,18 @@ export function useConversations() {
         CHAT_QUERY_KEYS.conversation(newConversation.id), 
         newConversation
       );
-    },
-    onError: (error: Error) => {
-      window.console.log("ERROR creationg conversation", error);
     }
   });
 
-  // Delete a conversation
   const deleteConversation = useMutation({
     mutationFn: (id: string, options?: { onSuccess?: () => void }) => {
       return chatApi.deleteConversation(id).then(() => {
-        // Call onSuccess callback if provided
         options?.onSuccess?.();
         return id;
       });
     },
     onSuccess: (id: string) => {
-      // Remove the conversation from the query cache
       queryClient.removeQueries({ queryKey: CHAT_QUERY_KEYS.conversation(id) });
-      // Remove the conversation from the conversations list
       queryClient.setQueryData(
         CHAT_QUERY_KEYS.conversations,
         (oldData: Conversation[] | undefined) => oldData?.filter((conv: Conversation) => conv.id !== id)
@@ -79,21 +70,11 @@ export function useConversations() {
     },
   });
 
-  // Select a conversation
   const selectConversation = (id: string) => {
-    if (import.meta.env.DEV) {
-      window.console.log('Selecting conversation:', id);
-    }
     setSelectedId(id);
-    // Actually fetch the conversation data, not just prefetch it
     queryClient.fetchQuery({
       queryKey: CHAT_QUERY_KEYS.conversation(id),
       queryFn: () => chatApi.getConversation(id),
-    }).catch((error: unknown) => {
-      // Log errors if the fetch fails
-      if (import.meta.env.DEV) {
-        window.console.error('Error fetching conversation:', error);
-      }
     });
   };
 
@@ -111,7 +92,7 @@ export function useConversations() {
   };
 }
 
-export function useMessage(id?: string) {
+export function useMessage(conversationId: string) {
   const queryClient = useQueryClient();
   const [streamedResponse, setStreamedResponse] = useState('');
 
@@ -126,7 +107,7 @@ export function useMessage(id?: string) {
     return () => {
       fetchClient.abortStreamsByUrl('/chat/conversations/');
     };
-  }, [id]);
+  }, [conversationId]);
 
   const {
     data: conversation,
@@ -134,9 +115,8 @@ export function useMessage(id?: string) {
     error,
     refetch,
   } = useQuery({
-    queryKey: id ? CHAT_QUERY_KEYS.conversation(id) : undefined,
-    queryFn: () => id ? chatApi.getConversation(id) : null,
-    enabled: !!id,
+    queryKey: CHAT_QUERY_KEYS.conversation(conversationId),
+    queryFn: () => chatApi.getConversation(conversationId),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
@@ -144,29 +124,21 @@ export function useMessage(id?: string) {
     retry: 1,
   });
 
-  // Send a message
-  const sendMessageMutation = useMutation({
+  const sendMessage = useMutation({
     mutationFn: chatApi.sendMessage,
     onSuccess: (newMessage: Message) => {
-      if (!conversation) return;
-      
-      // Update the messages in the conversation
+      console.log("newMessage", newMessage);
+      // Add user message to the conversation
       const updatedConversation = {
         ...conversation,
         messages: [...conversation.messages, newMessage],
         lastMessage: newMessage,
         messageCount: conversation.messageCount + 1,
       };
-
-      // Update the conversation in the query cache
       queryClient.setQueryData(
         CHAT_QUERY_KEYS.conversation(conversation.id),
         updatedConversation
       );
-
-
-      window.console.log("HELLO");
-      window.console.log(queryClient.getQueryData(CHAT_QUERY_KEYS.conversations));
 
       // Update the conversation in the conversations list
       queryClient.setQueryData(
@@ -190,7 +162,7 @@ export function useMessage(id?: string) {
     error,
     refetch,
     streamedResponse,
-    sendMessage: sendMessageMutation.mutate,
-    isSending: sendMessageMutation.isPending,
+    sendMessage: sendMessage.mutate,
+    isSending: sendMessage.isPending,
   };
 }
