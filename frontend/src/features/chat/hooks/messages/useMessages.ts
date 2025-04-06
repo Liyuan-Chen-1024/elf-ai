@@ -48,16 +48,25 @@ export function useMessages(conversationId: string) {
             return;
           }
           
+          // Log the chunk type and content for debugging
+          if (chunk.type === 'chunk') {
+            window.console.log(`Chunk received (${chunk.content.length} chars), accumulated: ${streamedContent.length + chunk.content.length} chars`);
+          } else {
+            window.console.log(`Received ${chunk.type} message:`, chunk);
+          }
+          
           // Handle different chunk types
           switch (chunk.type) {
             case 'chunk':
               streamedContent += chunk.content;  
-              updateMessageInCache(messageId, chunk.content, chunk.is_generating, chunk.status_generating);
-            
+              updateMessageInCache(messageId, streamedContent, chunk.is_generating, chunk.status_generating);
               break;
               
-            case 'end':              
-              updateMessageInCache(messageId, chunk.content, chunk.is_generating, chunk.status_generating);
+            case 'end':
+              if (chunk.content) {
+                streamedContent = chunk.content;
+              }
+              updateMessageInCache(messageId, streamedContent, chunk.is_generating, chunk.status_generating);
               break;
               
             case 'error':
