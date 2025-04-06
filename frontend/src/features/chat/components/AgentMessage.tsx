@@ -4,13 +4,131 @@ import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
-import 'highlight.js/styles/github.css'; // Import a highlight.js style
+import 'highlight.js/styles/atom-one-dark.css'; // Better syntax highlighting theme
 import { Message } from '../../../types';
 import { THEME } from '../styles/theme';
+import { Components } from 'react-markdown';
 
 interface AgentMessageProps {
   message: Message;
 }
+
+/**
+ * Custom renderers for Markdown components
+ */
+const MarkdownComponents: Partial<Components> = {
+  // Override code block rendering
+  code(props) {
+    const { children, className } = props;
+    const match = /language-(\w+)/.exec(className || '');
+    const language = match ? match[1] : '';
+    
+    // Special handling for single-line code blocks (often used for variable names)
+    const isSimpleCodeBlock = typeof children === 'string' && 
+      !children.includes('\n') && 
+      children.trim().length < 30;
+
+    return !props.inline ? (
+      <pre className={isSimpleCodeBlock ? 'simple-code-block' : ''}>
+        {/* Code language indicator */}
+        {language && (
+          <div className="code-language-indicator">
+            {language.toUpperCase()}
+          </div>
+        )}
+        <code className={className || ''}>
+          {children}
+        </code>
+      </pre>
+    ) : (
+      <code>
+        {children}
+      </code>
+    );
+  },
+  
+  // Override table rendering for better control
+  table(props) {
+    return (
+      <div style={{ 
+        overflowX: 'auto', 
+        maxWidth: '100%', 
+        margin: '1.5em 0',
+        padding: '1em',
+        background: '#f5f5f5',
+        borderRadius: '8px',
+      }}>
+        <table 
+          {...props} 
+          style={{ 
+            width: '100%', 
+            borderCollapse: 'separate',
+            borderSpacing: '3px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+            background: 'white',
+            border: '2px solid #aaa',
+            borderRadius: '6px',
+            overflow: 'hidden',
+          }} 
+        />
+      </div>
+    );
+  },
+  
+  // Custom cell rendering
+  td(props) {
+    return (
+      <td 
+        {...props} 
+        style={{
+          border: '2px solid #aaa',
+          padding: '1em',
+          textAlign: 'center',
+          verticalAlign: 'middle',
+          fontSize: '1.5em',
+          fontWeight: 700,
+          color: 'black',
+          backgroundColor: 'white',
+          minWidth: '60px',
+          minHeight: '60px',
+        }}
+      />
+    );
+  },
+  
+  // Custom header cell rendering
+  th(props) {
+    return (
+      <th 
+        {...props} 
+        style={{
+          border: '2px solid #aaa',
+          padding: '1em',
+          textAlign: 'center',
+          verticalAlign: 'middle',
+          fontSize: '1.5em',
+          fontWeight: 700,
+          color: 'black',
+          backgroundColor: '#f0f0f0',
+          minWidth: '60px',
+          minHeight: '60px',
+        }}
+      />
+    );
+  },
+  
+  // Custom row rendering
+  tr(props) {
+    return (
+      <tr 
+        {...props} 
+        style={{
+          backgroundColor: 'white',
+        }}
+      />
+    );
+  }
+};
 
 /**
  * AgentMessage component displays messages from the AI agent.
@@ -154,30 +272,6 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
               '& h5, & h6': { fontSize: '1em' },
               '& ul, & ol': { paddingLeft: '1.5em', margin: '0.5em 0' },
               '& li': { margin: '0.25em 0' },
-              '& code': { 
-                backgroundColor: 'rgba(0,0,0,0.05)', 
-                padding: '2px 4px', 
-                borderRadius: '3px',
-                fontFamily: 'monospace',
-                fontSize: '0.9em'
-              },
-              '& pre': { 
-                backgroundColor: 'rgba(0,0,0,0.05)',
-                padding: '0.75em',
-                borderRadius: '4px',
-                overflowX: 'auto',
-                margin: '0.5em 0',
-                '& code': { 
-                  backgroundColor: 'transparent',
-                  padding: 0,
-                  fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
-                }
-              },
-              // Highlight.js styling tweaks
-              '& .hljs': {
-                background: 'transparent',
-                padding: 0
-              },
               '& a': { 
                 color: THEME.colors.primary.main,
                 textDecoration: 'none',
@@ -199,45 +293,6 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
                 backgroundColor: THEME.colors.background.inputBorder,
                 margin: '1em 0'
               },
-              // Table styling
-              '& table': {
-                borderCollapse: 'separate',
-                borderSpacing: '0',
-                width: '100%',
-                margin: '1em 0',
-                border: `2px solid #c0c0c0`,
-                borderRadius: '8px',
-                boxShadow: '0 3px 8px rgba(0,0,0,0.12)',
-                overflow: 'hidden',
-                background: 'white',
-                '& th, & td': {
-                  border: `2px solid #c0c0c0`,
-                  padding: '1em',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  minWidth: '4em',
-                  height: '3em',
-                  fontSize: '1.5em',
-                  fontWeight: 600,
-                  color: '#000000',
-                  backgroundColor: '#ffffff',
-                },
-                '& th': {
-                  backgroundColor: '#f5f5f5',
-                  fontWeight: THEME.typography.fontWeight.semibold,
-                  color: '#444',
-                },
-                // Make tables display as grid for better appearance
-                '& tr': {
-                  display: 'table-row',
-                  '&:nth-of-type(even)': {
-                    backgroundColor: '#ffffff'
-                  },
-                  '&:hover': {
-                    backgroundColor: '#f8f8ff'
-                  }
-                }
-              },
               ...(isGenerating && {
                 '&::after': {
                   content: '"|"',
@@ -256,6 +311,7 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
                 [rehypeHighlight, { ignoreMissing: true }]
               ]}
               remarkPlugins={[remarkGfm]}
+              components={MarkdownComponents}
             >
               {message.content || ''}
             </ReactMarkdown>
