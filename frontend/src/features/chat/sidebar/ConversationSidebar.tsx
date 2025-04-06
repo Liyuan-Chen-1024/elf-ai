@@ -18,18 +18,12 @@ import {
 import ChatIcon from '@mui/icons-material/Chat';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useConversations } from '../../hooks/useChat';
-import { Conversation } from '../../types';
+import { useConversations } from '../../../hooks/useChat';
+import { Conversation } from '../../../types';
 
-const DRAWER_WIDTH = 280;
+const DRAWER_WIDTH = 220;
 
-interface SidebarProps {
-  open: boolean;
-  activeTab: 'chat' | 'news' | 'profile';
-  onTabChange: (tab: 'chat' | 'news' | 'profile') => void;
-}
-
-function Sidebar({ open, activeTab }: SidebarProps) {
+function Sidebar() {
   const navigate = useNavigate();
   const { conversationId } = useParams<{ conversationId?: string }>();
   
@@ -56,35 +50,26 @@ function Sidebar({ open, activeTab }: SidebarProps) {
     );
   };
   
-  const handleDeleteClick = (conversationId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     // Stop the event from bubbling up and selecting the conversation
     e.stopPropagation();
     if (import.meta.env.DEV) {
-      window.console.log('Deleting conversation from sidebar:', conversationId);
+      window.console.log('Deleting conversation from sidebar:', id);
     }
-    deleteConversation(conversationId, {
+    deleteConversation(id, {
       onSuccess: () => {
         // Navigate to main chat route if we deleted the active conversation
-        if (conversationId === conversationId) {
+        if (id === conversationId) {
           navigate('/chat');
         }
       }
     });
   };
 
-  // Only render the sidebar if we're on the chat tab
-  if (activeTab !== 'chat') {
-    return null;
-  }
-
-  if (!open) {
-    return null;
-  }
-
   return (
     <Drawer
       variant="permanent"
-      open={open}
+      open={true}
       sx={{
         width: DRAWER_WIDTH,
         flexShrink: 0,
@@ -253,7 +238,7 @@ function Sidebar({ open, activeTab }: SidebarProps) {
                           }
                         }}
                       >
-                        <DeleteIcon sx={{ fontSize: '1rem' }} />
+                        <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
                   </ListItemButton>

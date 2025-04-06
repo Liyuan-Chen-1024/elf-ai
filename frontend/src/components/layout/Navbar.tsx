@@ -15,7 +15,6 @@ import {
   Tabs,
   Tab
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -28,7 +27,6 @@ import { User } from '../../types';
 
 interface NavbarProps {
   title?: string;
-  toggleSidebar: () => void;
   user: User | null;
   onLogout?: () => void;
   isDarkMode?: boolean;
@@ -39,7 +37,6 @@ interface NavbarProps {
 
 function Navbar({ 
   title = 'ElfAI',
-  toggleSidebar,
   user,
   onLogout,
   isDarkMode = false,
@@ -81,17 +78,6 @@ function Navbar({
           gap: 1
         }}
       >
-        {activeTab === 'chat' && (
-          <IconButton
-            color="inherit"
-            aria-label="toggle sidebar"
-            edge="start"
-            onClick={toggleSidebar}
-            sx={{ mr: { xs: 0.5, sm: 1 } }}
-          >
-            <MenuIcon />
-          </IconButton>
-        )}
         
         <Typography 
           variant="h6" 
@@ -221,15 +207,12 @@ function Navbar({
             <Button 
               color="inherit" 
               variant="outlined" 
-              size="small"
               sx={{ 
-                borderRadius: '20px',
-                borderColor: 'rgba(255,255,255,0.5)',
-                ml: 0.5,
-                py: 0.5,
+                borderColor: 'rgba(255, 255, 255, 0.5)',
+                color: 'white',
                 '&:hover': {
                   borderColor: 'white',
-                  backgroundColor: 'rgba(255,255,255,0.1)'
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)'
                 }
               }}
             >

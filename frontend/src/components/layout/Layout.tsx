@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Box } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import { User } from '../../types';
 
@@ -11,7 +10,6 @@ interface LayoutProps {
 }
 
 function Layout({ children, user }: LayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -30,13 +28,6 @@ function Layout({ children, user }: LayoutProps) {
     navigate(`/${tab}`);
   };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const DRAWER_WIDTH = 280;
-  const showSidebar = activeTab === 'chat' && sidebarOpen;
-
   return (
     <Box sx={{ 
       display: 'flex',
@@ -46,41 +37,20 @@ function Layout({ children, user }: LayoutProps) {
       background: 'linear-gradient(135deg, #f5f7fa 0%, #eef1f5 100%)',
     }}>
       <Navbar 
-        toggleSidebar={toggleSidebar}
         user={user}
         activeTab={activeTab}
         onTabChange={handleTabChange}
       />
       
-      <Box sx={{ 
-        display: 'flex', 
-        flexGrow: 1,
-        height: 'calc(100vh - 64px)',
-        overflow: 'hidden',
-      }}>
-        {activeTab === 'chat' && (
-          <Sidebar 
-            open={sidebarOpen} 
-            activeTab={activeTab} 
-            onTabChange={handleTabChange}
-          />
-        )}
-        
-        <Box 
-          component="main" 
-          sx={{ 
-            flexGrow: 1,
-            width: showSidebar ? `calc(100% - ${DRAWER_WIDTH}px)` : '100%',
-            height: '100%',
-            overflow: 'auto',
-            transition: theme => theme.transitions.create(['width', 'margin'], {
-              easing: theme.transitions.easing.sharp,
-              duration: theme.transitions.duration.leavingScreen,
-            }),
-          }}
-        >
-          {children}
-        </Box>
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1,
+          height: 'calc(100vh - 64px)',
+          overflow: 'auto',
+        }}
+      >
+        {children}
       </Box>
     </Box>
   );

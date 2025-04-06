@@ -3,7 +3,6 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Loader from './components/common/Loader';
-import ChatView from './features/chat/ChatView';
 import NewsView from './features/news/NewsView';
 import ProfileView from './features/profile/ProfileView';
 import LoginPage from './features/auth/LoginPage';
@@ -13,6 +12,9 @@ import { useAuth } from './hooks/useAuth';
 import './styles/global.css';
 import theme from './styles/theme';
 import { AxiosError } from 'axios';
+import ChatContainer from './features/chat/ChatContainer';
+import WelcomeScreen from './features/chat/WelcomeScreen';
+import ConversationView from './features/chat/conversation/ConversationView';
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -87,11 +89,8 @@ function App() {
                 <Route index element={<Navigate to="/chat" replace />} />
                 
                 {/* Main tabs */}
-                <Route path="/chat" element={<Outlet />}>
-                  {/* Chat routes */}
-                  <Route index element={<ChatView />} />
-                  <Route path=":conversationId" element={<ChatView />} />
-                </Route>
+                <Route path="/chat" element={<ChatContainer />} />
+                <Route path="/chat/:conversationId" element={<ChatContainer />} />
                 
                 <Route path="/news" element={<NewsView />} />
                 <Route path="/profile" element={<ProfileView />} />
