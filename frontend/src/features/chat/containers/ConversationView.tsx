@@ -1,149 +1,140 @@
-import React, { useState, useEffect } from 'react';
-import { Box } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import MessageList from './MessageList';
 import MessageInput from '../components/MessageInput';
-import { useConversations } from '../hooks/conversations';
-import { useMessages } from '../hooks/messages';
 import fetchClient from '../../../services/fetchClient';
 import { 
-  EmptyConversationState,
+  EmptyState,
   ConversationHeader,
-  ConversationContent
+  ConversationContent,
+  ContentLayout,
+  InputBar,
+  LoadingSpinner
 } from '../index';
-import { THEME } from '../styles/theme';
+import { useChatContext } from '../context';
 
 /**
  * ConversationView is the main container for a chat conversation.
  * It handles:
- * - Data fetching and state management for conversations and messages
- * - Creating new conversations
- * - Sending messages
  * - Orchestrating the layout of conversation components
+ * - Using the ChatContext to access data and actions
+ * - Managing conversation lifecycle
  */
 const ConversationView: React.FC = () => {
-  const navigate = useNavigate();
   const { conversationId } = useParams<{ conversationId: string }>();
-  const [createError, setCreateError] = useState<string | null>(null);
   
-  // Fetch conversations data
+  // Access all data and actions from the chat context
   const { 
+    // Conversation data
     conversations, 
-    isLoading,
-    isDeleting: isConversationDeleting,
+    isLoadingConversations,
+    isDeletingConversation,
+    isCreatingConversation,
+    
+    // Conversation actions
     createConversation,
-    isCreating
-  } = useConversations();
-  
-  // Fetch active conversation data and message handling
-  const {
-    conversation: activeConversation,
-    error: conversationError,
-    isSending,
-    refetch,
-    sendMessage
-  } = useMessages(conversationId || '');
+    conversationError,
+    
+    // Message data
+    currentConversation: activeConversation,
+    isLoadingMessages,
+    isSendingMessage,
+    messageError,
+    
+    // Message actions
+    sendMessage,
+  } = useChatContext();
 
   // Force refetch when conversationId changes and abort existing streams
   useEffect(() => {
-    if (conversationId && refetch) {
+    // When conversation ID changes or component mounts
+    if (conversationId) {
       if (import.meta.env.DEV) {
         console.log(`Selected conversation changed to ${conversationId}, refetching...`);
       }
       // Abort any active streams when changing conversations
       fetchClient.abortStreamsByUrl('/chat/conversations/');
-      refetch();
     }
-  }, [conversationId, refetch]);
-
-  // Handle sending a new message
-  const handleSendMessage = (message: string) => {
-    if (!message.trim()) return;
     
-    sendMessage({
-      conversationId: conversationId || '',
-      content: message,
-    });
-  };
+    // Clean up function - abort streams when component unmounts or conversation changes
+    return () => {
+      if (import.meta.env.DEV) {
+        console.log('Cleaning up active streams');
+      }
+      fetchClient.abortStreamsByUrl('/chat/conversations/');
+    };
+  }, [conversationId]);
 
-  // Handle creating a new conversation
-  const handleCreateConversation = async () => {
-    try {
-      setCreateError(null);
-      const newConversation = await createConversation();
-      navigate(`/chat/${newConversation.id}`);
-    } catch (error) {
-      console.error('Failed to create conversation:', error);
-      setCreateError('Failed to create conversation. Please try again.');
-    }
-  };
+  // Show loading state when initially loading conversations
+  if (isLoadingConversations) {
+    return (
+      <ContentLayout fullHeight centered>
+        <LoadingSpinner 
+          message="Loading conversations..." 
+          fullPage
+        />
+      </ContentLayout>
+    );
+  }
 
   // Determine what to render based on state
-  if (!isLoading && conversations.length === 0) {
+  if (!isLoadingConversations && conversations.length === 0) {
     return (
-      <EmptyConversationState
-        onCreateConversation={handleCreateConversation}
-        isCreating={isCreating}
-        error={createError}
+      <EmptyState
+        message="Welcome to Chat"
+        submessage="Create your first conversation to get started"
+        actionButton={{
+          label: "Start New Conversation :)",
+          onClick: createConversation,
+          loading: isCreatingConversation,
+          loadingLabel: "Creating..."
+        }}
+        error={conversationError}
+        fullPage
       />
     );
   }
 
+  // Show loading state when loading messages for a selected conversation
+  if (conversationId && isLoadingMessages && !activeConversation) {
+    return (
+      <ContentLayout fullHeight centered>
+        <LoadingSpinner 
+          message="Loading conversation..." 
+          fullPage
+        />
+      </ContentLayout>
+    );
+  }
+
   return (
-    <Box sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: 'calc(100vh - 70px)',
-      maxHeight: 'calc(100vh - 70px)',
-      overflow: 'hidden',
-      backgroundColor: THEME.colors.background.surface,
-    }}>
+    <ContentLayout
+      fullHeight
+      sx={{ overflow: 'hidden' }}
+    >
       <ConversationHeader 
         title={activeConversation?.title || 'New conversation'} 
       />
       
       <ConversationContent
-        conversationError={conversationError}
+        conversationError={messageError}
       >
         <MessageList
           messages={activeConversation?.messages || []}
-          isLoading={isSending}
+          isLoading={isSendingMessage}
           key={`message-list-${conversationId}`}
         />
       </ConversationContent>
 
-      <Box sx={{
-        position: 'sticky',
-        bottom: 0,
-        zIndex: 10,
-        width: '100%',
-        background: THEME.colors.background.surface,
-        borderTop: `1px solid ${THEME.colors.background.inputBorder}`,
-        py: 2,
-        flexShrink: 0,
-        display: 'flex',
-        justifyContent: 'center',
-      }}>
-        <Box sx={{ 
-          width: '90%',
-          maxWidth: '1200px',
-          minWidth: '300px',
-          '& textarea': {
-            maxHeight: '100px',
-            minHeight: '50px',
-            height: '50px',
-            overflow: 'auto'
-          }
-        }}>
-          <MessageInput
-            onSendMessage={handleSendMessage}
-            conversationId={conversationId || ''}
-            isLoading={isSending || isConversationDeleting || isLoading}
-            placeholder="Ask me anything..."
-          />
-        </Box>
-      </Box>
-    </Box>
+      <InputBar>
+        <MessageInput
+          onSendMessage={sendMessage}
+          conversationId={conversationId || ''}
+          isLoading={isSendingMessage || isDeletingConversation || isLoadingConversations}
+          placeholder="Ask me anything..."
+        />
+      </InputBar>
+    </ContentLayout>
   );
 };
 

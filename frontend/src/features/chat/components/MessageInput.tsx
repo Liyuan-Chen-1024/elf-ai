@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from 'react';
+import React from 'react';
 import { 
   Box, 
   TextField, 
@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { THEME } from '../styles/theme';
+import { useMessageInput } from '../hooks/messages';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
@@ -29,21 +30,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
   placeholder = 'Type a message...',
   conversationId,
 }) => {
-  const [message, setMessage] = useState('');
-
-  const handleSendMessage = () => {
-    if (message.trim() && !isLoading) {
-      onSendMessage(message);
-      setMessage('');
-    }
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+  const {
+    message,
+    setMessage,
+    handleSendMessage,
+    handleKeyDown,
+    isMessageEmpty
+  } = useMessageInput(onSendMessage, isLoading);
 
   return (
     <Box
@@ -84,11 +77,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
       />
       <IconButton
         onClick={handleSendMessage}
-        disabled={isLoading || !message.trim()}
+        disabled={isLoading || isMessageEmpty}
         sx={{
           position: 'absolute',
           right: '8px',
-          color: isLoading || !message.trim() 
+          color: isLoading || isMessageEmpty 
             ? 'rgba(0, 0, 0, 0.3)' 
             : THEME.colors.primary.main,
           '&:hover': {

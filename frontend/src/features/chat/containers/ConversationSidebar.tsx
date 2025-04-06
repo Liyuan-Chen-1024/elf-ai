@@ -4,8 +4,7 @@ import { Drawer } from '@mui/material';
 import { Conversation } from '../../../types';
 import SidebarContent from '../components/SidebarContent';
 import { useChatContext } from '../context';
-
-const DRAWER_WIDTH = 220;
+import { THEME } from '../styles/theme';
 
 /**
  * ConversationSidebar container component that handles:
@@ -41,12 +40,12 @@ const ConversationSidebar: React.FC = () => {
       variant="permanent"
       open={true}
       sx={{
-        width: DRAWER_WIDTH,
+        width: THEME.layout.sidebarWidth,
         flexShrink: 0,
         height: '100%',
         '& .MuiDrawer-paper': {
           position: 'relative',
-          width: DRAWER_WIDTH,
+          width: THEME.layout.sidebarWidth,
           height: '100%',
           boxSizing: 'border-box',
           border: 'none',

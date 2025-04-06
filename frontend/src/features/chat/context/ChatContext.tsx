@@ -36,11 +36,19 @@ interface ChatContextValue {
 // Create the context
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
 
+interface ChatProviderProps {
+  children: ReactNode;
+  // Optional: If not provided, no messages will be loaded
+  conversationId?: string | undefined;
+}
+
 // Provider component
-export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // For the selected conversation ID, we default to empty string
-  // This will be updated by the conversation component based on the route
-  const [selectedConversationId, setSelectedConversationId] = React.useState<string>('');
+export const ChatProvider: React.FC<ChatProviderProps> = ({ 
+  children,
+  conversationId
+}) => {
+  const hasActiveConversation = !!conversationId && conversationId.trim() !== '';
+  const activeConversationId = hasActiveConversation ? conversationId : '';
   
   // Conversation data and actions
   const {
@@ -58,18 +66,28 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   } = useConversationActions();
   
   // Message data and actions for the selected conversation
+  // Only fetch messages if we have a valid conversation ID
   const {
     messages = [],
     isLoading: isLoadingMessages,
     conversation: currentConversation
-  } = useMessages(selectedConversationId);
+  } = hasActiveConversation 
+      ? useMessages(activeConversationId) 
+      : { messages: [], isLoading: false, conversation: undefined };
   
   const {
     sendMessage,
     clearError: clearMessageError,
     error: messageError,
     isSending: isSendingMessage
-  } = useMessageActions(selectedConversationId);
+  } = hasActiveConversation
+      ? useMessageActions(activeConversationId)
+      : { 
+          sendMessage: async () => false, 
+          clearError: () => {}, 
+          error: null, 
+          isSending: false 
+        };
   
   // Value to provide to consumers
   const contextValue: ChatContextValue = {

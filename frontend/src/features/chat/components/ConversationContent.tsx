@@ -1,10 +1,10 @@
 import React from 'react';
-import { Box, Alert } from '@mui/material';
-import { THEME } from '../styles/theme';
+import { Box } from '@mui/material';
+import ErrorAlert from './ErrorAlert';
 
 interface ConversationContentProps {
   children: React.ReactNode;
-  conversationError: Error | null;
+  conversationError: string | null;
 }
 
 /**
@@ -27,24 +27,10 @@ const ConversationContent: React.FC<ConversationContentProps> = ({
       backgroundColor: 'rgba(255, 255, 255, 0.7)',
     }}>
       {conversationError && (
-        <Alert 
-          severity="error" 
-          sx={{ 
-            mb: 3,
-            borderRadius: '12px',
-            border: `1px solid ${THEME.colors.accent.red.border}`,
-            flexShrink: 0,
-            '& .MuiAlert-icon': {
-              color: THEME.colors.accent.red.main,
-            },
-          }}
-        >
-          Error loading conversation: {
-            conversationError instanceof Error 
-              ? conversationError.message 
-              : 'Unknown error'
-          }
-        </Alert>
+        <ErrorAlert 
+          error={`Unable to load conversation: ${conversationError}`}
+          showPrefix={false}
+        />
       )}
       
       {children}

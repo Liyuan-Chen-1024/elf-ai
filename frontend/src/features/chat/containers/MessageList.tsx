@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Message } from '../../../types';
 import MessageListContent from '../components/MessageListContent';
+import { useMessageUI } from '../hooks/messages';
 
 interface MessageListProps {
   messages: Message[];
@@ -10,10 +11,8 @@ interface MessageListProps {
 }
 
 /**
- * MessageList container component that handles:
- * - Auto-scrolling behavior to the latest message
- * - Tracking conversation changes
- * - Passing data down to the MessageListContent component
+ * MessageList container connects the message data to the presentation component
+ * and provides UI-specific behavior through hooks.
  */
 const MessageList: React.FC<MessageListProps> = ({ 
   messages = [], 
@@ -21,36 +20,17 @@ const MessageList: React.FC<MessageListProps> = ({
   emptyStateMessage = 'Start a new conversation',
   emptyStateSubmessage = 'Send a message to get started',
 }) => {
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const conversationIdRef = useRef<string | null>(null);
-  const currentConversationId = messages[0]?.conversationId ?? null;
-  
-  // Auto-scroll to bottom when conversation changes
-  useEffect(() => {
-    if (conversationIdRef.current !== currentConversationId) {
-      conversationIdRef.current = currentConversationId;
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
-    }
-  }, [currentConversationId]);
+  // Use the UI hook for scroll behavior
+  const { handleScrollableRef } = useMessageUI(messages);
 
-  // Auto-scroll when new messages arrive
-  useEffect(() => {
-    if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages.length]);
-
-  const handleContainerRendered = (container: HTMLDivElement) => {
-    messagesEndRef.current = container;
-  };
-
+  // Simple pass-through to the content component
   return (
     <MessageListContent
       messages={messages}
       isLoading={isLoading}
       emptyStateMessage={emptyStateMessage}
       emptyStateSubmessage={emptyStateSubmessage}
-      onContainerRendered={handleContainerRendered}
+      onContainerRendered={handleScrollableRef}
     />
   );
 };

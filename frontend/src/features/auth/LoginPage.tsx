@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -8,77 +8,24 @@ import {
   Alert,
   CircularProgress,
   Container,
-  Link,
   Divider,
 } from '@mui/material';
-import { useAuth } from '../../hooks/useAuth';
 import { AxiosError } from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useLoginForm } from './hooks';
 
-interface LoginPageProps {
-  onRegisterClick?: () => void;
-}
-
-function LoginPage({ onRegisterClick }: LoginPageProps) {
-  const { login, isLoginLoading, loginError, isAuthenticated } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [showDebugInfo, setShowDebugInfo] = useState(false);
-  const navigate = useNavigate();
-
-  // Redirect when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      if (import.meta.env.DEV) {
-        window.console.log('User authenticated, redirecting to /chat');
-      }
-      navigate('/chat');
-    }
-  }, [isAuthenticated, navigate]);
-
-  // Clear form error when inputs change
-  useEffect(() => {
-    if (username || password) {
-      setFormError(null);
-    }
-  }, [username, password]);
-  
-  // Toggle debug info with keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Shift+D to toggle debug info
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-        setShowDebugInfo(prev => !prev);
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    
-    if (!username.trim()) {
-      setFormError('Username is required');
-      return;
-    }
-    
-    if (!password.trim()) {
-      setFormError('Password is required');
-      return;
-    }
-    
-    // Show API URL in development mode
-    if (import.meta.env.DEV) {
-      window.console.log('Login attempt using API URL:', import.meta.env.VITE_API_URL);
-      window.console.log('Login credentials:', { username: username.trim() });
-    }
-    
-    login({ username: username.trim(), password: password.trim() });
-  };
+function LoginPage() {
+  const {
+    username,
+    setUsername,
+    password,
+    setPassword,
+    formError,
+    loginError,
+    isLoginLoading,
+    showDebugInfo,
+    handleSubmit,
+    handleTestLogin
+  } = useLoginForm();
 
   // Format error message from the API
   const getErrorMessage = () => {
@@ -109,15 +56,6 @@ function LoginPage({ onRegisterClick }: LoginPageProps) {
   // Get API URL for debug info
   const getApiUrl = () => {
     return import.meta.env.VITE_API_URL || 'http://localhost:8000';
-  };
-
-  // Test login with default credentials (for development only)
-  const handleTestLogin = () => {
-    if (import.meta.env.DEV) {
-      setUsername('admin');
-      setPassword('password');
-      login({ username: 'admin', password: 'password' });
-    }
   };
 
   return (
@@ -183,21 +121,6 @@ function LoginPage({ onRegisterClick }: LoginPageProps) {
             >
               {isLoginLoading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
-
-            {onRegisterClick && (
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Typography variant="body2">
-                  Don&apos;t have an account?{' '}
-                  <Link 
-                    component="button" 
-                    variant="body2" 
-                    onClick={onRegisterClick}
-                  >
-                    Register
-                  </Link>
-                </Typography>
-              </Box>
-            )}
           </Box>
           
           {/* Debug information (visible in development mode or when enabled) */}

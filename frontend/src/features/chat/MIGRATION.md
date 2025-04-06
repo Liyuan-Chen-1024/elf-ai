@@ -22,7 +22,8 @@ We've restructured the chat hooks to be more feature-focused and to follow a bet
   │
   ├── messages/
   │   ├── useMessages.ts               // Data fetching only
-  │   └── useMessageActions.ts         // Business logic/actions
+  │   ├── useMessageActions.ts         // Business logic/actions
+  │   └── useMessageUI.ts              // UI-specific concerns (scrolling, etc.)
   │
   └── constants.ts                     // Shared constants
 ```
@@ -58,6 +59,7 @@ const {
 1. **Clearer Separation of Concerns**:
    - Data fetching hooks handle API interactions only
    - Action hooks handle business logic
+   - UI hooks handle presentation concerns
 
 2. **Feature Cohesion**:
    - All chat hooks are grouped with the feature they support
@@ -68,4 +70,4 @@ const {
 
 4. **Improved Maintainability**:
    - Changes to business logic don't affect data fetching
-   - New actions can be added without changing data hooks 
+   - New actions can be added without changing data hooks

@@ -74,6 +74,14 @@ export const THEME = {
     strong: 'blur(20px)',
     subtle: 'blur(12px)',
   },
+  layout: {
+    headerHeight: '70px',
+    contentHeight: 'calc(100vh - 70px)',
+    sidebarWidth: '220px',
+    inputMaxHeight: '100px',
+    inputMinHeight: '50px',
+    maxContentWidth: '1200px',
+  },
   typography: {
     fontSize: {
       tiny: '0.75rem',      // 12px

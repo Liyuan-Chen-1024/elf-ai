@@ -12,13 +12,6 @@ if (import.meta.env.DEV) {
 
 // Auth API endpoints
 export type AuthResponse = { token: string; user: User };
-export interface UserRegistrationData {
-  username: string;
-  email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
-}
 
 export const authApi = {
   // Try login with multiple approaches to handle different API implementations
@@ -112,37 +105,6 @@ export const authApi = {
       window.localStorage.removeItem('authToken');
       window.localStorage.removeItem('user');
     }
-  },
-
-  register: async (userData: UserRegistrationData): Promise<AuthResponse> => {
-    const response = await fetchClient.post<AuthResponse>('/auth/register/', userData);
-    
-    // Extract and store the token
-    // Handle both { token: string } and { key: string } formats (common in DRF)
-    let token = null;
-    if (response.data.token) {
-      token = response.data.token;
-    } else if ('key' in response.data) {
-      token = (response.data as unknown as { key: string }).key;
-    }
-    
-    if (token) {
-      // Store the token
-      window.localStorage.setItem('authToken', token);
-      
-      if (import.meta.env.DEV) {
-        window.console.log('Auth token stored in localStorage after registration');
-      }
-      
-      // If there's user data, store that too
-      if (response.data.user) {
-        window.localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-    } else {
-      window.console.error('No token found in registration response', response.data);
-    }
-    
-    return response.data;
   },
 
   getCurrentUser: async (): Promise<User> => {

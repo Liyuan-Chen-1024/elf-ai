@@ -127,46 +127,6 @@ export function useAuth() {
     },
   });
 
-  // Register mutation
-  const registerMutation = useMutation({
-    mutationFn: authApi.register,
-    onSuccess: (data: AuthResponse) => {
-      if (import.meta.env.DEV) {
-        window.console.log('Registration successful:', data);
-      }
-      
-      // Extract token from different possible formats
-      let token = null;
-      if (data.token) {
-        token = data.token;
-      } else if ('key' in data) {
-        token = (data as unknown as { key: string }).key;
-      }
-      
-      if (token) {
-        // Store token in localStorage
-        window.localStorage.setItem('authToken', token);
-        
-        if (import.meta.env.DEV) {
-          window.console.log('Stored auth token in localStorage after registration:', token.substring(0, 5) + '...');
-        }
-      } else {
-        window.console.error('No token found in registration response', data);
-      }
-      
-      // Update current user query
-      queryClient.setQueryData(AUTH_QUERY_KEYS.user, data.user);
-      
-      // Force a refetch of the user data to ensure everything is up to date
-      refetch();
-    },
-    onError: (error) => {
-      if (import.meta.env.DEV) {
-        window.console.error('Registration error:', error);
-      }
-    }
-  });
-
   return {
     user,
     isAuthenticated: !!user,
@@ -174,13 +134,10 @@ export function useAuth() {
     error,
     login: loginMutation.mutate,
     logout: logoutMutation.mutate,
-    register: registerMutation.mutate,
     isLoginLoading: loginMutation.isPending,
     isLogoutLoading: logoutMutation.isPending,
-    isRegisterLoading: registerMutation.isPending,
     loginError: loginMutation.error,
     logoutError: logoutMutation.error,
-    registerError: registerMutation.error,
     refetchUser: refetch,
   };
 } 
