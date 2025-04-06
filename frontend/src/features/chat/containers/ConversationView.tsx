@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import MessageList from './MessageList';
 import MessageInput from '../components/MessageInput';
-import fetchClient from '../../../services/fetchClient';
+
 import { 
   EmptyState,
   ConversationHeader,
@@ -44,38 +44,6 @@ const ConversationView: React.FC = () => {
     // Message actions
     sendMessage,
   } = useChatContext();
-
-  // Force refetch when conversationId changes and abort existing streams
-  useEffect(() => {
-    // When conversation ID changes or component mounts
-    if (conversationId) {
-      if (import.meta.env.DEV) {
-        console.log(`Selected conversation changed to ${conversationId}, refetching...`);
-      }
-      // Abort any active streams when changing conversations
-      fetchClient.abortStreamsByUrl('/chat/conversations/');
-    }
-    
-    // Clean up function - abort streams when component unmounts or conversation changes
-    return () => {
-      if (import.meta.env.DEV) {
-        console.log('Cleaning up active streams');
-      }
-      fetchClient.abortStreamsByUrl('/chat/conversations/');
-    };
-  }, [conversationId]);
-
-  // Show loading state when initially loading conversations
-  if (isLoadingConversations) {
-    return (
-      <ContentLayout fullHeight centered>
-        <LoadingSpinner 
-          message="Loading conversations..." 
-          fullPage
-        />
-      </ContentLayout>
-    );
-  }
 
   // Determine what to render based on state
   if (!isLoadingConversations && conversations.length === 0) {

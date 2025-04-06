@@ -31,30 +31,11 @@ const getCsrfToken = () => document.cookie
 
 // Function to fetch CSRF token from server
 const fetchCsrfToken = async () => {
-  try {
-    console.log('Fetching CSRF token from server...');
-    // Django will set the CSRF cookie when accessing this endpoint
-    const response = await fetch('http://localhost:8000/api/v1/core/csrf-token/', {
-      method: 'GET',
-      credentials: 'include',
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch CSRF token');
-    }
-    
-    // In Django, the CSRF token is set in a cookie named 'csrftoken'
-    const token = getCsrfToken();
-    if (!token) {
-      console.warn('CSRF token not found in cookies after fetch');
-    } else {
-      console.log('CSRF token successfully retrieved:', token.substring(0, 5) + '...');
-    }
-    return token;
-  } catch (error) {
-    console.error('Error fetching CSRF token:', error);
-    return null;
-  }
+  await fetch('http://localhost:8000/api/v1/core/csrf-token/', {
+    method: 'GET',
+    credentials: 'include',
+  });
+  return getCsrfToken();
 };
 
 const isLoginRoute = (url: string) => url.includes('/auth/login');
@@ -107,14 +88,10 @@ const prepareRequest = (url: string, method: string, body: FormData | JsonData |
 };
 
 const fetchClient = async <T = unknown>(url: string, method: string = 'GET', body: FormData | JsonData | null = null, options: RequestOptions = {}): Promise<ApiResponse<T>> => {
-  // For all non-GET requests, ensure we have a CSRF token before proceeding
   if (method !== 'GET' && !getCsrfToken()) {
-    console.log('No CSRF token found, fetching one before proceeding with request...');
     await fetchCsrfToken();
   }
-  
   const [finalUrl, fetchOptions] = prepareRequest(url, method, body, options);
-
   try {
     const response = await fetch(finalUrl, fetchOptions);
 
@@ -147,7 +124,7 @@ const fetchClient = async <T = unknown>(url: string, method: string = 'GET', bod
 
 // === Streaming Support ===
 
-const stream = async (url: string, options: RequestOptions = {}, onChunk: (chunk: string) => void) => {
+const stream = async (url: string, options: RequestOptions = {}, onChunk: (chunk: any) => void) => {
   const [finalUrl, fetchOptions] = prepareRequest(url, 'GET', null, options);
 
   const response = await fetch(finalUrl, fetchOptions);
@@ -171,7 +148,15 @@ const stream = async (url: string, options: RequestOptions = {}, onChunk: (chunk
 
     for (const line of lines) {
       if (line.trim()) {
-        onChunk(line);
+        try {
+          // Try to parse the chunk as JSON
+          const jsonData = JSON.parse(line);
+          onChunk(jsonData);
+        } catch (error) {
+          // If parsing fails, pass the raw string
+          console.warn('Failed to parse streaming chunk as JSON:', error);
+          onChunk(line);
+        }
       }
     }
   }
@@ -185,6 +170,7 @@ const initializeApi = async () => {
 const api = {
   get: <T = unknown>(url: string, options: RequestOptions = {}) => fetchClient<T>(url, 'GET', null, options),
   post: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) => fetchClient<T>(url, 'POST', body, options),
+  patch: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) => fetchClient<T>(url, 'PATCH', body, options),
   put: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) => fetchClient<T>(url, 'PUT', body, options),
   delete: <T = unknown>(url: string, options: RequestOptions = {}) => fetchClient<T>(url, 'DELETE', null, options),
   stream,

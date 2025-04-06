@@ -13,51 +13,6 @@ interface AgentMessageProps {
  */
 const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
   const isGenerating = Boolean(message.is_generating);
-  const [content, setContent] = useState(message.content || '');
-  const [intervalId, setIntervalId] = useState<number | null>(null);
-  
-  // When the message content prop changes, update our state
-  useEffect(() => {
-    // If not generating, use the message content directly
-    if (!isGenerating) {
-      setContent(message.content || '');
-    }
-  }, [message.content, isGenerating]);
-  
-  // Set up polling for cache updates while streaming
-  useEffect(() => {
-    // Only set up polling if the message is generating and has an ID
-    if (isGenerating && message.id) {
-      console.log(`Setting up polling for message: ${message.id}`);
-      
-      // Check for content in cache first
-      
-      
-      // Set up interval to check for cache updates
-      const id = window.setInterval(() => {
-        if (message.id && streamingCache.has(message.id)) {
-          const cachedContent = streamingCache.get(message.id);
-          if (cachedContent !== content) {
-            console.log(`Updating from cache: ${cachedContent.length} chars`);
-            setContent(cachedContent);
-          }
-        }
-      }, 100);
-      
-      setIntervalId(id);
-      
-      return () => {
-        window.clearInterval(id);
-        console.log(`Cleared polling interval for message: ${message.id}`);
-      };
-    }
-    
-    // Make sure to clear any existing interval when message is no longer generating
-    if (!isGenerating && intervalId) {
-      window.clearInterval(intervalId);
-      setIntervalId(null);
-    }
-  }, [message.id, isGenerating]);
   
   return (
     <Box sx={{
@@ -143,7 +98,7 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
               }),
             }}
           >
-            {isGenerating ? `Generating... (${content.length} chars)` : 'Completed'}
+            {isGenerating ? `Generating` : 'Completed'}
           </Typography>
         </Box>
       </Box>
@@ -188,7 +143,7 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
               })
             }}
           >
-            {content}
+            {message.content || ''}
           </Typography>
         </Box>
       </Box>

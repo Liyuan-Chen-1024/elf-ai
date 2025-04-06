@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { chatApi } from '../../../../services/chatApi';
+import { chatApi, StreamingResponse } from '../../../../services/chatApi';
 import { Conversation, Message } from '../../../../types';
 import { CHAT_QUERY_KEYS, COMMON_QUERY_OPTIONS } from '../constants';
 
@@ -32,33 +32,55 @@ export function useMessages(conversationId: string) {
         return Promise.resolve({ user_message: {} as Message, agent_message: {} as Message });
       }
       
+      let streamedContent = '';
+
       return chatApi.sendMessage({ 
         conversationId, 
         content,
         // Update handler that updates the message in React Query cache
-        onUpdate: (updatedMessage) => {
-          console.log(`Message update received, id: ${updatedMessage.id}`);
+        onStream: (conversationId: string, messageId: string, chunk: StreamingResponse | string) => {
+          window.console.log(`Message update received, id: ${conversationId}, ${messageId}`);
           
-          // Update conversations in React Query cache
-          queryClient.setQueryData(
-            CHAT_QUERY_KEYS.conversation(conversationId),
-            (oldConversation: Conversation | undefined) => {
-              if (!oldConversation) return oldConversation;
+          // If chunk is a string (legacy format or parse error), handle it directly
+          if (typeof chunk === 'string') {
+            window.console.log('Received string chunk:', chunk);
+            streamedContent += chunk;
+            return;
+          }
+          
+          // Handle different chunk types
+          switch (chunk.type) {
+            case 'chunk':
+              // Handle content chunk
+              streamedContent += chunk.content;
+              console.log(`Received content chunk (${chunk.content.length} chars)`);
               
-              // Replace the message with the updated version
-              const updatedMessages = oldConversation.messages.map(msg => 
-                msg.id === updatedMessage.id ? updatedMessage : msg
-              );
+              // Update the message in the cache
+              updateMessageInCache(messageId, streamedContent);
+              break;
               
-              return {
-                ...oldConversation,
-                messages: updatedMessages,
-                lastMessage: updatedMessage.id === oldConversation.lastMessage?.id 
-                  ? updatedMessage 
-                  : oldConversation.lastMessage
-              };
-            }
-          );
+            case 'end':
+              // Handle end of streaming
+              console.log('Stream ended, final content:', chunk.content);
+              
+              // Use the complete message from the server
+              updateMessageInCache(messageId, chunk.content);
+              break;
+              
+            case 'error':
+              // Handle errors
+              console.error('Stream error:', chunk.error);
+              break;
+              
+            case 'start':
+              // Handle stream start
+              console.log('Stream started for message:', chunk.message_id);
+              streamedContent = '';
+              break;
+              
+            default:
+              console.warn('Unknown chunk type:', chunk);
+          }
         }
       });
     },
@@ -97,6 +119,34 @@ export function useMessages(conversationId: string) {
       );
     },
   });
+  
+  // Helper function to update a message in the cache
+  function updateMessageInCache(messageId: string, content: string) {
+    queryClient.setQueryData(
+      CHAT_QUERY_KEYS.conversation(conversationId),
+      (oldConversation: Conversation | undefined) => {
+        if (!oldConversation) return oldConversation;
+        
+        // Replace the message with the updated version
+        const updatedMessages = oldConversation.messages.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, content } 
+            : msg
+        );
+        
+        // Check if this is the last message
+        const isLastMessage = oldConversation.lastMessage?.id === messageId;
+        
+        return {
+          ...oldConversation,
+          messages: updatedMessages,
+          lastMessage: isLastMessage 
+            ? { ...oldConversation.lastMessage, content } 
+            : oldConversation.lastMessage
+        };
+      }
+    );
+  }
 
   return {
     conversation,

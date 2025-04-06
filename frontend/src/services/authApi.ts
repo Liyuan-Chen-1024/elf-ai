@@ -9,7 +9,6 @@ if (import.meta.env.DEV) {
   window.console.log('🔧 API Base URL configured as:', apiBaseUrl);
 }
 
-
 // Auth API endpoints
 export type AuthResponse = { token: string; user: User };
 
@@ -19,72 +18,54 @@ export const authApi = {
     try {
       window.console.log('Attempting login for:', credentials.username);
       
-      // Create form data for Django's authentication system
-      const formData = new FormData();
-      formData.append('username', credentials.username);
-      formData.append('password', credentials.password);
+      // Ensure CSRF token is fetched before login attempt
+      await fetchClient.initialize();
       
-      // First try with JSON (most common)
-      let response;
-      try {
-        response = await fetchClient.post<AuthResponse>('/auth/login/', {
-          username: credentials.username,
-          password: credentials.password
-        }, {
-          headers: {'Content-Type': 'application/json'},
-          withCredentials: false
-        });
-        window.console.log('Login succeeded with JSON format');
-      } catch (_jsonError) {
-        window.console.log('JSON login failed, trying FormData approach');
-        
-        // If JSON fails, try FormData approach
-        response = await fetchClient.post<AuthResponse>('/auth/login/', formData, {
-          withCredentials: false
-        });
-        window.console.log('Login succeeded with FormData format');
+      // Log current CSRF token status
+      const csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+      
+      if (csrfToken) {
+        window.console.log('CSRF token found in cookies:', csrfToken.substring(0, 5) + '...');
+      } else {
+        window.console.warn('No CSRF token found in cookies before login attempt');
+        // Try to fetch it again to be safe
+        await fetchClient.initialize();
       }
-    
-      window.console.log('Login response:', JSON.stringify(response.data));
       
-      // Extract and store token - handle different formats
-      let token = null;
-      let userData = null;
+      window.console.log('Login attempt with credentials:', {
+        username: credentials.username,
+        password: credentials.password.replace(/./g, '*') // Don't log actual password
+      });
       
-      if (typeof response.data === 'string') {
-        // Some Django APIs return the token as a string
-        token = response.data;
-      } else if (response.data.token) {
-        token = response.data.token;
-        userData = response.data.user;
-      } else if ('key' in response.data) {
-        token = (response.data as unknown as { key: string }).key;
-        userData = response.data.user;
-      }
+      // Use post directly
+      const response = await fetchClient.post<AuthResponse>('/auth/login/', {
+        username: credentials.username,
+        password: credentials.password
+      });
+
+      window.console.log('Login response status:', response.status);
+      
+      // Get data directly from response (already parsed)
+      const data = response.data;
+      window.console.log('Login response data:', data);
+      
+      // Extract token and user data
+      const { token, user } = data;
       
       if (token) {
         // Store the token
         window.localStorage.setItem('authToken', token);
-        window.console.log('Stored auth token:', token);
+        window.console.log('Stored auth token:', token.substring(0, 5) + '...');
         
-        // If there's user data, store that too
-        if (userData) {
-          window.localStorage.setItem('user', JSON.stringify(userData));
-        }
+        // Also log token for debugging
+        window.console.log('Token being stored in localStorage:', token);
         
-        // Return properly formed response with minimum required User fields
-        return {
-          token,
-          user: userData || { 
-            id: 'unknown', 
-            username: credentials.username,
-            email: '',  // Add minimum required fields
-            name: credentials.username,
-            avatar: ''  // Empty string instead of null
-          }
-        };
+        return { token, user };
       } else {
-        window.console.error('No token found in login response', response.data);
+        window.console.error('No token found in login response data:', data);
         throw new Error('No authentication token received');
       }
     } catch (error) {
@@ -95,7 +76,7 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     try {
-      await fetchClient.post('/auth/logout/');
+      await fetchClient.post('/auth/logout/', {});
     } catch (error) {
       if (import.meta.env.DEV) {
         window.console.error('Logout error:', error);
@@ -108,7 +89,12 @@ export const authApi = {
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const response = await fetchClient.get<User>('/auth/profile/');
-    return response.data;
+    try {
+      const response = await fetchClient.get<User>('/auth/profile/');
+      return response.data;
+    } catch (error) {
+      window.console.error('Failed to get current user:', error);
+      throw error;
+    }
   },
 };
