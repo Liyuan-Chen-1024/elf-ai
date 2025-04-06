@@ -1,7 +1,6 @@
 import { useConversations } from "../../hooks/useChat";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
-import { Conversation } from '../../types';
 import { useState } from 'react';
 
 function WelcomeScreen() {

@@ -1,11 +1,10 @@
 import { Box } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ConversationView from './conversation/ConversationView';
 import WelcomeScreen from './WelcomeScreen';
 import ConversationSidebar from './sidebar/ConversationSidebar';
 
 function ChatContainer() {
-  const navigate = useNavigate();
   const { conversationId } = useParams<{ conversationId?: string }>();
   
   return (
@@ -15,8 +14,10 @@ function ChatContainer() {
       overflow: 'hidden',
       position: 'relative'
     }}>
-      <ConversationSidebar />
-
+      {conversationId && (
+        <ConversationSidebar />
+      )}
+     
       <Box sx={{ 
         flex: 1, 
         display: 'flex', 

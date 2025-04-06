@@ -126,7 +126,7 @@ export function useMessage(conversationId: string) {
 
   const sendMessage = useMutation({
     mutationFn: chatApi.sendMessage,
-    onSuccess: (newMessage: Message) => {
+    onSuccess: async (newMessage: Message) => {
       console.log("newMessage", newMessage);
       // Add user message to the conversation
       const updatedConversation = {
@@ -152,9 +152,26 @@ export function useMessage(conversationId: string) {
             } : conv
           )
       );
+
+      // Start streaming the agent's response
+      if (newMessage.agent_message_id) {
+        setStreamedResponse('Thinking...');
+        try {
+          await chatApi.streamMessage({
+            conversationId: conversation.id,
+            messageId: newMessage.agent_message_id,
+            content: newMessage.content,
+            onChunk: (chunk: string) => {
+              setStreamedResponse(prev => chunk === '' ? chunk : prev + chunk);
+            }
+          });
+        } catch (error) {
+          console.error('Error streaming message:', error);
+          setStreamedResponse(prev => prev + '\n\nError: Failed to get response');
+        }
+      }
     },
   });
-
 
   return {
     conversation,

@@ -39,7 +39,6 @@ function ChatView() {
   
   const { 
     conversations, 
-    createConversation,
     isLoading,
     isDeleting: isConversationDeleting
   } = useConversations();
@@ -69,23 +68,14 @@ function ChatView() {
     if (!message.trim()) return;
     
     try {
-      let targetConversationId = conversationId;
-      
-      if (!targetConversationId) {
-        // Create new conversation
-        const newConversation = await createConversation({ 
-          title: message.substring(0, 30) + '...' 
-        });
-        targetConversationId = newConversation.id;
-        // Navigate to new conversation
-        navigate(`/chat/${targetConversationId}`);
-      }
-
-      // Send the message
-      await sendMessage({
-        conversationId: targetConversationId,
+      const response = await sendMessage({
+        conversationId: conversationId,
         content: message
       });
+
+      if (import.meta.env.DEV) {
+        console.log('Message sent, response:', response);
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
     }
