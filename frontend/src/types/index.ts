@@ -21,7 +21,9 @@ export interface Message {
   isEdited: boolean;
   role: 'user' | 'agent' | 'system';
   is_deleted?: boolean;
-  agent_message_id?: string;
+  agent_message_id: string;
+  is_generating: boolean;
+  status_generating: string;
 }
 
 // Conversation related types

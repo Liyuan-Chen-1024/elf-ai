@@ -10,6 +10,8 @@ class MessageSerializer(serializers.ModelSerializer):
     conversation_id = serializers.UUIDField()
     created_at = serializers.DateTimeField(read_only=True)
     role = serializers.CharField(read_only=True)
+    is_generating = serializers.BooleanField(read_only=True)
+    status_generating = serializers.CharField(read_only=True, allow_null=True)
 
     class Meta:
         model = Message
@@ -20,8 +22,10 @@ class MessageSerializer(serializers.ModelSerializer):
             "sender",
             "created_at",
             "role",
+            "is_generating",
+            "status_generating",
         ]
-        read_only_fields = ["id", "timestamp", "role"]
+        read_only_fields = ["id", "timestamp", "role", "is_generating", "status_generating"]
 
     @extend_schema_field({
         "type": "object",

@@ -481,28 +481,36 @@ export class FetchClient {
               // Convert the chunk to text and add it to our buffer
               const chunk = decoder.decode(value, { stream: true });
               if (import.meta.env.DEV && chunk.length > 0) {
-                window.console.log(`Received ${chunk.length} bytes of stream data`);
+                window.console.log(`Received ${chunk.length} bytes of stream data:`, chunk);
               }
               buffer += chunk;
               
               // Process any complete SSE messages in the buffer
-              let newlineIndex;
-              while ((newlineIndex = buffer.indexOf('\n\n')) !== -1) {
-                const message = buffer.slice(0, newlineIndex);
-                buffer = buffer.slice(newlineIndex + 2);
+              // Events are separated by newline characters
+              const lines = buffer.split('\n');
+              
+              // Keep the last potentially incomplete line in the buffer
+              buffer = lines.pop() || '';
+              
+              // Process complete lines
+              for (const line of lines) {
+                // Skip empty lines
+                if (!line.trim()) continue;
                 
-                // Process the SSE message
-                if (message.startsWith('data: ')) {
+                // Handle data lines
+                if (line.startsWith('data:')) {
                   try {
-                    const jsonStr = message.substring(6);
+                    const jsonStr = line.substring(5).trim();
                     if (import.meta.env.DEV) {
-                      window.console.log('SSE message:', jsonStr);
+                      window.console.log('SSE data message:', jsonStr);
                     }
-                    const data = JSON.parse(jsonStr) as T;
-                    onChunk(data);
-                  } catch (_error) {
+                    if (jsonStr) {
+                      const data = JSON.parse(jsonStr) as T;
+                      onChunk(data);
+                    }
+                  } catch (error) {
                     if (import.meta.env.DEV) {
-                      window.console.error('Error parsing SSE message:', message);
+                      window.console.error('Error parsing SSE message:', line, error);
                     }
                   }
                 }
@@ -566,12 +574,18 @@ export class FetchClient {
   }
 
   public async post<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<FetchResponse<T>> {
-    return this.request<T>({
-      url,
-      method: 'POST',
-      data,
-      options,
-    });
+    try {
+      const result = await this.request<T>({
+        url,
+        method: 'POST',
+        data,
+        options,
+      });
+      return result;
+    } catch (error) {
+      console.error(`POST request failed to ${url}:`, error);
+      throw error;
+    }
   }
 
   public async put<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<FetchResponse<T>> {

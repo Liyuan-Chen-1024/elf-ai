@@ -56,6 +56,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 user_message = Message.objects.create(
                     conversation=conversation,
                     content=serializer.validated_data['content'],
+                    is_generating=False,
                     role='user'
                 )
                 
@@ -74,11 +75,11 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 )
 
                 return Response({
-                    "message": MessageSerializer(user_message).data,
-                    "agent_message_id": agent_message.id
+                    "user_message": MessageSerializer(user_message).data,
+                    "agent_message": MessageSerializer(agent_message).data
                 }, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['GET'], url_path='messages/(?P<message_id>[^/.]+)/stream')
+    @action(detail=True, methods=['GET', 'POST'], url_path='messages/(?P<message_id>[^/.]+)/stream')
     def stream_agent_response(self, request: Request, pk=None, message_id=None):
         """Stream the AI's response for a specific message."""
         conversation = self.get_object()

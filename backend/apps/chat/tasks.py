@@ -23,6 +23,11 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
         ai_message = Message.objects.get(id=ai_message_id, role='agent')
         
         try:
+            # Update initial status
+            with transaction.atomic():
+                ai_message.status_generating = "Analyzing your message..."
+                ai_message.save(update_fields=['status_generating'])
+
             # Your AI generation logic here
             # This is a placeholder - replace with your actual AI logic
             response_chunks = [
@@ -32,16 +37,40 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 "\n\nFirst, let me analyze this in detail. ",
                 "There are several important aspects to consider here. ",
                 "Let's break this down step by step.\n\n",
+            ]
+            
+            # Update status to show we're processing
+            with transaction.atomic():
+                ai_message.status_generating = "Formulating response..."
+                ai_message.save(update_fields=['status_generating'])
+
+            # First set of thoughts
+            response_chunks.extend([
                 "1. The initial perspective: Your question touches on some fundamental concepts. ",
                 "It's important to approach this systematically and thoughtfully. ",
                 "\n\n2. Going deeper: When we examine this more closely, ",
+            ])
+
+            # Update status for deeper analysis
+            with transaction.atomic():
+                ai_message.status_generating = "Analyzing implications..."
+                ai_message.save(update_fields=['status_generating'])
+
+            # More detailed analysis
+            response_chunks.extend([
                 "we can see various interconnected elements at play. ",
                 "Each one contributes to the overall picture in its own unique way. ",
                 "\n\n3. Consider the implications: This leads us to some interesting conclusions. ",
                 "Not only about the immediate question, but also about related concepts. ",
-                "\n\nFurthermore, there are additional factors to consider. ",
-                "Recent research and developments in this area suggest that ",
-                "we should also take into account emerging perspectives. ",
+            ])
+
+            # Update status for conclusion
+            with transaction.atomic():
+                ai_message.status_generating = "Finalizing response..."
+                ai_message.save(update_fields=['status_generating'])
+
+            # Conclusion
+            response_chunks.extend([
                 "\n\nTo summarize the key points:\n",
                 "• First, we need to acknowledge the complexity of the matter\n",
                 "• Second, there are multiple valid approaches to consider\n",
@@ -50,7 +79,7 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 "while this is a comprehensive overview, ",
                 "there's always room for further discussion and exploration. ",
                 "Would you like me to elaborate on any particular aspect?"
-            ]
+            ])
             
             # Update message content progressively
             accumulated_content = ""
@@ -59,12 +88,12 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 with transaction.atomic():
                     ai_message.content = accumulated_content
                     ai_message.save(update_fields=['content'])
-                    time.sleep(1)
             
             # Mark generation as complete
             with transaction.atomic():
                 ai_message.is_generating = False
-                ai_message.save(update_fields=['is_generating'])
+                ai_message.status_generating = None  # Clear status when done
+                ai_message.save(update_fields=['is_generating', 'status_generating'])
                 
         except Exception as e:
             logger.exception(f"Error generating AI response for message {ai_message_id}")
@@ -72,7 +101,8 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
             with transaction.atomic():
                 ai_message.content = f"Error generating response: {str(e)}"
                 ai_message.is_generating = False
-                ai_message.save(update_fields=['content', 'is_generating'])
+                ai_message.status_generating = "Error occurred"
+                ai_message.save(update_fields=['content', 'is_generating', 'status_generating'])
             raise
             
     except Message.DoesNotExist:

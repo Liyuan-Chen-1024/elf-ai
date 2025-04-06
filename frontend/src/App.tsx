@@ -12,9 +12,7 @@ import { useAuth } from './hooks/useAuth';
 import './styles/global.css';
 import theme from './styles/theme';
 import { AxiosError } from 'axios';
-import ChatContainer from './features/chat/ChatContainer';
-import WelcomeScreen from './features/chat/WelcomeScreen';
-import ConversationView from './features/chat/conversation/ConversationView';
+import { ChatContainer } from './features/chat';
 
 // Create a query client
 const queryClient = new QueryClient({
