@@ -42,6 +42,22 @@ interface ChatProviderProps {
   conversationId?: string | undefined;
 }
 
+// Default empty message data - used when no conversation is active
+const emptyMessageData = {
+  messages: [] as Message[],
+  isLoading: false,
+  conversation: undefined,
+  error: null
+};
+
+// Default empty message actions - used when no conversation is active
+const emptyMessageActions = {
+  sendMessage: async () => false, 
+  clearError: () => {}, 
+  error: null, 
+  isSending: false 
+};
+
 // Provider component
 export const ChatProvider: React.FC<ChatProviderProps> = ({ 
   children,
@@ -50,7 +66,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   const hasActiveConversation = !!conversationId && conversationId.trim() !== '';
   const activeConversationId = hasActiveConversation ? conversationId : '';
   
-  // Conversation data and actions
+  // Conversation data and actions - these hooks are always called
   const {
     conversations,
     isLoading: isLoadingConversations
@@ -65,29 +81,27 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     isDeleting: isDeletingConversation
   } = useConversationActions();
   
-  // Message data and actions for the selected conversation
-  // Only fetch messages if we have a valid conversation ID
+  // Always call the hooks, but with an empty ID if there's no active conversation
+  // This ensures hook call order remains consistent
+  const messagesResult = useMessages(activeConversationId);
+  
+  // Get messages data from result if we have an active conversation, otherwise use empty data
   const {
     messages = [],
     isLoading: isLoadingMessages,
     conversation: currentConversation
-  } = hasActiveConversation 
-      ? useMessages(activeConversationId) 
-      : { messages: [], isLoading: false, conversation: undefined };
+  } = hasActiveConversation ? messagesResult : emptyMessageData;
   
+  // Always call the message actions hook, but with an empty ID if there's no active conversation
+  const messageActionsResult = useMessageActions(activeConversationId);
+  
+  // Get message actions from result if we have an active conversation, otherwise use empty actions
   const {
     sendMessage,
     clearError: clearMessageError,
     error: messageError,
     isSending: isSendingMessage
-  } = hasActiveConversation
-      ? useMessageActions(activeConversationId)
-      : { 
-          sendMessage: async () => false, 
-          clearError: () => {}, 
-          error: null, 
-          isSending: false 
-        };
+  } = hasActiveConversation ? messageActionsResult : emptyMessageActions;
   
   // Value to provide to consumers
   const contextValue: ChatContextValue = {

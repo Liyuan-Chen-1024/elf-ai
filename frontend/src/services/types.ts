@@ -32,7 +32,8 @@ export interface ResponseInterceptor {
 }
 
 export interface SSEMessage {
-  type: 'start' | 'token' | 'content_complete' | 'done' | 'error';
+  type: 'start' | 'token' | 'chunk' | 'content_complete' | 'done' | 'error';
   content?: string;
   message_id?: string;
+  [key: string]: any;
 } 

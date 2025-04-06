@@ -1,61 +1,30 @@
 import { Conversation, Message } from '../types';
 import fetchClient from './fetchClient';
-import { SSEMessage } from './types';
 
-// Global state for streaming messages
-// This is a direct approach that bypasses React Query's caching
+// API base URL - same as what fetchClient uses
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// Super simple global state for streaming content
 export const streamState = {
-  activeStreams: new Map<string, string>(),
-  listeners: new Set<(messageId: string, content: string) => void>(),
-
-  // Add content to a streaming message
-  addContent(messageId: string, chunk: string) {
-    const currentContent = this.activeStreams.get(messageId) || '';
-    const newContent = currentContent + chunk;
-    
-    console.log(`Adding chunk to message ${messageId}:`, {
-      currentContent,
-      chunkToAdd: chunk,
-      newContent
-    });
-    
-    this.activeStreams.set(messageId, newContent);
-    
-    // Notify listeners about the content update - do this asynchronously
-    // to avoid blocking the main thread
-    setTimeout(() => {
-      this.listeners.forEach(listener => {
-        try {
-          listener(messageId, newContent);
-        } catch (error) {
-          console.error('Error in stream listener:', error);
-        }
-      });
-    }, 0);
+  // Map of message IDs to their content
+  contents: new Map<string, string>(),
+  
+  // Set content for a message
+  setContent(messageId: string, content: string) {
+    this.contents.set(messageId, content);
+    console.log(`Updated content for ${messageId}, length: ${content.length}`);
   },
-
-  // Subscribe to content updates
-  subscribe(callback: (messageId: string, content: string) => void) {
-    this.listeners.add(callback);
-    return () => {
-      this.listeners.delete(callback);
-    };
+  
+  // Get content for a message
+  getContent(messageId: string): string {
+    return this.contents.get(messageId) || '';
   },
-
-  // Mark a stream as complete
-  completeStream(messageId: string) {
-    // Keep the content but mark it as complete
-    this.listeners.forEach(listener => listener(messageId, '[DONE]'));
+  
+  // Clear content for a message
+  clearContent(messageId: string) {
+    this.contents.delete(messageId);
   }
 };
-
-// Get API URL from environment or use default
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-// Log the API URL in development mode
-if (import.meta.env.DEV) {
-  window.console.log('🔧 API Base URL configured as:', apiBaseUrl);
-}
 
 interface PaginatedResponse<T> {
   results: T[];
@@ -74,19 +43,8 @@ export const chatApi = {
   },
 
   createConversation: async (): Promise<Conversation> => {
-    try {
-      const response = await fetchClient.post<Conversation>('/chat/conversations/');
-      
-      if (!response.data || typeof response.data !== 'object') {
-        console.error('Invalid response from create conversation', response);
-        throw new Error('Invalid server response');
-      }
-      
-      return response.data;
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      throw error;
-    }
+    const response = await fetchClient.post<Conversation>('/chat/conversations/');
+    return response.data;
   },
 
   updateConversation: async ({ id, title }: { id: string; title: string }): Promise<Conversation> => {
@@ -113,64 +71,109 @@ export const chatApi = {
     content: string;
     onStream?: (chunk: string) => void;
   }): Promise<{ user_message: Message; agent_message: Message }> => {
-    try {
-      // Send the message
-      const response = await fetchClient.post<{ user_message: Message; agent_message: Message }>(
-        `/chat/conversations/${conversationId}/messages/`, 
-        { content },
-        {
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
+    // Send the message
+    const response = await fetchClient.post<{ user_message: Message; agent_message: Message }>(
+      `/chat/conversations/${conversationId}/messages/`, 
+      { content }
+    );
 
-      // Validate response format
-      if (!response.data || !response.data.user_message || !response.data.agent_message) {
-        console.error('Invalid response format from sendMessage:', response);
-        throw new Error('Invalid response format from server');
-      }
+    // Find any message that is currently generating
+    const generatingMessage = [response.data.user_message, response.data.agent_message]
+      .find(msg => msg.is_generating);
 
-      // Find any message that is currently generating
-      const generatingMessage = [response.data.user_message, response.data.agent_message]
-        .find(msg => msg.is_generating);
-
-      // If a message is generating and we have a stream callback, start streaming
-      if (generatingMessage && onStream) {
-        console.log(`Starting stream for message ${generatingMessage.id}`);
-
-        try {
-          // Start the stream
-          await fetchClient.stream<SSEMessage>(
-            `/chat/conversations/${conversationId}/messages/${generatingMessage.id}/stream/`,
-            { content },
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'text/event-stream, application/json',
-              }
-            },
-            (data) => {
-              if (data.type === 'token' && data.content) {
-                // Forward the token to the callback
-                onStream(data.content);
-              } else if (data.type === 'error') {
-                console.error('Error from server:', data.content);
-                onStream(`\n\nError: ${data.content}`);
-              } else if (data.type === 'done') {
-                console.log('Stream complete');
-                onStream('[DONE]');
+    // If we have a generating message, set up streaming
+    if (generatingMessage && generatingMessage.id) {
+      console.log(`Setting up stream for message ${generatingMessage.id}`);
+      
+      // Initialize stream state with initial content
+      const initialContent = generatingMessage.content || '';
+      streamState.setContent(generatingMessage.id, initialContent);
+      
+      try {
+        // Simple stream handler that just updates content
+        const handleStreamResponse = async (response: Response) => {
+          if (!response.body) return;
+          
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              console.log('Stream completed');
+              break;
+            }
+            
+            // Decode the chunk and add to buffer
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+            
+            // Process SSE messages
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep the last potentially incomplete line
+            
+            for (const line of lines) {
+              if (!line.trim() || !line.startsWith('data:')) continue;
+              
+              try {
+                const data = JSON.parse(line.substring(5).trim());
+                
+                if (data.type === 'token' && data.content) {
+                  // Update our simple stream state
+                  const currentContent = streamState.getContent(generatingMessage.id);
+                  const newContent = currentContent + data.content;
+                  streamState.setContent(generatingMessage.id, newContent);
+                  
+                  // Call the onStream callback if provided
+                  if (onStream) onStream(data.content);
+                }
+              } catch (err) {
+                console.warn('Error parsing SSE message:', err);
               }
             }
-          );
-        } catch (streamError) {
-          console.error('Error during streaming:', streamError);
-          // Don't re-throw, just log the error to continue with the flow
-        }
-      }
+          }
+        };
+        
+        // Use fetchClient for streaming to ensure all headers match regular requests
+        const streamUrl = `/chat/conversations/${conversationId}/messages/${generatingMessage.id}/stream/`;
+        
+        // First get the stream response using fetchClient
+        try {
+          // Get CSRF token from cookie if available
+          const csrfToken = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
 
-      return response.data;
-    } catch (error) {
-      console.error('Error sending message:', error);
-      throw error;
+          const streamResponse = await fetch(`${API_BASE_URL}${streamUrl}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'text/event-stream',
+              'Authorization': localStorage.getItem('authToken') ? `Token ${localStorage.getItem('authToken')}` : '',
+              ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
+            },
+            body: JSON.stringify({ content }),
+            credentials: 'include'
+          });
+
+          // Only process if we got a valid response
+          if (streamResponse.ok) {
+            // Process the stream
+            handleStreamResponse(streamResponse);
+          } else {
+            console.error('Failed to start stream, status:', streamResponse.status);
+          }
+        } catch (streamErr) {
+          console.error('Error initiating stream:', streamErr);
+        }
+        
+      } catch (error) {
+        console.error('Error setting up stream:', error);
+      }
     }
+
+    return response.data;
   }
 };

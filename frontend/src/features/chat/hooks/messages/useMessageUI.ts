@@ -8,10 +8,11 @@ import { Message } from '../../../../types';
  * This implementation uses more browser-compatible scroll behavior
  * with smoother animations and proper throttling.
  */
-export function useMessageUI(messages: Message[]) {
+export function useMessageUI(messages: Message[] = []) {
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const conversationIdRef = useRef<string | null>(null);
-  const currentConversationId = messages[0]?.conversationId ?? null;
+  // Handle potential undefined/empty messages array gracefully
+  const currentConversationId = messages && messages.length > 0 ? messages[0]?.conversationId : null;
   
   // Throttle scroll to prevent too many scrolls in quick succession
   const scrollTimeoutRef = useRef<number | null>(null);
@@ -48,7 +49,8 @@ export function useMessageUI(messages: Message[]) {
   
   // Auto-scroll to bottom when conversation changes
   useEffect(() => {
-    if (conversationIdRef.current !== currentConversationId) {
+    // Only run if we have a valid conversation ID
+    if (currentConversationId && conversationIdRef.current !== currentConversationId) {
       conversationIdRef.current = currentConversationId;
       smoothScrollToBottom(true); // Instant scroll when conversation changes
     }
@@ -63,7 +65,8 @@ export function useMessageUI(messages: Message[]) {
 
   // Auto-scroll when new messages arrive
   useEffect(() => {
-    if (messages.length > 0) {
+    // Only scroll if we have messages 
+    if (messages && messages.length > 0) {
       smoothScrollToBottom();
     }
     
@@ -73,7 +76,7 @@ export function useMessageUI(messages: Message[]) {
         window.clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [messages.length]);
+  }, [messages ? messages.length : 0]); // Safely access length
 
   // Handler for when the scrollable container is rendered
   const handleScrollableRef = (container: HTMLDivElement) => {

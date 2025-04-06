@@ -15,15 +15,21 @@ CORS_ALLOW_ALL_ORIGINS: bool = True
 CORS_ALLOW_CREDENTIALS: bool = True
 CORS_ORIGIN_ALLOW_ALL: bool = True  # Add this for older versions of django-cors-headers
 # Override CORS_ALLOWED_ORIGINS from base.py
-CORS_ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+CORS_ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080"]
 
 # CSRF Settings
-CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080", "http://localhost:8000"]
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"  # Consider using "None" for cross-site requests in development
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
+CSRF_USE_SESSIONS = False  # Don't store CSRF in sessions
+CSRF_COOKIE_DOMAIN = None  # Allow subdomain access
+
+# Debug CSRF issues in development
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
+
 SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_HTTPONLY = True
 
@@ -38,18 +44,6 @@ CORS_ALLOW_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
-    "access-control-allow-origin",
-    "cache-control",
-    "connection",
-    "content-encoding",
-    "content-length",
-    "host",
-    "pragma",
-    "referer",
-    "sec-fetch-dest",
-    "sec-fetch-mode",
-    "sec-fetch-site",
-    "last-event-id",  # Required for SSE
 ]
 
 CORS_EXPOSE_HEADERS = [

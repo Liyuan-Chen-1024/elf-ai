@@ -6,6 +6,8 @@ import { useMessages } from './useMessages';
  * on top of the basic useMessages data hook.
  */
 export function useMessageActions(conversationId: string) {
+  const hasValidId = !!conversationId && conversationId.trim() !== '';
+  
   const { 
     sendMessage: apiSendMessage,
     messages,
@@ -21,6 +23,11 @@ export function useMessageActions(conversationId: string) {
    * Send a message with error handling
    */
   const sendMessage = async (content: string) => {
+    if (!hasValidId) {
+      setError('No active conversation selected');
+      return false;
+    }
+    
     if (!content.trim()) {
       setError('Message cannot be empty');
       return false;
