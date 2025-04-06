@@ -5,6 +5,8 @@ import fetchClient from './fetchClient';
 interface StreamingChunkBase {
   type: string;
   message_id: string;
+  is_generating?: boolean;
+  status_generating?: string;
 }
 
 interface StreamingStart extends StreamingChunkBase {
@@ -116,6 +118,7 @@ export const chatApi = {
           }
         },
         (chunk) => {
+          window.console.log(chunk);
           onStream(conversationId, agentMessageId, chunk);
         }
       );

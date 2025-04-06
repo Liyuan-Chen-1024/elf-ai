@@ -28,7 +28,7 @@ export function useMessages(conversationId: string) {
     mutationFn: ({ content }: { content: string }) => {
       // Don't send message if no valid conversation ID
       if (!hasValidId) {
-        console.warn('Attempted to send message without valid conversation ID');
+        window.console.warn('Attempted to send message without valid conversation ID');
         return Promise.resolve({ user_message: {} as Message, agent_message: {} as Message });
       }
       
@@ -51,35 +51,26 @@ export function useMessages(conversationId: string) {
           // Handle different chunk types
           switch (chunk.type) {
             case 'chunk':
-              // Handle content chunk
-              streamedContent += chunk.content;
-              console.log(`Received content chunk (${chunk.content.length} chars)`);
-              
-              // Update the message in the cache
-              updateMessageInCache(messageId, streamedContent);
+              streamedContent += chunk.content;  
+              updateMessageInCache(messageId, chunk.content, chunk.is_generating, chunk.status_generating);
+            
               break;
               
-            case 'end':
-              // Handle end of streaming
-              console.log('Stream ended, final content:', chunk.content);
-              
-              // Use the complete message from the server
-              updateMessageInCache(messageId, chunk.content);
+            case 'end':              
+              updateMessageInCache(messageId, chunk.content, chunk.is_generating, chunk.status_generating);
               break;
               
             case 'error':
-              // Handle errors
-              console.error('Stream error:', chunk.error);
               break;
               
             case 'start':
               // Handle stream start
-              console.log('Stream started for message:', chunk.message_id);
               streamedContent = '';
+              updateMessageInCache(messageId, streamedContent, chunk.is_generating, chunk.status_generating);
               break;
               
             default:
-              console.warn('Unknown chunk type:', chunk);
+              window.console.warn('Unknown chunk type:', chunk);
           }
         }
       });
@@ -121,16 +112,15 @@ export function useMessages(conversationId: string) {
   });
   
   // Helper function to update a message in the cache
-  function updateMessageInCache(messageId: string, content: string) {
+  function updateMessageInCache(messageId: string, content: string, is_generating: boolean = false, status_generating: string = '') {
     queryClient.setQueryData(
       CHAT_QUERY_KEYS.conversation(conversationId),
       (oldConversation: Conversation | undefined) => {
         if (!oldConversation) return oldConversation;
-        
-        // Replace the message with the updated version
+      // Replace the message with the updated version
         const updatedMessages = oldConversation.messages.map(msg => 
           msg.id === messageId 
-            ? { ...msg, content } 
+            ? { ...msg, content, is_generating, status_generating } 
             : msg
         );
         

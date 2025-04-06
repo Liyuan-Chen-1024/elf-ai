@@ -6,6 +6,9 @@ declare const document: Document;
 declare const fetch: typeof window.fetch;
 declare const console: Console;
 
+// Import the StreamingResponse type
+import { StreamingResponse } from './chatApi';
+
 // Define RequestOptions type to replace 'any'
 interface RequestOptions extends RequestInit {
   headers?: Record<string, string>;
@@ -124,7 +127,7 @@ const fetchClient = async <T = unknown>(url: string, method: string = 'GET', bod
 
 // === Streaming Support ===
 
-const stream = async (url: string, options: RequestOptions = {}, onChunk: (chunk: any) => void) => {
+const stream = async (url: string, options: RequestOptions = {}, onChunk: (chunk: StreamingResponse | string) => void) => {
   const [finalUrl, fetchOptions] = prepareRequest(url, 'GET', null, options);
 
   const response = await fetch(finalUrl, fetchOptions);

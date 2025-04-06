@@ -98,7 +98,7 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
               }),
             }}
           >
-            {isGenerating ? `Generating` : 'Completed'}
+            {message.status_generating}
           </Typography>
         </Box>
       </Box>

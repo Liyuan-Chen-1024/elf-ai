@@ -1,9 +1,13 @@
+"""
+Views for the chat application.
+
+This module provides API views for managing conversations and messages,
+including streaming functionality for agent responses.
+"""
 from typing import Any, Dict, Generator, List
 import json
 import time
-import asyncio
 
-from django.conf import settings
 from django.db import transaction
 from django.http import StreamingHttpResponse
 from rest_framework import status, viewsets
@@ -19,17 +23,23 @@ from apps.chat.serializers import (
     ConversationSerializer,
     MessageCreateSerializer,
     MessageSerializer,
-    MessageUpdateSerializer
 )
-
 
 logger = get_logger(__name__)
 
+
 class ConversationViewSet(viewsets.ModelViewSet):
+    """
+    API viewset for managing conversations.
+    
+    Provides CRUD operations for conversations and nested endpoints
+    for managing messages within conversations.
+    """
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        """Return conversations for the authenticated user, ordered by last update."""
         return (
             Conversation.objects.filter(user=self.request.user)
             .prefetch_related("messages")
@@ -37,11 +47,17 @@ class ConversationViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
+        """Save the conversation with the authenticated user."""
         serializer.save(user=self.request.user)
 
     @action(detail=True, methods=['GET', 'POST'])
-    def messages(self, request: Request, pk=None):
-        """List and create messages for a specific conversation."""
+    def messages(self, request: Request, pk=None) -> Response:
+        """
+        List and create messages for a specific conversation.
+        
+        GET: Returns all messages in the conversation
+        POST: Creates a new user message and initiates an agent response
+        """
         conversation = self.get_object()
         
         if request.method == 'GET':
@@ -60,7 +76,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     role='user'
                 )
                 
-                # Create a placeholder for the AI's response
+                # Create a placeholder for the agent's response
                 agent_message = Message.objects.create(
                     conversation=conversation,
                     content="",
@@ -68,20 +84,32 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     role='agent'
                 )
 
-                # Start the AI response generation task
+                # Start the agent response generation task
                 generate_agent_response.delay(
                     message_content=user_message.content,
                     ai_message_id=str(agent_message.id)
                 )
 
-                return Response({
-                    "user_message": MessageSerializer(user_message).data,
-                    "agent_message": MessageSerializer(agent_message).data
-                }, status=status.HTTP_201_CREATED)
+                return Response(
+                    {
+                        "user_message": MessageSerializer(user_message).data,
+                        "agent_message": MessageSerializer(agent_message).data
+                    }, 
+                    status=status.HTTP_201_CREATED
+                )
 
-    @action(detail=True, methods=['GET', 'POST'], url_path='messages/(?P<message_id>[^/.]+)/stream')
-    def stream_agent_response(self, request: Request, pk=None, message_id=None):
-        """Stream the AI's response for a specific message."""
+    @action(
+        detail=True, 
+        methods=['GET'], 
+        url_path='messages/(?P<message_id>[^/.]+)/stream'
+    )
+    def stream_agent_response(self, request: Request, pk=None, message_id=None) -> StreamingHttpResponse:
+        """
+        Stream the agent's response for a specific message.
+        
+        Provides real-time updates on message content and generation status
+        through server-sent events (SSE).
+        """
         conversation = self.get_object()
         try:
             message = conversation.messages.get(id=message_id, role='agent')
@@ -92,10 +120,24 @@ class ConversationViewSet(viewsets.ModelViewSet):
             )
 
         def event_stream() -> Generator[str, None, None]:
-            """Generate streaming response events."""
+            """
+            Generate streaming response events.
+            
+            Yields JSON-formatted strings for the SSE stream with progressive
+            updates to the message content and status.
+            """
             try:
                 last_content = ""
-                yield json.dumps({"type": "start", "message_id": str(message.id)}) + "\n"
+                # Initial event with starting state
+                yield json.dumps(
+                    {
+                        "type": "start", 
+                        "message_id": str(message.id),     
+                        "is_generating": message.is_generating,
+                        "status_generating": message.status_generating,
+                        "content": message.content
+                    }
+                ) + "\n"
 
                 while True:
                     # Refresh message from database
@@ -108,6 +150,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
                         yield json.dumps({
                             "type": "chunk",
                             "message_id": str(message.id),
+                            "is_generating": message.is_generating,
+                            "status_generating": message.status_generating,
                             "content": new_content
                         }) + "\n"
                     
@@ -116,6 +160,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
                         yield json.dumps({
                             "type": "end",
                             "message_id": str(message.id),
+                            "is_generating": message.is_generating,
+                            "status_generating": message.status_generating,
                             "content": message.content
                         }) + "\n"
                         break
@@ -127,7 +173,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 yield json.dumps({
                     "type": "error",
                     "message_id": str(message.id),
-                    "error": str(e)
+                    "error": str(e),
+                    "is_generating": False,
+                    "status_generating": "Error",
+                    "content": ''
                 }) + "\n"
 
         return StreamingHttpResponse(
@@ -135,11 +184,18 @@ class ConversationViewSet(viewsets.ModelViewSet):
             content_type="text/event-stream"
         )
 
+
 class MessageViewSet(viewsets.ModelViewSet):
+    """
+    API viewset for managing individual messages.
+    
+    Provides CRUD operations for messages with proper user filtering.
+    """
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        """Return messages for the authenticated user with related conversations."""
         return Message.objects.filter(
             conversation__user=self.request.user
         ).select_related("conversation")

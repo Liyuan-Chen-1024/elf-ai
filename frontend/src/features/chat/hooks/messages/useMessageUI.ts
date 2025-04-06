@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Message } from '../../../../types';
 
 /**
@@ -11,8 +11,13 @@ import { Message } from '../../../../types';
 export function useMessageUI(messages: Message[] = []) {
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const conversationIdRef = useRef<string | null>(null);
+  // Track the last message content for auto-scrolling during streaming
+  const [lastMessageContent, setLastMessageContent] = useState<string>('');
+  
   // Handle potential undefined/empty messages array gracefully
   const currentConversationId = messages && messages.length > 0 ? messages[0]?.conversationId : null;
+  // Track the last message for content changes
+  const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
   
   // Throttle scroll to prevent too many scrolls in quick succession
   const scrollTimeoutRef = useRef<number | null>(null);
@@ -37,7 +42,7 @@ export function useMessageUI(messages: Message[] = []) {
           behavior: instant ? 'auto' : 'smooth',
           block: 'end'
         });
-      } catch (e) {
+      } catch (_e) {
         // Fallback for older browsers
         const parent = element.parentElement;
         if (parent) {
@@ -77,6 +82,14 @@ export function useMessageUI(messages: Message[] = []) {
       }
     };
   }, [messages ? messages.length : 0]); // Safely access length
+  
+  // Auto-scroll when the content of the last message changes (streaming updates)
+  useEffect(() => {
+    if (lastMessage && lastMessage.content !== lastMessageContent) {
+      setLastMessageContent(lastMessage.content);
+      smoothScrollToBottom();
+    }
+  }, [lastMessage?.content]);
 
   // Handler for when the scrollable container is rendered
   const handleScrollableRef = (container: HTMLDivElement) => {

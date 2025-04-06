@@ -38,11 +38,14 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 "There are several important aspects to consider here. ",
                 "Let's break this down step by step.\n\n",
             ]
+
             
             # Update status to show we're processing
             with transaction.atomic():
                 ai_message.status_generating = "Formulating response..."
                 ai_message.save(update_fields=['status_generating'])
+
+            time.sleep(2)
 
             # First set of thoughts
             response_chunks.extend([
@@ -51,10 +54,12 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 "\n\n2. Going deeper: When we examine this more closely, ",
             ])
 
+
             # Update status for deeper analysis
             with transaction.atomic():
                 ai_message.status_generating = "Analyzing implications..."
                 ai_message.save(update_fields=['status_generating'])
+
 
             # More detailed analysis
             response_chunks.extend([
@@ -88,11 +93,11 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 with transaction.atomic():
                     ai_message.content = accumulated_content
                     ai_message.save(update_fields=['content'])
-            
+        
             # Mark generation as complete
             with transaction.atomic():
                 ai_message.is_generating = False
-                ai_message.status_generating = None  # Clear status when done
+                ai_message.status_generating = "Completed"  # Use empty string instead of None
                 ai_message.save(update_fields=['is_generating', 'status_generating'])
                 
         except Exception as e:
