@@ -28,20 +28,43 @@ const MarkdownComponents: Partial<Components> = {
       !children.includes('\n') && 
       children.trim().length < 30;
 
-    return !props.inline ? (
-      <pre className={isSimpleCodeBlock ? 'simple-code-block' : ''}>
-        {/* Code language indicator */}
-        {language && (
-          <div className="code-language-indicator">
-            {language.toUpperCase()}
-          </div>
-        )}
-        <code className={className || ''}>
-          {children}
-        </code>
-      </pre>
-    ) : (
-      <code>
+    // Check if this is a single line code in a list context (for explanations)
+    const isExplanationContext = className?.includes('language-') && isSimpleCodeBlock;
+    
+    // Detect if this is an inline code or a block code
+    const isInline = !className?.includes('language-');
+      
+    if (!isInline) {
+      // Different styling for explanation code blocks in numbered explanations
+      if (isExplanationContext && isSimpleCodeBlock) {
+        return (
+          <pre className="explanation-code">
+            <code className={className || ''}>
+              {children}
+            </code>
+          </pre>
+        );
+      }
+      
+      // Regular code blocks
+      return (
+        <pre className={isSimpleCodeBlock ? 'simple-code-block' : ''}>
+          {/* Code language indicator */}
+          {language && (
+            <div className="code-language-indicator">
+              {language.toUpperCase()}
+            </div>
+          )}
+          <code className={className || ''}>
+            {children}
+          </code>
+        </pre>
+      );
+    } 
+    
+    // Inline code handling
+    return (
+      <code className="inline-code">
         {children}
       </code>
     );
@@ -127,7 +150,61 @@ const MarkdownComponents: Partial<Components> = {
         }}
       />
     );
-  }
+  },
+  
+  // Custom list item rendering
+  li(props) {
+    const { children, ...rest } = props;
+    
+    // Simple check for "Explanation:" text in list items
+    const containsExplanationText = 
+      typeof children === 'string' && 
+      children.includes('Explanation:');
+    
+    return (
+      <li 
+        {...rest} 
+        className={containsExplanationText ? 'explanation-list-item' : undefined}
+        style={{
+          marginBottom: '0.75rem',
+        }}
+      >
+        {children}
+      </li>
+    );
+  },
+  
+  // Custom heading for explanations
+  h3(props) {
+    const { children, ...rest } = props;
+    
+    // Check if this is an explanation heading
+    const isExplanationHeading = 
+      typeof children === 'string' && 
+      (children === 'Explanation:' || children === 'Explanation');
+    
+    if (isExplanationHeading) {
+      return (
+        <h3 
+          {...rest}
+          className="explanation-heading"
+          style={{
+            color: '#555',
+            fontWeight: 600,
+            fontSize: '1.1rem',
+            marginTop: '1.5rem',
+            marginBottom: '0.75rem',
+            paddingBottom: '0.5rem',
+            borderBottom: '1px solid #e0e0e0'
+          }}
+        >
+          {children}
+        </h3>
+      );
+    }
+    
+    return <h3 {...rest}>{children}</h3>;
+  },
 };
 
 /**

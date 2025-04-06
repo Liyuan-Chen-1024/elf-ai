@@ -125,4 +125,86 @@ tr {
 
 tr:nth-child(even) {
   background-color: #f9f9f9;
+}
+
+/* Add special styling for explanation code blocks */
+.explanation-code {
+  background-color: rgba(40, 44, 52, 0.9) !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0.5rem 0 !important;
+  display: block !important;
+  color: #e6e6e6 !important;
+  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  overflow-x: auto !important;
+  white-space: pre !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+}
+
+.explanation-code code {
+  background-color: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+}
+
+/* Improve single line code appearance */
+pre.single-line-code {
+  padding: 0.5rem 1rem !important;
+  margin: 0.5rem 0 !important;
+  border-radius: 6px !important;
+}
+
+/* Make numbered explanation code blocks better */
+ol li pre, 
+ul li pre {
+  margin: 0.5rem 0 !important;
+}
+
+/* Styles for explanation sections */
+.explanation-section {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #7f56da;
+}
+
+.explanation-section h3 {
+  margin-top: 0;
+  color: #424242;
+}
+
+/* Improve spacing around list items with code */
+ol li, ul li {
+  margin-bottom: 1rem;
+}
+
+/* Special style for inline explanation code */
+.explanation-inline-code {
+  background-color: rgba(40, 44, 52, 0.9);
+  color: #e6e6e6;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 90%;
+  display: inline-block;
+  margin: 0 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Inline code styling */
+.inline-code {
+  background-color: rgba(175, 184, 193, 0.2);
+  color: #24292f;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 90%;
+  font-weight: 500;
+  word-break: break-word;
 } 
