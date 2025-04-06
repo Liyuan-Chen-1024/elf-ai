@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import MessageList from './MessageList';
 import MessageInput from '../components/MessageInput';
@@ -44,6 +44,12 @@ const ConversationView: React.FC = () => {
     // Message actions
     sendMessage,
   } = useChatContext();
+
+  // Check if any message is currently generating
+  const isGenerating = useMemo(() => {
+    if (!activeConversation?.messages) return false;
+    return activeConversation.messages.some(message => message.is_generating);
+  }, [activeConversation?.messages]);
 
   // Determine what to render based on state
   if (!isLoadingConversations && conversations.length === 0) {
@@ -98,7 +104,8 @@ const ConversationView: React.FC = () => {
         <MessageInput
           onSendMessage={sendMessage}
           conversationId={conversationId || ''}
-          isLoading={isSendingMessage || isDeletingConversation || isLoadingConversations}
+          isLoading={isSendingMessage || isDeletingConversation || isLoadingConversations || isGenerating}
+          isGenerating={isGenerating}
           placeholder="Ask me anything..."
         />
       </InputBar>

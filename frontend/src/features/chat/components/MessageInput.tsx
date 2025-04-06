@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { 
   Box, 
   TextField, 
@@ -12,9 +12,13 @@ import { useMessageInput } from '../hooks/messages';
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
+  isGenerating?: boolean;
   placeholder?: string;
   conversationId?: string;
 }
+
+// Add this with other declarations at the top
+declare const setTimeout: typeof window.setTimeout;
 
 /**
  * MessageInput component for entering and sending chat messages.
@@ -27,7 +31,9 @@ interface MessageInputProps {
 const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   isLoading = false,
+  isGenerating = false,
   placeholder = 'Type a message...',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   conversationId,
 }) => {
   const {
@@ -36,7 +42,20 @@ const MessageInput: React.FC<MessageInputProps> = ({
     handleSendMessage,
     handleKeyDown,
     isMessageEmpty
-  } = useMessageInput(onSendMessage, isLoading);
+  } = useMessageInput(onSendMessage, isLoading || isGenerating);
+
+  const inputRef = useRef<HTMLDivElement>(null);
+  
+  // Focus the input when generation is complete
+  useEffect(() => {
+    // When isGenerating changes from true to false, focus the input
+    if (!isGenerating && inputRef.current) {
+      // Short delay to ensure rendering is complete
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isGenerating]);
 
   return (
     <Box
@@ -51,11 +70,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
         fullWidth
         multiline
         maxRows={4}
-        placeholder={placeholder}
+        placeholder={isGenerating ? 'Waiting for response...' : placeholder}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
-        disabled={isLoading}
+        disabled={isLoading || isGenerating}
+        inputRef={inputRef}
         sx={{
           '& .MuiOutlinedInput-root': {
             borderRadius: '30px',
@@ -77,11 +97,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
       />
       <IconButton
         onClick={handleSendMessage}
-        disabled={isLoading || isMessageEmpty}
+        disabled={isLoading || isGenerating || isMessageEmpty}
         sx={{
           position: 'absolute',
           right: '8px',
-          color: isLoading || isMessageEmpty 
+          color: isLoading || isGenerating || isMessageEmpty 
             ? 'rgba(0, 0, 0, 0.3)' 
             : THEME.colors.primary.main,
           '&:hover': {
