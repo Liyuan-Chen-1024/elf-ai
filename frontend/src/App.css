@@ -2,21 +2,23 @@
 
 /* Base styles for code blocks */
 pre {
-  background-color: #282c34;
-  border-radius: 8px;
-  padding: 1rem 0;
-  margin: 1rem 0;
-  overflow-x: auto;
-  position: relative;
+  border-radius: 8px !important;
+  padding: 1rem 0 !important;
+  margin: 1rem 0 !important;
+  overflow-x: auto !important;
+  position: relative !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+  max-width: 100% !important;
 }
 
 pre code {
-  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
   font-size: 15px !important;
   line-height: 1.6 !important;
-  display: block;
-  padding: 0 1.5rem;
-  color: #abb2bf;
+  display: block !important;
+  padding: 0 1.5rem !important;
+  color: #abb2bf !important;
 }
 
 /* Fix for inline code */
@@ -127,36 +129,9 @@ tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
-/* Add special styling for explanation code blocks */
-.explanation-code {
-  background-color: rgba(40, 44, 52, 0.9) !important;
-  border-radius: 6px !important;
-  padding: 0.5rem 1rem !important;
-  margin: 0.5rem 0 !important;
-  display: block !important;
-  color: #e6e6e6 !important;
-  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
-  overflow-x: auto !important;
-  white-space: pre !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
-}
-
-.explanation-code code {
-  background-color: transparent !important;
-  color: inherit !important;
-  padding: 0 !important;
-  font-size: inherit !important;
-  font-family: inherit !important;
-}
-
 /* Improve single line code appearance */
 pre.single-line-code {
-  padding: 0.5rem 1rem !important;
-  margin: 0.5rem 0 !important;
-  border-radius: 6px !important;
+  display: none !important;
 }
 
 /* Make numbered explanation code blocks better */
@@ -186,15 +161,7 @@ ol li, ul li {
 
 /* Special style for inline explanation code */
 .explanation-inline-code {
-  background-color: rgba(40, 44, 52, 0.9);
-  color: #e6e6e6;
-  padding: 0.2rem 0.6rem;
-  border-radius: 4px;
-  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 90%;
-  display: inline-block;
-  margin: 0 0.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: none !important;
 }
 
 /* Inline code styling */
@@ -207,4 +174,206 @@ ol li, ul li {
   font-size: 90%;
   font-weight: 500;
   word-break: break-word;
+}
+
+/* Numbered list with code snippets */
+ol li code, ul li code {
+  background-color: rgba(40, 44, 52, 0.9);
+  color: #e6e6e6;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  padding: 0.2rem 0.5rem;
+}
+
+/* Style for explanation headings */
+.explanation-heading {
+  color: #555;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Improve numbered list styling */
+ol {
+  padding-left: 2rem;
+}
+
+ol li {
+  margin-bottom: 1rem;
+  padding-left: 0.5rem;
+}
+
+/* Code blocks in explanations */
+ol li pre, ul li pre {
+  margin: 0.75rem 0;
+  padding: 0;
+  background-color: #282c34;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+ol li pre code, ul li pre code {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: #abb2bf;
+  background-color: transparent;
+}
+
+/* Single line code blocks */
+pre.simple-code-block {
+  padding: 0.5rem 1rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* Remove dark blue background around code blocks */
+.markdown-body pre,
+pre[class*="language-"] {
+  background-color: #282c34 !important;
+  margin: 1rem 0 !important;
+  border-radius: 8px !important;
+  padding: 1rem 0 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  border: none !important;
+}
+
+/* Fix nested pre elements if they exist */
+pre pre, div > pre {
+  background-color: #282c34 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Override any custom backgrounds that might be applied from other components */
+[class*="agent"] pre,
+[class*="message"] pre,
+[class*="content"] pre {
+  background-color: #282c34 !important;
+  border: none !important;
+}
+
+/* Target the specific dark blue background around code blocks */
+[style*="background"] > pre,
+[style*="background-color"] > pre {
+  margin: 0 !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+}
+
+/* Ensure code blocks take full width in their containers */
+pre {
+  width: 100% !important;
+}
+
+/* Add some more specific selectors to override the dark blue wrapper */
+.message-content pre,
+.agent-message pre,
+[class*="box"] > pre {
+  background-color: #282c34 !important;
+  margin: 1rem 0 !important;
+  padding: 1rem 0 !important;
+  border-radius: 8px !important;
+  border: none !important;
+}
+
+/* Target the containing box for AgentMessage */
+[data-message-id] > div {
+  background-color: transparent !important;
+}
+
+/* Target the dark blue background at the root level */
+[class*="MuiBox"] {
+  background-color: inherit;
+}
+
+/* Override the wrapper background */
+.code-block-root {
+  background-color: #282c34 !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 0 !important;
+  margin: 1rem 0 !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* Target the dark blue container specifically */
+[style*="background-color: rgb(40, 43, 77)"],
+[style*="background-color: #282b4d"],
+[style*="background-color: rgb(45, 45, 73)"] {
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Target the specific dark blue wrapper div */
+.MuiBox-root[style] {
+  background-color: inherit !important;
+}
+
+/* Target the Python code block container specifically */
+pre:has(.language-python) {
+  background-color: #282c34 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+  margin: 1rem 0 !important;
+}
+
+/* Force all pre elements to have the same background */
+pre {
+  background-color: #282c34 !important;
+}
+
+/* Style the Python language label specifically */
+.language-python + .code-language-indicator {
+  background: rgba(86, 156, 214, 0.75) !important;
+  color: white !important;
+}
+
+/* Remove any parent background-color styling */
+[style*="background"] {
+  background-color: inherit !important;
+}
+
+/* !important Override for the dark blue container */
+pre {
+  margin: 0 !important; 
+  max-width: 100% !important;
+}
+
+.dark-mode-code-wrapper,
+.dark-background-wrapper,
+[style*="background-color: rgb(39, 41, 68)"],
+[style*="background-color: rgb(40, 43, 77)"],
+[style*="background-color: #282b4d"],
+[style*="background-color: rgb(45, 45, 73)"],
+[style*="background: rgb(39, 41, 68)"] {
+  background-color: #282c34 !important;
+  padding: 0 !important;
+  margin: 1rem 0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Clean up the parent structure */
+[style*="background"] > pre,
+[style*="background-color"] > pre {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Remove any blue wrapper styling */
+[style*="background-color: rgb(39, 41, 68)"],
+[style*="background-color: rgb(40, 43, 77)"],
+[style*="background-color: #282b4d"],
+[style*="background-color: rgb(45, 45, 73)"] {
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 } 

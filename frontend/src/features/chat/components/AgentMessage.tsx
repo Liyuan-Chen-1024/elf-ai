@@ -23,32 +23,18 @@ const MarkdownComponents: Partial<Components> = {
     const match = /language-(\w+)/.exec(className || '');
     const language = match ? match[1] : '';
     
-    // Special handling for single-line code blocks (often used for variable names)
+    // Special handling for single-line code blocks
     const isSimpleCodeBlock = typeof children === 'string' && 
       !children.includes('\n') && 
       children.trim().length < 30;
-
-    // Check if this is a single line code in a list context (for explanations)
-    const isExplanationContext = className?.includes('language-') && isSimpleCodeBlock;
     
     // Detect if this is an inline code or a block code
     const isInline = !className?.includes('language-');
       
     if (!isInline) {
-      // Different styling for explanation code blocks in numbered explanations
-      if (isExplanationContext && isSimpleCodeBlock) {
-        return (
-          <pre className="explanation-code">
-            <code className={className || ''}>
-              {children}
-            </code>
-          </pre>
-        );
-      }
-      
-      // Regular code blocks
+      // Regular code blocks - add a special class for targeting via CSS
       return (
-        <pre className={isSimpleCodeBlock ? 'simple-code-block' : ''}>
+        <pre className={`code-block-root ${isSimpleCodeBlock ? 'simple-code-block' : ''}`}>
           {/* Code language indicator */}
           {language && (
             <div className="code-language-indicator">
