@@ -7,9 +7,10 @@ import { User } from '../../types';
 interface LayoutProps {
   children: React.ReactNode;
   user: User | null;
+  onLogout?: () => void;
 }
 
-function Layout({ children, user }: LayoutProps) {
+function Layout({ children, user, onLogout }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -40,6 +41,7 @@ function Layout({ children, user }: LayoutProps) {
         user={user}
         activeTab={activeTab}
         onTabChange={handleTabChange}
+        onLogout={onLogout}
       />
       
       <Box 

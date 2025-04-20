@@ -61,10 +61,10 @@ function AuthGuard() {
 
 // Main layout wrapper with tabs
 function MainLayout() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   
   return (
-    <Layout user={user}>
+    <Layout user={user} onLogout={logout}>
       <Outlet />
     </Layout>
   );

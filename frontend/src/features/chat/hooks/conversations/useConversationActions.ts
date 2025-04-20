@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConversations } from './useConversations';
+import fetchClient from '../../../../services/fetchClient';
 
 /**
  * Hook for conversation-related actions with navigation and error handling.
@@ -23,6 +24,9 @@ export function useConversationActions() {
   const createConversation = async () => {
     setError(null);
     try {
+      // Ensure we have a fresh CSRF token before making the request
+      await fetchClient.initialize();
+      
       const newConversation = await apiCreateConversation();
       if (newConversation?.id) {
         navigate(`/chat/${newConversation.id}`);
@@ -32,7 +36,7 @@ export function useConversationActions() {
         return null;
       }
     } catch (err) {
-      console.error('Failed to create conversation:', err);
+      window.console.error('Failed to create conversation:', err);
       setError('Failed to create conversation. Please try again.');
       return null;
     }
@@ -50,7 +54,7 @@ export function useConversationActions() {
       }
       return true;
     } catch (err) {
-      console.error('Failed to delete conversation:', err);
+      window.console.error('Failed to delete conversation:', err);
       setError('Failed to delete conversation. Please try again.');
       return false;
     }

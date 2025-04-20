@@ -66,7 +66,11 @@ export function useAuth() {
 
   // Login mutation
   const loginMutation = useMutation({
-    mutationFn: authApi.login,
+    mutationFn: async (credentials: { username: string; password: string }) => {
+      // Always initialize the API to get a fresh CSRF token before login
+      await authApi.initialize();
+      return authApi.login(credentials);
+    },
     onSuccess: (data: AuthResponse) => {
       if (import.meta.env.DEV) {
         window.console.log('Login successful:', data);

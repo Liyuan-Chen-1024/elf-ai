@@ -13,6 +13,11 @@ if (import.meta.env.DEV) {
 export type AuthResponse = { token: string; user: User };
 
 export const authApi = {
+  // Initialize API with CSRF token
+  initialize: async (): Promise<void> => {
+    await fetchClient.initialize();
+  },
+
   // Try login with multiple approaches to handle different API implementations
   login: async (credentials: { username: string; password: string }): Promise<AuthResponse> => {
     try {
@@ -85,6 +90,12 @@ export const authApi = {
       // Always clear local storage, even if the API call fails
       window.localStorage.removeItem('authToken');
       window.localStorage.removeItem('user');
+      
+      // Clear cookies (specifically CSRF token) to ensure a fresh state after login
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.trim().split('=');
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      });
     }
   },
 
