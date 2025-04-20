@@ -2,7 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import ErrorAlert from './ErrorAlert';
 import ContentLayout from './ContentLayout';
-import { THEME } from '../styles/theme';
+import { THEME } from '../styles/theme.tsx';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

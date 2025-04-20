@@ -16,6 +16,7 @@
         "subclassing",
         "Timestampable",
         "venv",
+        "viewset",
         "VITE",
         "xlarge"
     ]
