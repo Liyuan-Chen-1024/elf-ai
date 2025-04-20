@@ -1,3 +1,3 @@
 // Export application hooks
 export * from './useAuth';
-export * from './useNews'; 
+export * from './useNews';

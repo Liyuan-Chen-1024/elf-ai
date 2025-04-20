@@ -31,6 +31,6 @@ export function useMessageInput(
     setMessage,
     handleSendMessage,
     handleKeyDown,
-    isMessageEmpty
+    isMessageEmpty,
   };
-} 
+}

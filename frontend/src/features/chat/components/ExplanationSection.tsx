@@ -20,7 +20,7 @@ const ExplanationSection: React.FC<ExplanationSectionProps> = ({ title, children
         backgroundColor: 'rgba(248, 249, 250, 0.7)',
         borderRadius: '8px',
         borderLeft: `4px solid ${THEME.colors.primary.main}`,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
       }}
     >
       {title && (
@@ -30,7 +30,7 @@ const ExplanationSection: React.FC<ExplanationSectionProps> = ({ title, children
             fontWeight: THEME.typography.fontWeight.semibold,
             fontSize: '1.1rem',
             color: THEME.colors.text.primary,
-            marginBottom: '0.75rem'
+            marginBottom: '0.75rem',
           }}
         >
           {title}
@@ -46,13 +46,13 @@ const ExplanationSection: React.FC<ExplanationSectionProps> = ({ title, children
           '& li': {
             marginBottom: '0.75rem',
             '&:last-child': {
-              marginBottom: 0
-            }
+              marginBottom: 0,
+            },
           },
           '& pre.explanation-code': {
             marginLeft: 0,
             marginRight: 0,
-          }
+          },
         }}
       >
         {children}
@@ -61,4 +61,4 @@ const ExplanationSection: React.FC<ExplanationSectionProps> = ({ title, children
   );
 };
 
-export default ExplanationSection; 
+export default ExplanationSection;

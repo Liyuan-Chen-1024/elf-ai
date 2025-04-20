@@ -62,7 +62,7 @@ function AuthGuard() {
 // Main layout wrapper with tabs
 function MainLayout() {
   const { user, logout } = useAuth();
-  
+
   return (
     <Layout user={user} onLogout={logout}>
       <Outlet />
@@ -80,21 +80,21 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
-            
+
             {/* Protected routes */}
             <Route element={<AuthGuard />}>
               <Route element={<MainLayout />}>
                 <Route index element={<Navigate to="/chat" replace />} />
-                
+
                 {/* Main tabs */}
                 <Route path="/chat" element={<ChatContainer />} />
                 <Route path="/chat/:conversationId" element={<ChatContainer />} />
-                
+
                 <Route path="/news" element={<NewsView />} />
                 <Route path="/profile" element={<ProfileView />} />
               </Route>
             </Route>
-            
+
             {/* Fallback route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

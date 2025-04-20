@@ -12,6 +12,7 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 /**
@@ -21,21 +22,25 @@ interface ErrorBoundaryState {
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     // Update state so the next render will show the fallback UI
-    return { hasError: true, error };
+    return { hasError: true, error, errorInfo: null };
   }
 
-  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // You can also log the error to an error reporting service
-    console.error('Error caught by boundary:', error, errorInfo);
+    window.console.error('Error caught by ErrorBoundary:', error, errorInfo);
+    this.setState({
+      error,
+      errorInfo,
+    });
   }
 
   handleReset = (): void => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   override render(): ReactNode {
@@ -69,16 +74,14 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               Something went wrong
             </Typography>
 
-            {this.state.error && (
-              <ErrorAlert error={this.state.error.message} />
-            )}
+            {this.state.error && <ErrorAlert error={this.state.error.message} />}
 
             <Button
               variant="contained"
               onClick={this.handleReset}
               sx={{
                 mt: 2,
-                background: THEME.colors.primary.gradient,
+                background: THEME.colors.primary.main,
                 borderRadius: '50px',
                 padding: '10px 24px',
                 textTransform: 'none',
@@ -96,4 +99,4 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundary;

@@ -12,14 +12,13 @@ type ElfAIDebug = {
   getAuthToken: () => string | null;
   checkToken: () => boolean;
   testCSRF: () => Promise<string | null>;
-  testLogin: (username: string, password: string) => Promise<any>;
+  testLogin: (username: string, password: string) => Promise<unknown>;
   verifyTokenFormat: () => boolean;
 };
 
 declare global {
   interface Window {
     __elfai_debug: ElfAIDebug;
-    fetch: typeof fetch;
   }
 }
 
@@ -54,19 +53,19 @@ export const debug = {
  */
 export const checkApiConfig = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
-  
+
   debug.log('API configuration:', {
     apiUrl,
     development: import.meta.env.DEV,
     production: import.meta.env.PROD,
   });
-  
+
   if (!apiUrl) {
     debug.error(
       'API URL is not configured. Make sure you have a .env file with VITE_API_URL=http://yourapiurl'
     );
   }
-  
+
   return !!apiUrl;
 };
 
@@ -77,118 +76,110 @@ export const initDebug = () => {
   if (import.meta.env.DEV) {
     debug.log('Initializing debug tools');
     checkApiConfig();
-    
+
     // Add listener for localStorage changes to detect token issues
     const originalSetItem = window.localStorage.setItem;
-    window.localStorage.setItem = function(key, value) {
+    window.localStorage.setItem = function (key, value) {
       if (key === 'authToken') {
         debug.log(`Auth token being set: ${value.substring(0, 5)}...`);
       }
       originalSetItem.call(this, key, value);
     };
-    
+
     const originalRemoveItem = window.localStorage.removeItem;
-    window.localStorage.removeItem = function(key) {
+    window.localStorage.removeItem = function (key) {
       if (key === 'authToken') {
         debug.log(`Auth token being removed. Current URL: ${window.location.pathname}`);
-        console.trace('Auth token removal stack trace');
+        window.console.trace('Auth token removal stack trace');
       }
       originalRemoveItem.call(this, key);
     };
-    
+
     // Add CSRF testing tools
-    const testCSRF = async () => {
-      console.log('Fetching CSRF token...');
+    const testCSRF = async (): Promise<string | null> => {
+      window.console.log('Fetching CSRF token...');
       try {
         await api.initialize();
-        const token = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('csrftoken='))
-          ?.split('=')[1];
-        
-        console.log('CSRF token:', token ? `${token.substring(0, 5)}...` : 'Not found');
-        console.log('Full cookies:', document.cookie);
+        const token =
+          document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1] || null;
+
+        window.console.log('CSRF token:', token ? `${token.substring(0, 5)}...` : 'Not found');
+        window.console.log('Full cookies:', document.cookie);
         return token;
       } catch (error) {
-        console.error('CSRF fetch error:', error);
+        window.console.error('CSRF fetch error:', error);
         return null;
       }
     };
-    
-    const testLogin = async (username = 'admin', password = 'admin') => {
-      console.log(`Testing login with ${username}/${password}...`);
+
+    // Replace 'any' with more specific type
+    type TestLoginFn = (username: string, password: string) => Promise<unknown>;
+
+    // Use window.fetch instead of fetch
+    const testLogin: TestLoginFn = async (username, password) => {
       try {
-        // First get a CSRF token
-        await testCSRF();
-        
-        // Get the CSRF token from cookies
-        const csrfToken = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('csrftoken='))
-          ?.split('=')[1];
-        
-        // Attempt login with raw fetch
-        const response = await window.fetch('http://localhost:8000/api/v1/auth/login/', {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await window.fetch(`${apiUrl}/api/v1/auth/login/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // Add CSRF header if available
-            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
           },
           body: JSON.stringify({ username, password }),
-          credentials: 'include'
+          credentials: 'include',
         });
-        
-        console.log('Response status:', response.status);
-        const data = await response.json();
-        console.log('Response data:', data);
-        return data;
+        return await response.json();
       } catch (error) {
-        console.error('Login test error:', error);
-        return null;
+        return { error };
       }
     };
-    
-    // Verify token format and presence
+
+    // Get auth token properly
+    const getAuthToken = () => window.localStorage.getItem('authToken');
+
+    // Use window.fetch instead of fetch
     const verifyTokenFormat = () => {
-      const token = localStorage.getItem('authToken');
+      const token = window.localStorage.getItem('authToken');
       if (!token) {
-        console.error('No auth token found in localStorage');
+        window.console.error('No auth token found in localStorage');
         return false;
       }
-      
-      console.log('Auth token found:', token.substring(0, 10) + '...');
-      console.log('Auth token length:', token.length);
-      
+
+      window.console.log('Auth token found:', token.substring(0, 10) + '...');
+      window.console.log('Auth token length:', token.length);
+
       // Test an API request with the token
-      console.log('Testing API request with the token...');
-      fetch('http://localhost:8000/api/v1/auth/profile/', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Token ${token}`
-        },
-        credentials: 'include'
-      })
-      .then(response => {
-        console.log('Auth test response status:', response.status);
-        if (response.ok) {
-          console.log('Auth token is valid! ✅');
-          return response.json();
-        } else {
-          console.error('Auth token is invalid or expired ❌');
-          return response.json().catch(() => ({}));
-        }
-      })
-      .then(data => {
-        console.log('Auth test response data:', data);
-      })
-      .catch(error => {
-        console.error('Auth test error:', error);
-      });
-      
+      window.console.log('Testing API request with the token...');
+      window
+        .fetch('http://localhost:8000/api/v1/auth/profile/', {
+          method: 'GET',
+          headers: {
+            Authorization: `Token ${token}`,
+          },
+          credentials: 'include',
+        })
+        .then(response => {
+          window.console.log('Auth test response status:', response.status);
+          if (response.ok) {
+            window.console.log('Auth token is valid! ✅');
+            return response.json();
+          } else {
+            window.console.error('Auth token is invalid or expired ❌');
+            return response.json().catch(() => ({}));
+          }
+        })
+        .then(data => {
+          window.console.log('Auth test response data:', data);
+        })
+        .catch(error => {
+          window.console.error('Auth test error:', error);
+        });
+
       return true;
     };
-    
+
     // Add global debug object for console access
     window.__elfai_debug = {
       checkApiConfig,
@@ -196,9 +187,7 @@ export const initDebug = () => {
         window.localStorage.removeItem('authToken');
         debug.log('Auth token cleared');
       },
-      getAuthToken: () => {
-        return window.localStorage.getItem('authToken');
-      },
+      getAuthToken,
       checkToken: () => {
         const token = window.localStorage.getItem('authToken');
         if (token) {
@@ -211,11 +200,11 @@ export const initDebug = () => {
       },
       testCSRF,
       testLogin,
-      verifyTokenFormat
+      verifyTokenFormat,
     };
-    
+
     debug.log('Debug tools initialized. Use window.__elfai_debug to access them');
   }
 };
 
-export default debug; 
+export default debug;

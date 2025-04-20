@@ -27,10 +27,11 @@ interface ApiResponse<T = unknown> {
 }
 
 const getAuthToken = () => localStorage.getItem('authToken');
-const getCsrfToken = () => document.cookie
-  .split('; ')
-  .find(row => row.startsWith('csrftoken='))
-  ?.split('=')[1];
+const getCsrfToken = () =>
+  document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrftoken='))
+    ?.split('=')[1];
 
 // Function to fetch CSRF token from server
 const fetchCsrfToken = async () => {
@@ -46,7 +47,12 @@ const isLoginRoute = (url: string) => url.includes('/auth/login');
 // Define the return type of prepareRequest
 type PrepareRequestResult = [string, RequestInit];
 
-const prepareRequest = (url: string, method: string, body: FormData | JsonData | null = null, options: RequestOptions = {}): PrepareRequestResult => {
+const prepareRequest = (
+  url: string,
+  method: string,
+  body: FormData | JsonData | null = null,
+  options: RequestOptions = {}
+): PrepareRequestResult => {
   url = 'http://localhost:8000/api/v1' + url;
   const isLogin = isLoginRoute(url);
   const authToken = getAuthToken();
@@ -66,7 +72,7 @@ const prepareRequest = (url: string, method: string, body: FormData | JsonData |
   const headers = {
     ...(body && !(body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
     // Use 'Token' prefix instead of 'Bearer' for Django REST Framework's TokenAuthentication
-    ...(authToken ? { 'Authorization': `Token ${authToken}` } : {}),
+    ...(authToken ? { Authorization: `Token ${authToken}` } : {}),
     // Include CSRF token for all non-GET requests
     ...(csrfToken && needsCsrf ? { 'X-CSRFToken': csrfToken } : {}),
     ...(options.headers || {}),
@@ -75,7 +81,7 @@ const prepareRequest = (url: string, method: string, body: FormData | JsonData |
   const fetchOptions: RequestInit = {
     method,
     headers,
-    credentials: 'include',  // Always include credentials
+    credentials: 'include', // Always include credentials
     ...options,
   };
 
@@ -90,7 +96,12 @@ const prepareRequest = (url: string, method: string, body: FormData | JsonData |
   return [url, fetchOptions];
 };
 
-const fetchClient = async <T = unknown>(url: string, method: string = 'GET', body: FormData | JsonData | null = null, options: RequestOptions = {}): Promise<ApiResponse<T>> => {
+const fetchClient = async <T = unknown>(
+  url: string,
+  method: string = 'GET',
+  body: FormData | JsonData | null = null,
+  options: RequestOptions = {}
+): Promise<ApiResponse<T>> => {
   if (method !== 'GET' && !getCsrfToken()) {
     await fetchCsrfToken();
   }
@@ -100,7 +111,9 @@ const fetchClient = async <T = unknown>(url: string, method: string = 'GET', bod
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`HTTP ${response.status}: ${errorData.detail || errorData.message || response.statusText}`);
+      throw new Error(
+        `HTTP ${response.status}: ${errorData.detail || errorData.message || response.statusText}`
+      );
     }
 
     // Parse JSON data if possible
@@ -109,7 +122,7 @@ const fetchClient = async <T = unknown>(url: string, method: string = 'GET', bod
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
     } else {
-      data = await response.text() as unknown as T;
+      data = (await response.text()) as unknown as T;
     }
 
     return {
@@ -117,7 +130,7 @@ const fetchClient = async <T = unknown>(url: string, method: string = 'GET', bod
       status: response.status,
       headers: response.headers,
       json: () => response.json(),
-      text: () => response.text()
+      text: () => response.text(),
     };
   } catch (error) {
     console.error(`Request to ${finalUrl} failed:`, error);
@@ -127,7 +140,11 @@ const fetchClient = async <T = unknown>(url: string, method: string = 'GET', bod
 
 // === Streaming Support ===
 
-const stream = async (url: string, options: RequestOptions = {}, onChunk: (chunk: StreamingResponse | string) => void) => {
+const stream = async (
+  url: string,
+  options: RequestOptions = {},
+  onChunk: (chunk: StreamingResponse | string) => void
+) => {
   const [finalUrl, fetchOptions] = prepareRequest(url, 'GET', null, options);
 
   const response = await fetch(finalUrl, fetchOptions);
@@ -141,7 +158,7 @@ const stream = async (url: string, options: RequestOptions = {}, onChunk: (chunk
   let buffer = '';
 
   while (true) {
-    const { done, value } = await reader?.read() || { done: true, value: null };
+    const { done, value } = (await reader?.read()) || { done: true, value: null };
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
@@ -171,11 +188,16 @@ const initializeApi = async () => {
 };
 
 const api = {
-  get: <T = unknown>(url: string, options: RequestOptions = {}) => fetchClient<T>(url, 'GET', null, options),
-  post: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) => fetchClient<T>(url, 'POST', body, options),
-  patch: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) => fetchClient<T>(url, 'PATCH', body, options),
-  put: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) => fetchClient<T>(url, 'PUT', body, options),
-  delete: <T = unknown>(url: string, options: RequestOptions = {}) => fetchClient<T>(url, 'DELETE', null, options),
+  get: <T = unknown>(url: string, options: RequestOptions = {}) =>
+    fetchClient<T>(url, 'GET', null, options),
+  post: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) =>
+    fetchClient<T>(url, 'POST', body, options),
+  patch: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) =>
+    fetchClient<T>(url, 'PATCH', body, options),
+  put: <T = unknown>(url: string, body: JsonData, options: RequestOptions = {}) =>
+    fetchClient<T>(url, 'PUT', body, options),
+  delete: <T = unknown>(url: string, options: RequestOptions = {}) =>
+    fetchClient<T>(url, 'DELETE', null, options),
   stream,
   initialize: initializeApi,
 };

@@ -1,12 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { 
-  ConversationView, 
-  ConversationSidebar,
-  ErrorBoundary,
-  EmptyState
-} from '../index';
+import { ConversationView, ConversationSidebar, ErrorBoundary, EmptyState } from '../index';
 import { ChatProvider, useChatContext } from '../context';
 import { THEME } from '../styles/theme';
 
@@ -14,22 +9,18 @@ import { THEME } from '../styles/theme';
  * Welcome screen displayed when no conversation is selected
  */
 const WelcomeView: React.FC = () => {
-  const {
-    createConversation,
-    conversationError,
-    clearConversationError,
-    isCreatingConversation
-  } = useChatContext();
-  
+  const { createConversation, conversationError, clearConversationError, isCreatingConversation } =
+    useChatContext();
+
   return (
     <EmptyState
       message="Welcome to ElfAI Chat"
       submessage="Select a conversation from the sidebar or create a new one"
       actionButton={{
-        label: "Start New Conversation",
+        label: 'Start New Conversation',
         onClick: createConversation,
         loading: isCreatingConversation,
-        loadingLabel: "Creating..."
+        loadingLabel: 'Creating...',
       }}
       error={conversationError}
       onClearError={clearConversationError}
@@ -45,26 +36,30 @@ const WelcomeView: React.FC = () => {
  */
 const ChatContainer: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
-  
+
   return (
     <ErrorBoundary>
       <ChatProvider conversationId={conversationId}>
-        <Box sx={{ 
-          display: 'flex', 
-          height: THEME.layout.contentHeight,
-          overflow: 'hidden',
-          position: 'relative'
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            height: THEME.layout.contentHeight,
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
           {/* Always show sidebar for consistency */}
           <ConversationSidebar />
-         
-          <Box sx={{ 
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column',
-            overflow: 'hidden',
-            position: 'relative'
-          }}>
+
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
             {conversationId ? (
               <ErrorBoundary>
                 <ConversationView />
@@ -81,4 +76,4 @@ const ChatContainer: React.FC = () => {
   );
 };
 
-export default ChatContainer; 
+export default ChatContainer;

@@ -3,13 +3,13 @@ import { useParams } from 'react-router-dom';
 import MessageList from './MessageList';
 import MessageInput from '../components/MessageInput';
 
-import { 
+import {
   EmptyState,
   ConversationHeader,
   ConversationContent,
   ContentLayout,
   InputBar,
-  LoadingSpinner
+  LoadingSpinner,
 } from '../index';
 import { useChatContext } from '../context';
 
@@ -22,25 +22,25 @@ import { useChatContext } from '../context';
  */
 const ConversationView: React.FC = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
-  
+
   // Access all data and actions from the chat context
-  const { 
+  const {
     // Conversation data
-    conversations, 
+    conversations,
     isLoadingConversations,
     isDeletingConversation,
     isCreatingConversation,
-    
+
     // Conversation actions
     createConversation,
     conversationError,
-    
+
     // Message data
     currentConversation: activeConversation,
     isLoadingMessages,
     isSendingMessage,
     messageError,
-    
+
     // Message actions
     sendMessage,
   } = useChatContext();
@@ -58,10 +58,10 @@ const ConversationView: React.FC = () => {
         message="Welcome to Chat"
         submessage="Create your first conversation to get started"
         actionButton={{
-          label: "Start New Conversation :)",
+          label: 'Start New Conversation :)',
           onClick: createConversation,
           loading: isCreatingConversation,
-          loadingLabel: "Creating..."
+          loadingLabel: 'Creating...',
         }}
         error={conversationError}
         fullPage
@@ -73,26 +73,16 @@ const ConversationView: React.FC = () => {
   if (conversationId && isLoadingMessages && !activeConversation) {
     return (
       <ContentLayout fullHeight centered>
-        <LoadingSpinner 
-          message="Loading conversation..." 
-          fullPage
-        />
+        <LoadingSpinner message="Loading conversation..." fullPage />
       </ContentLayout>
     );
   }
 
   return (
-    <ContentLayout
-      fullHeight
-      sx={{ overflow: 'hidden' }}
-    >
-      <ConversationHeader 
-        title={activeConversation?.title || 'New conversation'} 
-      />
-      
-      <ConversationContent
-        conversationError={messageError}
-      >
+    <ContentLayout fullHeight sx={{ overflow: 'hidden' }}>
+      <ConversationHeader title={activeConversation?.title || 'New conversation'} />
+
+      <ConversationContent conversationError={messageError}>
         <MessageList
           messages={activeConversation?.messages || []}
           isLoading={isSendingMessage}
@@ -104,7 +94,9 @@ const ConversationView: React.FC = () => {
         <MessageInput
           onSendMessage={sendMessage}
           conversationId={conversationId || ''}
-          isLoading={isSendingMessage || isDeletingConversation || isLoadingConversations || isGenerating}
+          isLoading={
+            isSendingMessage || isDeletingConversation || isLoadingConversations || isGenerating
+          }
           isGenerating={isGenerating}
           placeholder="Ask me anything..."
         />
@@ -113,4 +105,4 @@ const ConversationView: React.FC = () => {
   );
 };
 
-export default ConversationView; 
+export default ConversationView;

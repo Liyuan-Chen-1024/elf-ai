@@ -9,13 +9,13 @@ import fetchClient from '../../../../services/fetchClient';
  */
 export function useConversationActions() {
   const navigate = useNavigate();
-  const { 
-    createConversation: apiCreateConversation, 
+  const {
+    createConversation: apiCreateConversation,
     deleteConversation: apiDeleteConversation,
     isCreating,
-    isDeleting
+    isDeleting,
   } = useConversations();
-  
+
   const [error, setError] = useState<string | null>(null);
 
   /**
@@ -26,7 +26,7 @@ export function useConversationActions() {
     try {
       // Ensure we have a fresh CSRF token before making the request
       await fetchClient.initialize();
-      
+
       const newConversation = await apiCreateConversation();
       if (newConversation?.id) {
         navigate(`/chat/${newConversation.id}`);
@@ -73,6 +73,6 @@ export function useConversationActions() {
     clearError,
     error,
     isCreating,
-    isDeleting
+    isDeleting,
   };
-} 
+}

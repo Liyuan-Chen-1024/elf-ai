@@ -7,11 +7,13 @@
         "healthcheck",
         "initdb",
         "isort",
+        "mypy",
         "mysqladmin",
         "pycache",
         "pytest",
         "PYTHONPATH",
         "runserver",
+        "subclassing",
         "Timestampable",
         "venv",
         "VITE"

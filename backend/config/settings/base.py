@@ -47,7 +47,7 @@ INSTALLED_APPS: List[str] = [
     "apps.core",
     "apps.core.user",
     "apps.chat",
-    'django_celery_results',
+    "django_celery_results",
     "django_celery_beat",
 ]
 
@@ -154,7 +154,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
-    ]
+    ],
 }
 
 # Spectacular settings
@@ -292,10 +292,14 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
-CELERY_WORKER_CONCURRENCY = env.int('CELERY_WORKER_CONCURRENCY', default=2)
-CELERY_WORKER_MAX_TASKS_PER_CHILD = env.int('CELERY_WORKER_MAX_TASKS_PER_CHILD', default=100)
+CELERY_WORKER_CONCURRENCY = env.int("CELERY_WORKER_CONCURRENCY", default=2)
+CELERY_WORKER_MAX_TASKS_PER_CHILD = env.int(
+    "CELERY_WORKER_MAX_TASKS_PER_CHILD", default=100
+)
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True  # New setting for Celery 6.0
-CELERY_SECURITY_KEY = env("DJANGO_SECRET_KEY")  # Use Django's secret key for Celery security
+CELERY_SECURITY_KEY = env(
+    "DJANGO_SECRET_KEY"
+)  # Use Django's secret key for Celery security
 
 # Celery Beat Settings
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"

@@ -27,10 +27,14 @@ except OperationalError:
     echo "Database is ready."
 fi
 
-# Apply migrations if not in test mode
-if [ "${APP_ENVIRONMENT}" != "test" ]; then
+# Apply migrations if not in test mode and not skipping migrations
+if [ "${APP_ENVIRONMENT}" != "test" ] && [ "${SKIP_DJANGO_MIGRATIONS}" != "true" ]; then
     echo "Applying database migrations..."
     python manage.py migrate
+else
+    if [ "${SKIP_DJANGO_MIGRATIONS}" = "true" ]; then
+        echo "Skipping migrations due to SKIP_DJANGO_MIGRATIONS=true"
+    fi
 fi
 
 # Execute the main command

@@ -22,55 +22,46 @@ const MarkdownComponents: Partial<Components> = {
     const { children, className } = props;
     const match = /language-(\w+)/.exec(className || '');
     const language = match ? match[1] : '';
-    
+
     // Special handling for single-line code blocks
-    const isSimpleCodeBlock = typeof children === 'string' && 
-      !children.includes('\n') && 
-      children.trim().length < 30;
-    
+    const isSimpleCodeBlock =
+      typeof children === 'string' && !children.includes('\n') && children.trim().length < 30;
+
     // Detect if this is an inline code or a block code
     const isInline = !className?.includes('language-');
-      
+
     if (!isInline) {
       // Regular code blocks - add a special class for targeting via CSS
       return (
         <pre className={`code-block-root ${isSimpleCodeBlock ? 'simple-code-block' : ''}`}>
           {/* Code language indicator */}
-          {language && (
-            <div className="code-language-indicator">
-              {language.toUpperCase()}
-            </div>
-          )}
-          <code className={className || ''}>
-            {children}
-          </code>
+          {language && <div className="code-language-indicator">{language.toUpperCase()}</div>}
+          <code className={className || ''}>{children}</code>
         </pre>
       );
-    } 
-    
+    }
+
     // Inline code handling
-    return (
-      <code className="inline-code">
-        {children}
-      </code>
-    );
+    return <code className="inline-code">{children}</code>;
   },
-  
+
   // Override table rendering for better control
   table(props) {
     return (
-      <div style={{ 
-        overflowX: 'auto', 
-        maxWidth: '100%', 
-        margin: '1.5em 0',
-        padding: '1em',
-        background: '#f5f5f5',
-        borderRadius: '8px',
-      }}>
-        <table 
-          {...props} 
-          style={{ 
-            width: '100%', 
+      <div
+        style={{
+          overflowX: 'auto',
+          maxWidth: '100%',
+          margin: '1.5em 0',
+          padding: '1em',
+          background: '#f5f5f5',
+          borderRadius: '8px',
+        }}
+      >
+        <table
+          {...props}
+          style={{
+            width: '100%',
             borderCollapse: 'separate',
             borderSpacing: '3px',
             boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
@@ -78,17 +69,17 @@ const MarkdownComponents: Partial<Components> = {
             border: '2px solid #aaa',
             borderRadius: '6px',
             overflow: 'hidden',
-          }} 
+          }}
         />
       </div>
     );
   },
-  
+
   // Custom cell rendering
   td(props) {
     return (
-      <td 
-        {...props} 
+      <td
+        {...props}
         style={{
           border: '2px solid #aaa',
           padding: '1em',
@@ -104,12 +95,12 @@ const MarkdownComponents: Partial<Components> = {
       />
     );
   },
-  
+
   // Custom header cell rendering
   th(props) {
     return (
-      <th 
-        {...props} 
+      <th
+        {...props}
         style={{
           border: '2px solid #aaa',
           padding: '1em',
@@ -125,31 +116,30 @@ const MarkdownComponents: Partial<Components> = {
       />
     );
   },
-  
+
   // Custom row rendering
   tr(props) {
     return (
-      <tr 
-        {...props} 
+      <tr
+        {...props}
         style={{
           backgroundColor: 'white',
         }}
       />
     );
   },
-  
+
   // Custom list item rendering
   li(props) {
     const { children, ...rest } = props;
-    
+
     // Simple check for "Explanation:" text in list items
-    const containsExplanationText = 
-      typeof children === 'string' && 
-      children.includes('Explanation:');
-    
+    const containsExplanationText =
+      typeof children === 'string' && children.includes('Explanation:');
+
     return (
-      <li 
-        {...rest} 
+      <li
+        {...rest}
         className={containsExplanationText ? 'explanation-list-item' : undefined}
         style={{
           marginBottom: '0.75rem',
@@ -159,19 +149,18 @@ const MarkdownComponents: Partial<Components> = {
       </li>
     );
   },
-  
+
   // Custom heading for explanations
   h3(props) {
     const { children, ...rest } = props;
-    
+
     // Check if this is an explanation heading
-    const isExplanationHeading = 
-      typeof children === 'string' && 
-      (children === 'Explanation:' || children === 'Explanation');
-    
+    const isExplanationHeading =
+      typeof children === 'string' && (children === 'Explanation:' || children === 'Explanation');
+
     if (isExplanationHeading) {
       return (
-        <h3 
+        <h3
           {...rest}
           className="explanation-heading"
           style={{
@@ -181,14 +170,14 @@ const MarkdownComponents: Partial<Components> = {
             marginTop: '1.5rem',
             marginBottom: '0.75rem',
             paddingBottom: '0.5rem',
-            borderBottom: '1px solid #e0e0e0'
+            borderBottom: '1px solid #e0e0e0',
           }}
         >
           {children}
         </h3>
       );
     }
-    
+
     return <h3 {...rest}>{children}</h3>;
   },
 };
@@ -199,62 +188,73 @@ const MarkdownComponents: Partial<Components> = {
  */
 const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
   const isGenerating = Boolean(message.is_generating);
-  
+
   return (
-    <Box sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      mb: 2,
-      '&:last-child': { mb: 0 },
-    }}>
-      {/* Agent Header */}
-      <Box sx={{
+    <Box
+      sx={{
         display: 'flex',
-        alignItems: 'flex-start',
-        mb: 1,
-        ml: 2,
-      }}>
-        <Box sx={{
-          position: 'relative',
+        flexDirection: 'column',
+        width: '100%',
+        mb: 2,
+        '&:last-child': { mb: 0 },
+      }}
+    >
+      {/* Agent Header */}
+      <Box
+        sx={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Avatar 
+          alignItems: 'flex-start',
+          mb: 1,
+          ml: 2,
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Avatar
             alt="Elf Agent"
             src={THEME.avatars.assistant}
-            sx={{ 
+            sx={{
               width: 32,
               height: 32,
               backgroundColor: THEME.colors.accent.purple.light,
               border: `1.5px solid ${THEME.colors.accent.purple.border}`,
+              boxShadow: THEME.colors.accent.purple.shadow,
+              transition: 'all 0.3s ease',
               ...(isGenerating && {
                 animation: `${THEME.animations.pulse} 2s infinite, ${THEME.animations.float} 3s ease-in-out infinite`,
               }),
             }}
           />
           {isGenerating && (
-            <CircularProgress 
-              size={40} 
+            <CircularProgress
+              size={40}
               thickness={1.5}
-              sx={{ 
+              sx={{
                 position: 'absolute',
                 color: THEME.colors.accent.purple.border,
                 animation: 'none',
-              }} 
+                boxShadow: `0 0 10px ${THEME.colors.accent.purple.main}30`,
+              }}
             />
           )}
         </Box>
         <Box sx={{ flex: 1, ml: 2 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{
                 color: THEME.colors.text.primary,
                 fontWeight: THEME.typography.fontWeight.semibold,
                 fontSize: THEME.typography.fontSize.small,
@@ -263,9 +263,9 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
             >
               Elf Agent
             </Typography>
-            <Typography 
-              variant="caption" 
-              sx={{ 
+            <Typography
+              variant="caption"
+              sx={{
                 color: THEME.colors.text.muted,
                 fontSize: THEME.typography.fontSize.tiny,
               }}
@@ -273,12 +273,15 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
               {new Date().toLocaleTimeString()}
             </Typography>
           </Box>
-          <Typography 
-            variant="caption" 
-            sx={{ 
-              color: THEME.colors.text.secondary,
-              fontStyle: 'italic',
+          <Typography
+            variant="caption"
+            sx={{
+              color: message.status_generating === "Completed" 
+                ? THEME.colors.text.completed 
+                : THEME.colors.text.secondary,
+              fontStyle: message.status_generating === "Completed" ? 'normal' : 'italic',
               fontSize: THEME.typography.fontSize.tiny,
+              fontWeight: message.status_generating === "Completed" ? THEME.typography.fontWeight.medium : 'normal',
               ...(isGenerating && {
                 animation: `${THEME.animations.float} 3s ease-in-out infinite`,
               }),
@@ -290,13 +293,15 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
       </Box>
 
       {/* Agent Message Content */}
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'flex-start',
-        width: '100%',
-        pl: 6,
-      }}>
-        <Box 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-start',
+          width: '100%',
+          pl: 6,
+        }}
+      >
+        <Box
           sx={{
             wordBreak: 'break-word',
             p: { xs: 2, sm: 2.5 },
@@ -307,10 +312,10 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
             position: 'relative',
             borderRadius: '0.5rem',
           }}
-        > 
-          <Box 
+        >
+          <Box
             data-message-id={message.id || ''}
-            sx={{ 
+            sx={{
               position: 'relative',
               fontFamily: 'inherit',
               fontSize: THEME.typography.fontSize.regular,
@@ -318,12 +323,12 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
               letterSpacing: THEME.typography.spacing.tight,
               minHeight: '20px',
               // Markdown component styling
-              '& p': { 
+              '& p': {
                 margin: '0.5em 0',
                 '&:first-of-type': { marginTop: 0 },
-                '&:last-of-type': { marginBottom: 0 } 
+                '&:last-of-type': { marginBottom: 0 },
               },
-              '& h1, & h2, & h3, & h4, & h5, & h6': { 
+              '& h1, & h2, & h3, & h4, & h5, & h6': {
                 margin: '0.75em 0 0.5em 0',
                 fontWeight: THEME.typography.fontWeight.semibold,
                 '&:first-of-type': { marginTop: 0 },
@@ -335,26 +340,26 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
               '& h5, & h6': { fontSize: '1em' },
               '& ul, & ol': { paddingLeft: '1.5em', margin: '0.5em 0' },
               '& li': { margin: '0.25em 0' },
-              '& a': { 
+              '& a': {
                 color: THEME.colors.primary.main,
                 textDecoration: 'none',
-                '&:hover': { textDecoration: 'underline' }
+                '&:hover': { textDecoration: 'underline' },
               },
               '& img': {
                 maxWidth: '100%',
-                borderRadius: '4px'
+                borderRadius: '4px',
               },
               '& blockquote': {
                 borderLeft: `4px solid ${THEME.colors.background.inputBorder}`,
                 margin: '0.5em 0',
                 padding: '0 0 0 1em',
-                color: THEME.colors.text.secondary
+                color: THEME.colors.text.secondary,
               },
               '& hr': {
                 border: 0,
                 height: '1px',
                 backgroundColor: THEME.colors.background.inputBorder,
-                margin: '1em 0'
+                margin: '1em 0',
               },
               ...(isGenerating && {
                 '&::after': {
@@ -364,15 +369,12 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
                   animation: `${THEME.animations.blink} 1s step-end infinite`,
                   color: 'rgba(28, 28, 30, 0.6)',
                   fontWeight: 200,
-                }
-              })
+                },
+              }),
             }}
           >
             <ReactMarkdown
-              rehypePlugins={[
-                rehypeRaw,
-                [rehypeHighlight, { ignoreMissing: true }]
-              ]}
+              rehypePlugins={[rehypeRaw, [rehypeHighlight, { ignoreMissing: true }]]}
               remarkPlugins={[remarkGfm]}
               components={MarkdownComponents}
             >
@@ -385,4 +387,4 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
   );
 };
 
-export default AgentMessage; 
+export default AgentMessage;

@@ -19,15 +19,15 @@ interface MessageListContentProps {
  * - Rendering the appropriate message component based on role
  * - Empty state display when no messages exist
  */
-const MessageListContent: React.FC<MessageListContentProps> = ({ 
-  messages = [], 
+const MessageListContent: React.FC<MessageListContentProps> = ({
+  messages = [],
   isLoading = false,
   emptyStateMessage = 'Start a new conversation',
   emptyStateSubmessage = 'Send a message to get started',
-  onContainerRendered
+  onContainerRendered,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     if (messagesEndRef.current && onContainerRendered) {
       onContainerRendered(messagesEndRef.current);
@@ -35,23 +35,22 @@ const MessageListContent: React.FC<MessageListContentProps> = ({
   }, [onContainerRendered]);
 
   return (
-    <Box sx={{ 
-      width: '100%',
-      flex: 1,
-      minHeight: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      overflowY: 'auto',
-    }}>
-      {(!messages.length && !isLoading) && (
-        <EmptyState 
-          message={emptyStateMessage} 
-          submessage={emptyStateSubmessage} 
-        />
+    <Box
+      sx={{
+        width: '100%',
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
+      }}
+    >
+      {!messages.length && !isLoading && (
+        <EmptyState message={emptyStateMessage} submessage={emptyStateSubmessage} />
       )}
-      
+
       <Box sx={{ flexGrow: 1, minHeight: 0 }}>
-        {messages.map((message) => {
+        {messages.map(message => {
           switch (message.role) {
             case 'user':
               return <UserMessage key={`user-${message.id}`} message={message} />;
@@ -68,4 +67,4 @@ const MessageListContent: React.FC<MessageListContentProps> = ({
   );
 };
 
-export default MessageListContent; 
+export default MessageListContent;

@@ -1,11 +1,23 @@
-.PHONY: dev test lint clean up down logs ps restart celery-restart
+.PHONY: dev test lint lint-frontend lint-backend test-backend test-frontend clean up down logs ps restart celery-restart build
+
+# Helper functions
+define setup_base_env
+	@echo "Setting up base environment..."
+	@cp .env.base .env
+endef
+
+define setup_test_env
+	@echo "Setting up test environment..."
+	@cat .env.base .env.test > .env.tmp
+	@mv .env.tmp .env
+endef
 
 # Development
 dev:
+	$(call setup_base_env)
 	@echo "Starting all services..."
 	@echo "View logs with: make logs"
 	@echo "Restart Celery with: make celery-restart"
-	@cp .env.base .env
 	docker compose down --remove-orphans
 	docker compose up -d
 	@echo "Waiting for services to initialize..."
@@ -15,84 +27,105 @@ dev:
 	@echo "Development environment is ready!"
 	docker compose logs -f
 
+# Run all tests and linting
 test:
-	@echo "Running ALL tests..."
+	$(call setup_test_env)
+	@echo "Running ALL tests and linting..."
+	make lint
 	make test-backend
 	make test-frontend
+	@echo "All tests passed!"
 
 # Testing
 test-backend:
-	@echo "Running tests..."
-	@cat .env.base .env.test > .env.tmp
-	@mv .env.tmp .env
-	docker compose -f docker-compose.yml run --rm --build backend pytest -v --collect-only && \
-	docker compose -f docker-compose.yml run --rm backend pytest -v
+	$(call setup_test_env)
+	@echo "Running backend tests..."
+	@echo "Starting required services..."
+	docker compose up -d db redis
+	@echo "Waiting for services to be ready..."
+	@sleep 5
+	@echo "Applying migrations..."
+	docker compose run --rm --build backend python manage.py migrate
+	@echo "Running pytest tests..."
+	docker compose run --rm backend pytest -v
+	@echo "Running Django tests..."
+	docker compose run --rm backend python manage.py test
 
 test-frontend:
-	@echo "Running tests..."
-	@cat .env.base .env.test > .env.tmp
-	@mv .env.tmp .env
-	docker compose -f docker-compose.yml run --rm --build --entrypoint "npm" frontend test
+	$(call setup_test_env)
+	@echo "Running frontend tests..."
+	docker compose run --rm --build --entrypoint "npm" frontend test
 
 lint:
+	$(call setup_test_env)
 	@echo "Running ALL lint..."
 	make lint-frontend
 	make lint-backend
 
 lint-frontend:
+	$(call setup_test_env)
 	@echo "Running lint..."
-	@cat .env.base .env.test > .env.tmp
-	@mv .env.tmp .env
-	docker compose -f docker-compose.yml run --rm --build --entrypoint "npm" frontend install
-	docker compose -f docker-compose.yml run --rm --entrypoint "npm" frontend run lint
+	docker compose run --rm --build --entrypoint="" frontend sh -c "cd /app && npm install"
+	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && npm run lint"
+	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && npm run format"
 
 lint-backend:
+	$(call setup_test_env)
 	@echo "Running lint..."
-	@cat .env.base .env.test > .env.tmp
-	@mv .env.tmp .env
-	docker compose -f docker-compose.yml run --rm --build backend flake8 .
-	docker compose -f docker-compose.yml run --rm --build backend black . --check
-	docker compose -f docker-compose.yml run --rm --build backend isort . --check-only
+	@echo "Starting database containers if not running..."
+	docker compose up -d db redis
+	@echo "Waiting for database to be ready..."
+	@sleep 5
+	@echo "Checking code format with black..."
+	docker compose run --rm --entrypoint="" backend sh -c "cd /app && python -m black . --check"
+	@echo "Checking import order with isort..."
+	docker compose run --rm --entrypoint="" backend sh -c "cd /app && python -m isort . --check-only"
+	@echo "Checking code quality with flake8..."
+	docker compose run --rm --entrypoint="" backend sh -c "cd /app && python -m flake8"
 
 build:
-	docker build --target production -t elfai-web:latest .
-
-# Linting
-lint:
-	@echo "Running linters..."
-	docker compose exec backend flake8 .
-	docker compose exec backend black . --check
-	docker compose exec backend isort . --check-only
-	docker-compose run --rm web npm run format
+	$(call setup_base_env)
+	@echo "Building frontend and backend images..."
+	docker build -f frontend/Dockerfile --target production -t elfai-frontend:latest ./frontend
+	docker build -f backend/Dockerfile --target production -t elfai-backend:latest ./backend
 
 # Cleanup
 clean:
 	@echo "Cleaning up..."
-	docker compose down -v --remove-orphans
+	$(call setup_base_env)
+	-docker compose down -v --remove-orphans 2>/dev/null || true
 	rm -f .env .env.tmp
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete
-	find . -type f -name ".coverage" -delete
-	find . -type d -name ".pytest_cache" -exec rm -rf {} +
-	find . -type d -name "*.egg-info" -exec rm -rf {} + 
-	rm -rf frontend/node_modules
-	rm -rf backend/venv
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	find . -type f -name ".coverage" -delete 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	-rm -rf frontend/node_modules 2>/dev/null || true
+	-rm -rf backend/venv 2>/dev/null || true
+	@echo "Clean completed successfully"
 
 up:
-	docker-compose up -d
+	$(call setup_base_env)
+	@echo "Starting all services..."
+	docker compose up -d
 
 down:
-	docker-compose down
+	$(call setup_base_env)
+	docker compose down
 
 logs:
-	docker-compose logs -f
+	$(call setup_base_env)
+	docker compose logs -f
 
 ps:
-	docker-compose ps
+	$(call setup_base_env)
+	docker compose ps
 
 restart:
-	docker-compose restart
+	$(call setup_base_env)
+	docker compose restart
 
 celery-restart:
-	docker-compose restart celery_worker celery_beat
+	$(call setup_base_env)
+	docker compose restart celery_worker celery_beat

@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime
+
 from django.db import models
+
 
 class TimeStampedModel(models.Model):
     """Base model with created_at and updated_at fields."""
@@ -21,4 +23,3 @@ class UUIDModel(models.Model):
 
     class Meta:
         abstract = True
-

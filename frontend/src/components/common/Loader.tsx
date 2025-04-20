@@ -27,4 +27,4 @@ function Loader({ message = 'Loading...' }: LoaderProps) {
   );
 }
 
-export default Loader; 
+export default Loader;

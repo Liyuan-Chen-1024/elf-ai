@@ -31,57 +31,78 @@ export function useMessages(conversationId: string) {
         window.console.warn('Attempted to send message without valid conversation ID');
         return Promise.resolve({ user_message: {} as Message, agent_message: {} as Message });
       }
-      
+
       let streamedContent = '';
 
-      return chatApi.sendMessage({ 
-        conversationId, 
+      return chatApi.sendMessage({
+        conversationId,
         content,
         // Update handler that updates the message in React Query cache
-        onStream: (conversationId: string, messageId: string, chunk: StreamingResponse | string) => {
+        onStream: (
+          conversationId: string,
+          messageId: string,
+          chunk: StreamingResponse | string
+        ) => {
           window.console.log(`Message update received, id: ${conversationId}, ${messageId}`);
-          
+
           // If chunk is a string (legacy format or parse error), handle it directly
           if (typeof chunk === 'string') {
             window.console.log('Received string chunk:', chunk);
             streamedContent += chunk;
             return;
           }
-          
+
           // Log the chunk type and content for debugging
           if (chunk.type === 'chunk') {
-            window.console.log(`Chunk received (${chunk.content.length} chars), accumulated: ${streamedContent.length + chunk.content.length} chars`);
+            window.console.log(
+              `Chunk received (${chunk.content.length} chars), accumulated: ${streamedContent.length + chunk.content.length} chars`
+            );
           } else {
             window.console.log(`Received ${chunk.type} message:`, chunk);
           }
-          
+
           // Handle different chunk types
           switch (chunk.type) {
             case 'chunk':
-              streamedContent += chunk.content;  
-              updateMessageInCache(messageId, streamedContent, chunk.is_generating, chunk.status_generating);
+              streamedContent += chunk.content;
+              updateMessageInCache(
+                messageId,
+                streamedContent,
+                chunk.is_generating,
+                chunk.status_generating
+              );
               break;
-              
+
             case 'end':
               if (chunk.content) {
                 streamedContent = chunk.content;
               }
-              updateMessageInCache(messageId, streamedContent, chunk.is_generating, chunk.status_generating);
+              updateMessageInCache(
+                messageId,
+                streamedContent,
+                chunk.is_generating,
+                chunk.status_generating
+              );
               break;
-              
+
             case 'error':
               break;
-              
+
             case 'start':
               // Handle stream start
               streamedContent = '';
-              updateMessageInCache(messageId, streamedContent, chunk.is_generating, chunk.status_generating);
+              updateMessageInCache(
+                messageId,
+                streamedContent,
+                chunk.is_generating,
+                chunk.status_generating
+              );
               break;
-              
+
             default:
               window.console.warn('Unknown chunk type:', chunk);
           }
-        }
+        },
       });
     },
     onSuccess: (response: { user_message: Message; agent_message: Message }) => {
@@ -89,7 +110,7 @@ export function useMessages(conversationId: string) {
       if (!hasValidId || !response.user_message || !response.agent_message) {
         return;
       }
-      
+
       // Update conversations list with the new messages
       queryClient.setQueryData(
         CHAT_QUERY_KEYS.conversation(conversationId),
@@ -107,41 +128,45 @@ export function useMessages(conversationId: string) {
       // Update conversations list
       queryClient.setQueryData(
         CHAT_QUERY_KEYS.conversations,
-        (oldData: Conversation[] | undefined) => oldData?.map(conv => 
-          conv.id === conversationId 
-            ? {
-                ...conv,
-                lastMessage: response.agent_message,
-                messageCount: conv.messageCount + 2,
-              }
-            : conv
-        )
+        (oldData: Conversation[] | undefined) =>
+          oldData?.map(conv =>
+            conv.id === conversationId
+              ? {
+                  ...conv,
+                  lastMessage: response.agent_message,
+                  messageCount: conv.messageCount + 2,
+                }
+              : conv
+          )
       );
     },
   });
-  
+
   // Helper function to update a message in the cache
-  function updateMessageInCache(messageId: string, content: string, is_generating: boolean = false, status_generating: string = '') {
+  function updateMessageInCache(
+    messageId: string,
+    content: string,
+    is_generating: boolean = false,
+    status_generating: string = ''
+  ) {
     queryClient.setQueryData(
       CHAT_QUERY_KEYS.conversation(conversationId),
       (oldConversation: Conversation | undefined) => {
         if (!oldConversation) return oldConversation;
-      // Replace the message with the updated version
-        const updatedMessages = oldConversation.messages.map(msg => 
-          msg.id === messageId 
-            ? { ...msg, content, is_generating, status_generating } 
-            : msg
+        // Replace the message with the updated version
+        const updatedMessages = oldConversation.messages.map(msg =>
+          msg.id === messageId ? { ...msg, content, is_generating, status_generating } : msg
         );
-        
+
         // Check if this is the last message
         const isLastMessage = oldConversation.lastMessage?.id === messageId;
-        
+
         return {
           ...oldConversation,
           messages: updatedMessages,
-          lastMessage: isLastMessage 
-            ? { ...oldConversation.lastMessage, content } 
-            : oldConversation.lastMessage
+          lastMessage: isLastMessage
+            ? { ...oldConversation.lastMessage, content }
+            : oldConversation.lastMessage,
         };
       }
     );
@@ -156,4 +181,4 @@ export function useMessages(conversationId: string) {
     sendMessage: sendMessage.mutate,
     isSending: sendMessage.isPending,
   };
-} 
+}

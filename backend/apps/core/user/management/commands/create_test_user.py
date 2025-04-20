@@ -21,15 +21,11 @@ class Command(BaseCommand):
         password = "admin"
 
         if User.objects.filter(username=username).exists():
-            self.stdout.write(
-                self.style.SUCCESS(f'User {username} already exists')
-            )
+            self.stdout.write(self.style.SUCCESS(f"User {username} already exists"))
             return
 
         user = User.objects.create_superuser(
-            username=username,
-            email=email,
-            password=password
+            username=username, email=email, password=password
         )
 
         # Create auth token for the user

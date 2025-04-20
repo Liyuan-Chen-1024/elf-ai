@@ -10,7 +10,7 @@ export const useAuthStore = {
   getState: (): AuthState => {
     // Get token from localStorage
     const token = window.localStorage.getItem('authToken');
-    
+
     // Try to get user data
     let user = null;
     try {
@@ -22,14 +22,14 @@ export const useAuthStore = {
       // Silently fail if we can't parse the user data
       window.console.error('Failed to parse user data from localStorage');
     }
-    
+
     return {
       token,
       user,
-      isAuthenticated: !!token
+      isAuthenticated: !!token,
     };
   },
-  
+
   // Store setter
   setState: (state: Partial<AuthState>) => {
     if (state.token !== undefined) {
@@ -39,7 +39,7 @@ export const useAuthStore = {
         window.localStorage.setItem('authToken', state.token);
       }
     }
-    
+
     if (state.user !== undefined) {
       if (state.user === null) {
         window.localStorage.removeItem('user');
@@ -47,5 +47,5 @@ export const useAuthStore = {
         window.localStorage.setItem('user', JSON.stringify(state.user));
       }
     }
-  }
-}; 
+  },
+};

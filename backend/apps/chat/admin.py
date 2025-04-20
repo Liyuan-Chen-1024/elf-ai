@@ -74,9 +74,9 @@ class ConversationAdmin(admin.ModelAdmin):
         )
 
         # Recent conversations
-        recent_conversations = Conversation.objects.filter().order_by(
-            "-updated_at"
-        )[:10]
+        recent_conversations = Conversation.objects.filter().order_by("-updated_at")[
+            :10
+        ]
 
         # Messages per day (last 7 days)
         last_7_days = timezone.now() - timezone.timedelta(days=7)

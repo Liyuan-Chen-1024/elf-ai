@@ -33,7 +33,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
           alignItems: 'center',
         }),
         backgroundColor: THEME.colors.background.surface,
-        ...sx
+        ...sx,
       }}
       {...props}
     >
@@ -42,4 +42,4 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
   );
 };
 
-export default ContentLayout; 
+export default ContentLayout;

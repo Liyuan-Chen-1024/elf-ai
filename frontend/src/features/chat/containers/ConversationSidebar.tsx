@@ -14,20 +14,20 @@ import { THEME } from '../styles/theme';
 const ConversationSidebar: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
   const navigate = useNavigate();
-  
+
   // Get data and actions from the context
-  const { 
+  const {
     conversations,
     createConversation,
     deleteConversation,
     isCreatingConversation,
-    isDeletingConversation
+    isDeletingConversation,
   } = useChatContext();
 
   const handleConversationClick = (conversation: Conversation) => {
     navigate(`/chat/${conversation.id}`);
   };
-  
+
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     // Stop the event from bubbling up and selecting the conversation
     e.stopPropagation();
@@ -52,7 +52,7 @@ const ConversationSidebar: React.FC = () => {
           borderRight: '1px solid',
           borderColor: 'divider',
           boxShadow: 'none',
-          overflow: 'hidden'
+          overflow: 'hidden',
         },
       }}
     >
@@ -69,4 +69,4 @@ const ConversationSidebar: React.FC = () => {
   );
 };
 
-export default ConversationSidebar; 
+export default ConversationSidebar;

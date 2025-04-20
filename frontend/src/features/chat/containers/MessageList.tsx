@@ -14,8 +14,8 @@ interface MessageListProps {
  * MessageList container connects the message data to the presentation component
  * and provides UI-specific behavior through hooks.
  */
-const MessageList: React.FC<MessageListProps> = ({ 
-  messages = [], 
+const MessageList: React.FC<MessageListProps> = ({
+  messages = [],
   isLoading = false,
   emptyStateMessage = 'Start a new conversation',
   emptyStateSubmessage = 'Send a message to get started',
@@ -35,4 +35,4 @@ const MessageList: React.FC<MessageListProps> = ({
   );
 };
 
-export default MessageList; 
+export default MessageList;

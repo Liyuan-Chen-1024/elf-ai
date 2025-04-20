@@ -14,7 +14,7 @@ export function useLoginForm() {
   useEffect(() => {
     if (isAuthenticated) {
       if (import.meta.env.DEV) {
-        console.log('User authenticated, redirecting to /chat');
+        window.console.log('User authenticated, redirecting to /chat');
       }
       navigate('/chat');
     }
@@ -26,7 +26,7 @@ export function useLoginForm() {
       setFormError(null);
     }
   }, [username, password]);
-  
+
   // Toggle debug info with keyboard shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -35,7 +35,7 @@ export function useLoginForm() {
         setShowDebugInfo(prev => !prev);
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -43,23 +43,23 @@ export function useLoginForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    
+
     if (!username.trim()) {
       setFormError('Username is required');
       return;
     }
-    
+
     if (!password.trim()) {
       setFormError('Password is required');
       return;
     }
-    
+
     // Show API URL in development mode
     if (import.meta.env.DEV) {
-      console.log('Login attempt using API URL:', import.meta.env.VITE_API_URL);
-      console.log('Login credentials:', { username: username.trim() });
+      window.console.log('Login attempt using API URL:', import.meta.env.VITE_API_URL);
+      window.console.log('Login credentials:', { username: username.trim() });
     }
-    
+
     login({ username: username.trim(), password: password.trim() });
   };
 
@@ -82,6 +82,6 @@ export function useLoginForm() {
     isLoginLoading,
     showDebugInfo,
     handleSubmit,
-    handleTestLogin
+    handleTestLogin,
   };
-} 
+}

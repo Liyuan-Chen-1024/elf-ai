@@ -1,10 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { 
-  Box, 
-  TextField, 
-  IconButton, 
-  CircularProgress 
-} from '@mui/material';
+import { Box, TextField, IconButton, CircularProgress } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { THEME } from '../styles/theme';
 import { useMessageInput } from '../hooks/messages';
@@ -36,16 +31,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   conversationId,
 }) => {
-  const {
-    message,
-    setMessage,
-    handleSendMessage,
-    handleKeyDown,
-    isMessageEmpty
-  } = useMessageInput(onSendMessage, isLoading || isGenerating);
+  const { message, setMessage, handleSendMessage, handleKeyDown, isMessageEmpty } = useMessageInput(
+    onSendMessage,
+    isLoading || isGenerating
+  );
 
   const inputRef = useRef<HTMLDivElement>(null);
-  
+
   // Focus the input when generation is complete
   useEffect(() => {
     // When isGenerating changes from true to false, focus the input
@@ -72,7 +64,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         maxRows={4}
         placeholder={isGenerating ? 'Waiting for response...' : placeholder}
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={e => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={isLoading || isGenerating}
         inputRef={inputRef}
@@ -101,22 +93,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
         sx={{
           position: 'absolute',
           right: '8px',
-          color: isLoading || isGenerating || isMessageEmpty 
-            ? 'rgba(0, 0, 0, 0.3)' 
-            : THEME.colors.primary.main,
+          color:
+            isLoading || isGenerating || isMessageEmpty
+              ? 'rgba(0, 0, 0, 0.3)'
+              : THEME.colors.primary.main,
           '&:hover': {
             backgroundColor: 'rgba(124, 77, 255, 0.08)',
           },
         }}
       >
-        {isLoading ? (
-          <CircularProgress size={24} color="inherit" />
-        ) : (
-          <SendIcon />
-        )}
+        {isLoading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
       </IconButton>
     </Box>
   );
 };
 
-export default MessageInput; 
+export default MessageInput;

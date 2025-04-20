@@ -6,39 +6,39 @@ import { useMessages } from './useMessages';
  * on top of the basic useMessages data hook.
  */
 export function useMessageActions(conversationId: string) {
-  const hasValidId = !!conversationId && conversationId.trim() !== '';
-  
-  const { 
+  const {
     sendMessage: apiSendMessage,
     messages,
     conversation,
     isSending,
     isLoading,
-    refetch
+    refetch,
   } = useMessages(conversationId);
-  
+
   const [error, setError] = useState<string | null>(null);
 
   /**
    * Send a message with error handling
    */
-  const sendMessage = async (content: string) => {
-    if (!hasValidId) {
-      setError('No active conversation selected');
-      return false;
-    }
-    
-    if (!content.trim()) {
-      setError('Message cannot be empty');
-      return false;
-    }
-    
+  const sendMessage = async (content: string): Promise<boolean> => {
     setError(null);
     try {
-      apiSendMessage({ content });
+      // Validate input
+      if (!content?.trim()) {
+        throw new Error('Message content cannot be empty');
+      }
+
+      if (!conversationId) {
+        window.console.error('Cannot send message: No conversation ID');
+        throw new Error('No conversation selected');
+      }
+
+      // Send message via API
+      apiSendMessage({ conversationId, content });
+
       return true;
     } catch (err) {
-      console.error('Failed to send message:', err);
+      window.console.error('Failed to send message:', err);
       setError('Failed to send message. Please try again.');
       return false;
     }
@@ -59,6 +59,6 @@ export function useMessageActions(conversationId: string) {
     error,
     isSending,
     isLoading,
-    refetch
+    refetch,
   };
-} 
+}

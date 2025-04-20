@@ -24,17 +24,17 @@ function LoginPage() {
     isLoginLoading,
     showDebugInfo,
     handleSubmit,
-    handleTestLogin
+    handleTestLogin,
   } = useLoginForm();
 
   // Format error message from the API
   const getErrorMessage = () => {
     if (!loginError) return null;
-    
+
     if (loginError instanceof AxiosError) {
       const status = loginError.response?.status;
       const data = loginError.response?.data;
-      
+
       // Handle different error types
       if (status === 404) {
         return 'API endpoint not found. Please check the server configuration.';
@@ -46,7 +46,7 @@ function LoginPage() {
         return data.detail;
       }
     }
-    
+
     return loginError.message;
   };
 
@@ -64,23 +64,24 @@ function LoginPage() {
         <Typography component="h1" variant="h4" gutterBottom>
           ElfAI
         </Typography>
-        
+
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography component="h2" variant="h5" gutterBottom>
             Sign in
           </Typography>
-          
+
           {errorMessage && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {errorMessage}
               {import.meta.env.DEV && (
                 <Box sx={{ mt: 1, fontSize: '0.9em' }}>
-                  <strong>Hint:</strong> Try using username <code>admin</code> and password <code>password</code>
+                  <strong>Hint:</strong> Try using username <code>admin</code> and password{' '}
+                  <code>password</code>
                 </Box>
               )}
             </Alert>
           )}
-          
+
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <TextField
               margin="normal"
@@ -91,11 +92,11 @@ function LoginPage() {
               name="username"
               autoComplete="username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={e => setUsername(e.target.value)}
               disabled={isLoginLoading}
               error={!!formError && !username.trim()}
             />
-            
+
             <TextField
               margin="normal"
               required
@@ -106,11 +107,11 @@ function LoginPage() {
               id="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               disabled={isLoginLoading}
               error={!!formError && !password.trim()}
             />
-            
+
             <Button
               type="submit"
               fullWidth
@@ -122,7 +123,7 @@ function LoginPage() {
               {isLoginLoading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
           </Box>
-          
+
           {/* Debug information (visible in development mode or when enabled) */}
           {(import.meta.env.DEV || showDebugInfo) && (
             <>
@@ -130,15 +131,15 @@ function LoginPage() {
               <Typography variant="caption" color="text.secondary">
                 Debug info (Ctrl+Shift+D to toggle):
               </Typography>
-              <Box 
-                sx={{ 
-                  mt: 1, 
-                  p: 1, 
-                  bgcolor: 'grey.100', 
+              <Box
+                sx={{
+                  mt: 1,
+                  p: 1,
+                  bgcolor: 'grey.100',
                   borderRadius: 1,
                   fontSize: '0.75rem',
                   fontFamily: 'monospace',
-                  wordBreak: 'break-all'
+                  wordBreak: 'break-all',
                 }}
               >
                 <Typography variant="caption" display="block">
@@ -153,18 +154,24 @@ function LoginPage() {
                       Error Type: {loginError.name}
                     </Typography>
                     <Typography variant="caption" display="block">
-                      Status: {loginError instanceof AxiosError ? loginError.response?.status || 'No status' : 'N/A'}
+                      Status:{' '}
+                      {loginError instanceof AxiosError
+                        ? loginError.response?.status || 'No status'
+                        : 'N/A'}
                     </Typography>
                     <Typography variant="caption" display="block">
-                      URL: {loginError instanceof AxiosError ? loginError.config?.url || 'No URL' : 'N/A'}
+                      URL:{' '}
+                      {loginError instanceof AxiosError
+                        ? loginError.config?.url || 'No URL'
+                        : 'N/A'}
                     </Typography>
                   </>
                 )}
                 {import.meta.env.DEV && (
-                  <Button 
-                    size="small" 
-                    variant="outlined" 
-                    onClick={handleTestLogin} 
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={handleTestLogin}
                     sx={{ mt: 1, fontSize: '0.75rem' }}
                   >
                     Test Login (admin/password)
@@ -179,4 +186,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage; 
+export default LoginPage;

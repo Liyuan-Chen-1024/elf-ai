@@ -10,4 +10,4 @@ export const COMMON_QUERY_OPTIONS = {
 export const CHAT_QUERY_KEYS = {
   conversations: ['conversations'],
   conversation: (id: string) => ['conversations', id],
-} as const; 
+} as const;

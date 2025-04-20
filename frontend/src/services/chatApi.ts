@@ -28,32 +28,28 @@ interface StreamingError extends StreamingChunkBase {
   error: string;
 }
 
-export type StreamingResponse = 
-  | StreamingStart
-  | StreamingChunk
-  | StreamingEnd
-  | StreamingError;
+export type StreamingResponse = StreamingStart | StreamingChunk | StreamingEnd | StreamingError;
 
 // Super simple global state for streaming content
 export const streamState = {
   // Map of message IDs to their content
   contents: new Map<string, string>(),
-  
+
   // Set content for a message
   setContent(messageId: string, content: string) {
     this.contents.set(messageId, content);
     window.console.log(`Updated content for ${messageId}, length: ${content.length}`);
   },
-  
+
   // Get content for a message
   getContent(messageId: string): string {
     return this.contents.get(messageId) || '';
   },
-  
+
   // Clear content for a message
   clearContent(messageId: string) {
     this.contents.delete(messageId);
-  }
+  },
 };
 
 interface PaginatedResponse<T> {
@@ -77,7 +73,13 @@ export const chatApi = {
     return response.data;
   },
 
-  updateConversation: async ({ id, title }: { id: string; title: string }): Promise<Conversation> => {
+  updateConversation: async ({
+    id,
+    title,
+  }: {
+    id: string;
+    title: string;
+  }): Promise<Conversation> => {
     const response = await fetchClient.patch<Conversation>(`/chat/conversations/${id}/`, { title });
     return response.data;
   },
@@ -88,22 +90,28 @@ export const chatApi = {
   },
 
   getMessages: async (conversationId: string): Promise<Message[]> => {
-    const response = await fetchClient.get<Message[]>(`/chat/conversations/${conversationId}/messages/`);
+    const response = await fetchClient.get<Message[]>(
+      `/chat/conversations/${conversationId}/messages/`
+    );
     return response.data;
   },
 
-  sendMessage: async ({ 
-    conversationId, 
+  sendMessage: async ({
+    conversationId,
     content,
-    onStream
-  }: { 
-    conversationId: string; 
+    onStream,
+  }: {
+    conversationId: string;
     content: string;
-    onStream?: (conversationId: string, messageId: string, chunk: StreamingResponse | string) => void;
+    onStream?: (
+      conversationId: string,
+      messageId: string,
+      chunk: StreamingResponse | string
+    ) => void;
   }): Promise<{ user_message: Message; agent_message: Message }> => {
     // Send the message
     const response = await fetchClient.post<{ user_message: Message; agent_message: Message }>(
-      `/chat/conversations/${conversationId}/messages/`, 
+      `/chat/conversations/${conversationId}/messages/`,
       { content }
     );
 
@@ -115,14 +123,14 @@ export const chatApi = {
         {
           headers: {
             'Content-Type': 'application/json',
-          }
+          },
         },
-        (chunk) => {
+        chunk => {
           window.console.log(chunk);
           onStream(conversationId, agentMessageId, chunk);
         }
       );
     }
     return response.data;
-  }
+  },
 };

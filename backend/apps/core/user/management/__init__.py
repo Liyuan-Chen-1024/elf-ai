@@ -1,1 +1,1 @@
-"""Core app management module.""" 
+"""Core app management module."""

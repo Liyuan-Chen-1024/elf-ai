@@ -35,5 +35,7 @@ export interface SSEMessage {
   type: 'start' | 'token' | 'chunk' | 'content_complete' | 'done' | 'error';
   content?: string;
   message_id?: string;
-  [key: string]: any;
-} 
+  [key: string]: unknown;
+}
+
+export type APIHandler = (url: string, params?: unknown) => Promise<unknown>;

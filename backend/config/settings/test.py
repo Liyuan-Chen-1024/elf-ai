@@ -15,9 +15,9 @@ ALLOWED_HOSTS = ["*"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres_test",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
+        "NAME": "elfai",
+        "USER": "elfai",
+        "PASSWORD": "elfai",
         "HOST": "db",
         "PORT": "5432",
     }
@@ -113,6 +113,7 @@ CACHES = {
 }
 
 # Application definition
+# Updated INSTALLED_APPS - removed 'apps.shows' and 'apps.dashboard'
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -122,6 +123,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third party apps
     "rest_framework",
+    "rest_framework.authtoken",
     "django_filters",
     "corsheaders",
     "drf_spectacular",
@@ -134,8 +136,6 @@ INSTALLED_APPS = [
     "health_check.contrib.redis",
     # Local apps
     "apps.core",
-    "apps.shows",
-    "apps.dashboard",
     "apps.chat",
 ]
 

@@ -52,4 +52,4 @@ export function useConversations() {
     deleteConversation: deleteConversation.mutate,
     isDeleting: deleteConversation.isPending,
   };
-} 
+}

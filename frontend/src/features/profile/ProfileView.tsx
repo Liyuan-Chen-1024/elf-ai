@@ -59,11 +59,7 @@ function ProfileView() {
               <Typography variant="body2" color="text.secondary">
                 {user.email}
               </Typography>
-              <Button 
-                variant="outlined" 
-                sx={{ mt: 2 }}
-                size="small"
-              >
+              <Button variant="outlined" sx={{ mt: 2 }} size="small">
                 Change Avatar
               </Button>
             </Box>
@@ -95,11 +91,7 @@ function ProfileView() {
             </Typography>
             <Grid container spacing={2} sx={{ mb: 4 }}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="First Name"
-                  defaultValue={user.name?.split(' ')[0]}
-                />
+                <TextField fullWidth label="First Name" defaultValue={user.name?.split(' ')[0]} />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -109,12 +101,7 @@ function ProfileView() {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  defaultValue={user.email}
-                  type="email"
-                />
+                <TextField fullWidth label="Email" defaultValue={user.email} type="email" />
               </Grid>
               <Grid item xs={12}>
                 <Button variant="contained" color="primary">
@@ -130,22 +117,13 @@ function ProfileView() {
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <FormControlLabel
-                  control={<Switch defaultChecked />}
-                  label="Email notifications"
-                />
+                <FormControlLabel control={<Switch defaultChecked />} label="Email notifications" />
               </Grid>
               <Grid item xs={12}>
-                <FormControlLabel
-                  control={<Switch defaultChecked />}
-                  label="Show read receipts"
-                />
+                <FormControlLabel control={<Switch defaultChecked />} label="Show read receipts" />
               </Grid>
               <Grid item xs={12}>
-                <FormControlLabel
-                  control={<Switch />}
-                  label="Display online status"
-                />
+                <FormControlLabel control={<Switch />} label="Display online status" />
               </Grid>
             </Grid>
           </Paper>
@@ -155,4 +133,4 @@ function ProfileView() {
   );
 }
 
-export default ProfileView; 
+export default ProfileView;

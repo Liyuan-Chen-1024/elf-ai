@@ -13,20 +13,24 @@ interface UserMessageProps {
  */
 const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
   return (
-    <Box sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      mb: 2,
-      pr: { xs: 2, sm: 3 },
-      '&:last-child': { mb: 0 },
-    }}>
-      <Box sx={{
+    <Box
+      sx={{
         display: 'flex',
-        justifyContent: 'flex-end',
+        flexDirection: 'column',
         width: '100%',
-      }}>
-        <Box 
+        mb: 2,
+        pr: { xs: 2, sm: 3 },
+        '&:last-child': { mb: 0 },
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          width: '100%',
+        }}
+      >
+        <Box
           sx={{
             wordBreak: 'break-word',
             p: { xs: 2, sm: 2.5 },
@@ -38,10 +42,10 @@ const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
             position: 'relative',
             border: `1px solid ${THEME.colors.background.user}`,
           }}
-        > 
-          <Typography 
-            component="div" 
-            sx={{ 
+        >
+          <Typography
+            component="div"
+            sx={{
               whiteSpace: 'pre-wrap',
               fontFamily: 'inherit',
               fontSize: THEME.typography.fontSize.regular,
@@ -58,4 +62,4 @@ const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
   );
 };
 
-export default UserMessage; 
+export default UserMessage;

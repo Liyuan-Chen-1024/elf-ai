@@ -49,14 +49,17 @@ We organize hooks into three clear layers:
 The chat feature also includes reusable UI components that provide consistent styling across the application:
 
 ### Layout Components
+
 - `ContentLayout` - Standardized layout container with support for centered content
 - `InputBar` - Consistent styling for the message input area
 
 ### Feedback Components
+
 - `ErrorAlert` - Standardized error display component
 - `EmptyState` - Consistent empty state display
 
 ### Action Components
+
 - `PrimaryButton` - Button with loading state and standard styling
 
 ## Using Hooks in Components
@@ -82,4 +85,4 @@ import { useChatContext } from '../context';
 4. **Clear naming**: Names should reflect the layer (`Data`, `Actions`, `UI`)
 5. **Use shared components**: Leverage shared UI components for consistency
 
-For detailed migration information, see the [MIGRATION.md](../MIGRATION.md) file. 
+For detailed migration information, see the [MIGRATION.md](../MIGRATION.md) file.

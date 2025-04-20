@@ -1,5 +1,5 @@
 import React, { SyntheticEvent } from 'react';
-import { Box, Typography, Button, Alert } from '@mui/material';
+import { Box, Typography, Alert } from '@mui/material';
 import { THEME } from '../styles/theme';
 import PrimaryButton from './PrimaryButton';
 import ContentLayout from './ContentLayout';
@@ -22,31 +22,31 @@ interface EmptyStateProps {
  * EmptyState component displayed when there is no content to show.
  * Shows a title and a description message, with optional action button and error display.
  */
-const EmptyState: React.FC<EmptyStateProps> = ({ 
-  message, 
-  submessage, 
+const EmptyState: React.FC<EmptyStateProps> = ({
+  message,
+  submessage,
   actionButton,
   error,
   onClearError,
-  fullPage 
+  fullPage,
 }) => {
   const content = (
     <>
-      <Typography 
-        variant="h5" 
-        sx={{ 
+      <Typography
+        variant="h5"
+        sx={{
           color: THEME.colors.text.primary,
           fontWeight: THEME.typography.fontWeight.semibold,
           fontSize: THEME.typography.fontSize.large,
-          letterSpacing: THEME.typography.spacing.tighter,
+          letterSpacing: THEME.typography.spacing.tight,
           mb: 1,
         }}
       >
         {message}
       </Typography>
-      <Typography 
-        variant="body2" 
-        sx={{ 
+      <Typography
+        variant="body2"
+        sx={{
           color: THEME.colors.text.secondary,
           fontSize: THEME.typography.fontSize.regular,
           mb: actionButton ? 3 : 0,
@@ -54,29 +54,26 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       >
         {submessage}
       </Typography>
-      
+
       {error && (
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           {...(onClearError ? { onClose: onClearError } : {})}
           sx={{
             mt: 2,
             mb: 2,
             borderRadius: '8px',
-            border: `1px solid ${THEME.colors.accent.red.border}`
+            border: `1px solid #ff5252`,
           }}
         >
           {error}
         </Alert>
       )}
-      
+
       {actionButton && (
-        <PrimaryButton
-          onClick={actionButton.onClick}
-          loading={actionButton.loading ?? false}
-        >
-          {actionButton.loading && actionButton.loadingLabel 
-            ? actionButton.loadingLabel 
+        <PrimaryButton onClick={actionButton.onClick} loading={actionButton.loading ?? false}>
+          {actionButton.loading && actionButton.loadingLabel
+            ? actionButton.loadingLabel
             : actionButton.label}
         </PrimaryButton>
       )}
@@ -86,11 +83,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   // If fullPage is true, wrap in ContentLayout for full page display
   if (fullPage) {
     return (
-      <ContentLayout
-        fullHeight
-        centered
-        sx={{ gap: 2, px: 2 }}
-      >
+      <ContentLayout fullHeight centered sx={{ gap: 2, px: 2 }}>
         {content}
       </ContentLayout>
     );
@@ -98,18 +91,20 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
   // Otherwise just return the content in a flex box
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      flex: 1,
-      minHeight: 0,
-      py: 4,
-    }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
+        minHeight: 0,
+        py: 4,
+      }}
+    >
       {content}
     </Box>
   );
 };
 
-export default EmptyState; 
+export default EmptyState;

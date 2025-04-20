@@ -1,5 +1,14 @@
 import React from 'react';
-import { Box, Typography, Paper, Card, CardContent, CardMedia, Grid, Skeleton } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  Card,
+  CardContent,
+  CardMedia,
+  Grid,
+  Skeleton,
+} from '@mui/material';
 import { useNews } from '../../hooks/useNews';
 import { NewsItem } from '../../types';
 
@@ -51,12 +60,7 @@ function NewsView() {
             <Grid item xs={12} md={4} key={item.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {item.imageUrl && (
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={item.imageUrl}
-                    alt={item.title}
-                  />
+                  <CardMedia component="img" height="200" image={item.imageUrl} alt={item.title} />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography gutterBottom variant="h5" component="div">
@@ -78,4 +82,4 @@ function NewsView() {
   );
 }
 
-export default NewsView; 
+export default NewsView;

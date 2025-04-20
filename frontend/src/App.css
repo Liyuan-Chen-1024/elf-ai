@@ -13,7 +13,8 @@ pre {
 }
 
 pre code {
-  font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
+  font-family:
+    'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
   font-size: 15px !important;
   line-height: 1.6 !important;
   display: block !important;
@@ -96,7 +97,7 @@ table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 3px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   background: white;
   border: 2px solid #aaa;
   border-radius: 6px;
@@ -104,7 +105,8 @@ table {
   margin: 1em 0;
 }
 
-th, td {
+th,
+td {
   border: 2px solid #aaa;
   padding: 1em;
   text-align: center;
@@ -135,7 +137,7 @@ pre.single-line-code {
 }
 
 /* Make numbered explanation code blocks better */
-ol li pre, 
+ol li pre,
 ul li pre {
   margin: 0.5rem 0 !important;
 }
@@ -155,7 +157,8 @@ ul li pre {
 }
 
 /* Improve spacing around list items with code */
-ol li, ul li {
+ol li,
+ul li {
   margin-bottom: 1rem;
 }
 
@@ -177,7 +180,8 @@ ol li, ul li {
 }
 
 /* Numbered list with code snippets */
-ol li code, ul li code {
+ol li code,
+ul li code {
   background-color: rgba(40, 44, 52, 0.9);
   color: #e6e6e6;
   border-radius: 4px;
@@ -207,15 +211,17 @@ ol li {
 }
 
 /* Code blocks in explanations */
-ol li pre, ul li pre {
+ol li pre,
+ul li pre {
   margin: 0.75rem 0;
   padding: 0;
   background-color: #282c34;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-ol li pre code, ul li pre code {
+ol li pre code,
+ul li pre code {
   display: block;
   padding: 0.75rem 1rem;
   color: #abb2bf;
@@ -230,17 +236,18 @@ pre.simple-code-block {
 
 /* Remove dark blue background around code blocks */
 .markdown-body pre,
-pre[class*="language-"] {
+pre[class*='language-'] {
   background-color: #282c34 !important;
   margin: 1rem 0 !important;
   border-radius: 8px !important;
   padding: 1rem 0 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
   border: none !important;
 }
 
 /* Fix nested pre elements if they exist */
-pre pre, div > pre {
+pre pre,
+div > pre {
   background-color: #282c34 !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -249,16 +256,16 @@ pre pre, div > pre {
 }
 
 /* Override any custom backgrounds that might be applied from other components */
-[class*="agent"] pre,
-[class*="message"] pre,
-[class*="content"] pre {
+[class*='agent'] pre,
+[class*='message'] pre,
+[class*='content'] pre {
   background-color: #282c34 !important;
   border: none !important;
 }
 
 /* Target the specific dark blue background around code blocks */
-[style*="background"] > pre,
-[style*="background-color"] > pre {
+[style*='background'] > pre,
+[style*='background-color'] > pre {
   margin: 0 !important;
   box-shadow: none !important;
   border-radius: 8px !important;
@@ -272,7 +279,7 @@ pre {
 /* Add some more specific selectors to override the dark blue wrapper */
 .message-content pre,
 .agent-message pre,
-[class*="box"] > pre {
+[class*='box'] > pre {
   background-color: #282c34 !important;
   margin: 1rem 0 !important;
   padding: 1rem 0 !important;
@@ -286,7 +293,7 @@ pre {
 }
 
 /* Target the dark blue background at the root level */
-[class*="MuiBox"] {
+[class*='MuiBox'] {
   background-color: inherit;
 }
 
@@ -301,9 +308,9 @@ pre {
 }
 
 /* Target the dark blue container specifically */
-[style*="background-color: rgb(40, 43, 77)"],
-[style*="background-color: #282b4d"],
-[style*="background-color: rgb(45, 45, 73)"] {
+[style*='background-color: rgb(40, 43, 77)'],
+[style*='background-color: #282b4d'],
+[style*='background-color: rgb(45, 45, 73)'] {
   background-color: transparent !important;
   padding: 0 !important;
   margin: 0 !important;
@@ -336,23 +343,23 @@ pre {
 }
 
 /* Remove any parent background-color styling */
-[style*="background"] {
+[style*='background'] {
   background-color: inherit !important;
 }
 
 /* !important Override for the dark blue container */
 pre {
-  margin: 0 !important; 
+  margin: 0 !important;
   max-width: 100% !important;
 }
 
 .dark-mode-code-wrapper,
 .dark-background-wrapper,
-[style*="background-color: rgb(39, 41, 68)"],
-[style*="background-color: rgb(40, 43, 77)"],
-[style*="background-color: #282b4d"],
-[style*="background-color: rgb(45, 45, 73)"],
-[style*="background: rgb(39, 41, 68)"] {
+[style*='background-color: rgb(39, 41, 68)'],
+[style*='background-color: rgb(40, 43, 77)'],
+[style*='background-color: #282b4d'],
+[style*='background-color: rgb(45, 45, 73)'],
+[style*='background: rgb(39, 41, 68)'] {
   background-color: #282c34 !important;
   padding: 0 !important;
   margin: 1rem 0 !important;
@@ -361,19 +368,19 @@ pre {
 }
 
 /* Clean up the parent structure */
-[style*="background"] > pre,
-[style*="background-color"] > pre {
+[style*='background'] > pre,
+[style*='background-color'] > pre {
   margin: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 
 /* Remove any blue wrapper styling */
-[style*="background-color: rgb(39, 41, 68)"],
-[style*="background-color: rgb(40, 43, 77)"],
-[style*="background-color: #282b4d"],
-[style*="background-color: rgb(45, 45, 73)"] {
+[style*='background-color: rgb(39, 41, 68)'],
+[style*='background-color: rgb(40, 43, 77)'],
+[style*='background-color: #282b4d'],
+[style*='background-color: rgb(45, 45, 73)'] {
   background-color: transparent !important;
   padding: 0 !important;
   margin: 0 !important;
-} 
+}

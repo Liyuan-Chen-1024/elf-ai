@@ -18,7 +18,7 @@ class Conversation(TimeStampedModel, UUIDModel):
     )
 
     title = models.CharField(max_length=255, default="New conversation")
-    
+
     class Meta:
         ordering = ["-updated_at"]
         indexes = [
@@ -42,9 +42,14 @@ class Message(TimeStampedModel, UUIDModel):
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
     content = models.TextField()
     is_generating = models.BooleanField(default=False)
-    status_generating = models.CharField(max_length=255, blank=True, default="", help_text="Current generation status (e.g., 'Thinking', 'Browsing')")
+    status_generating = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Current generation status (e.g., 'Thinking', 'Browsing')",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ["created_at"]
         indexes = [
@@ -53,4 +58,3 @@ class Message(TimeStampedModel, UUIDModel):
 
     def __str__(self):
         return f"{self.role} message in {self.conversation.title} ({self.id})"
-

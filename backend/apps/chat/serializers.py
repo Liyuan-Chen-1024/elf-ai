@@ -1,11 +1,15 @@
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from rest_framework import serializers
+
 from drf_spectacular.utils import extend_schema_field
 
 from .models import Conversation, Message
 
+
 class MessageSerializer(serializers.ModelSerializer):
     """Serializer for Message objects, formatted as expected by the frontend."""
+
     sender = serializers.SerializerMethodField()
     conversation_id = serializers.UUIDField()
     created_at = serializers.DateTimeField(read_only=True)
@@ -25,15 +29,20 @@ class MessageSerializer(serializers.ModelSerializer):
             "is_generating",
             "status_generating",
         ]
-        read_only_fields = ["id", "timestamp", "role", "is_generating", "status_generating"]
+        read_only_fields = [
+            "id",
+            "timestamp",
+            "role",
+            "is_generating",
+            "status_generating",
+        ]
 
-    @extend_schema_field({
-        "type": "object",
-        "properties": {
-            "id": {"type": "string"},
-            "name": {"type": "string"}
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
         }
-    })
+    )
     def get_sender(self, obj: Message) -> Dict[str, str]:
         """Return sender information in the format expected by the frontend."""
         if obj.role == "user":
@@ -73,16 +82,15 @@ class ConversationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
-    @extend_schema_field({
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-                "id": {"type": "string"},
-                "name": {"type": "string"}
-            }
+    @extend_schema_field(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
+            },
         }
-    })
+    )
     def get_participants(self, obj: Conversation) -> List[Dict[str, str]]:
         """Return conversation participants in the format expected by the frontend."""
         user = obj.user

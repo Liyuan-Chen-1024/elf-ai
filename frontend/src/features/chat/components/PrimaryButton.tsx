@@ -32,7 +32,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         '&:hover': {
           background: THEME.colors.primary.hoverGradient,
         },
-        ...sx
+        ...sx,
       }}
       {...props}
     >
@@ -41,4 +41,4 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   );
 };
 
-export default PrimaryButton; 
+export default PrimaryButton;

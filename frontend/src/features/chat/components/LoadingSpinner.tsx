@@ -11,9 +11,9 @@ interface LoadingSpinnerProps {
  * LoadingSpinner provides a consistent loading indicator
  * with optional message text.
  */
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   message = 'Loading...',
-  fullPage = false
+  fullPage = false,
 }) => {
   return (
     <Box
@@ -27,17 +27,17 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
           width: '100%',
         }),
         padding: 4,
-        gap: 2
+        gap: 2,
       }}
     >
-      <CircularProgress 
+      <CircularProgress
         size={40}
         sx={{
           color: THEME.colors.primary.main,
           animation: `${THEME.animations.pulse} 2s infinite`,
         }}
       />
-      
+
       {message && (
         <Typography
           variant="body1"
@@ -53,4 +53,4 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   );
 };
 
-export default LoadingSpinner; 
+export default LoadingSpinner;

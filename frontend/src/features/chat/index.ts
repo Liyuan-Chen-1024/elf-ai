@@ -29,4 +29,4 @@ export * from './context';
 export * from './hooks';
 
 // Styles
-export { THEME as ChatTheme } from './styles/theme'; 
+export { THEME as ChatTheme } from './styles/theme';

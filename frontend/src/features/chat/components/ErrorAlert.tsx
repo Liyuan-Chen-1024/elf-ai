@@ -12,15 +12,11 @@ interface ErrorAlertProps {
  * Reusable error alert component with consistent styling
  * for displaying error messages across the application.
  */
-const ErrorAlert: React.FC<ErrorAlertProps> = ({ 
-  error, 
-  sx = {}, 
-  showPrefix = true 
-}) => {
+const ErrorAlert: React.FC<ErrorAlertProps> = ({ error, sx = {}, showPrefix = true }) => {
   return (
-    <Alert 
-      severity="error" 
-      sx={{ 
+    <Alert
+      severity="error"
+      sx={{
         mb: 3,
         borderRadius: '12px',
         border: `1px solid ${THEME.colors.accent.red.border}`,
@@ -28,12 +24,13 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({
         '& .MuiAlert-icon': {
           color: THEME.colors.accent.red.main,
         },
-        ...sx
+        ...sx,
       }}
     >
-      {showPrefix ? 'Error: ' : ''}{error}
+      {showPrefix ? 'Error: ' : ''}
+      {error}
     </Alert>
   );
 };
 
-export default ErrorAlert; 
+export default ErrorAlert;
