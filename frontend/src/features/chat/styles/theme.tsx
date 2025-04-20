@@ -17,7 +17,7 @@ export const animations = {
   blink: keyframes`
     0%, 100% { opacity: 0.8; }
     50% { opacity: 0.2; }
-  `
+  `,
 };
 
 // Theme constants
@@ -39,14 +39,15 @@ export const THEME = {
       // Message backgrounds
       user: 'rgba(124, 77, 255, 0.1)',
       assistant: 'transparent',
-      system: 'rgba(0, 122, 255, 0.05)', 
-      
+      system: 'rgba(0, 122, 255, 0.05)',
+
       // UI elements
       surface: '#FFFFFF',
       header: 'linear-gradient(180deg, rgba(247, 249, 252, 0.9) 0%, rgba(247, 249, 252, 0.6) 100%)',
-      headerBorder: 'linear-gradient(90deg, rgba(124, 77, 255, 0.08) 0%, rgba(255, 117, 151, 0.08) 100%)',
+      headerBorder:
+        'linear-gradient(90deg, rgba(124, 77, 255, 0.08) 0%, rgba(255, 117, 151, 0.08) 100%)',
       inputBorder: 'rgba(0, 0, 0, 0.08)',
-      
+
       // For backward compatibility
       default: '#f6f6f6',
       paper: '#ffffff',
@@ -66,8 +67,8 @@ export const THEME = {
         light: 'rgba(255, 59, 48, 0.05)',
         border: 'rgba(255, 59, 48, 0.12)',
         main: '#FF3B30',
-      }
-    }
+      },
+    },
   },
   avatars: {
     user: userAvatar,
@@ -91,11 +92,11 @@ export const THEME = {
   },
   typography: {
     fontSize: {
-      tiny: '0.75rem',      // 12px
-      small: '0.875rem',    // 14px
+      tiny: '0.75rem', // 12px
+      small: '0.875rem', // 14px
       regular: '0.9375rem', // 15px
-      large: '1.25rem',     // 20px
-      xlarge: '1.8rem',     // 28.8px
+      large: '1.25rem', // 20px
+      xlarge: '1.8rem', // 28.8px
     },
     fontWeight: {
       regular: 400,
@@ -103,11 +104,11 @@ export const THEME = {
       semibold: 600,
     },
     spacing: {
-      tight: '-0.01em', 
+      tight: '-0.01em',
       tighter: '-0.02em',
-    }
+    },
   },
-  animations
+  animations,
 };
 
-export default THEME; 
+export default THEME;

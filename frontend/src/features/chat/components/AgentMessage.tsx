@@ -224,9 +224,10 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
               height: '100%',
               backgroundColor: 'transparent',
               position: 'relative',
-              boxShadow: message.status_generating === "Completed" 
-                ? THEME.colors.accent.purple.shadow
-                : 'none',
+              boxShadow:
+                message.status_generating === 'Completed'
+                  ? THEME.colors.accent.purple.shadow
+                  : 'none',
               ...(isGenerating && {
                 animation: `${THEME.animations.float} 3s ease-in-out infinite, ${THEME.animations.pulse} 2s infinite`,
               }),
@@ -265,12 +266,16 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
           <Typography
             variant="caption"
             sx={{
-              color: message.status_generating === "Completed" 
-                ? THEME.colors.text.completed 
-                : THEME.colors.text.secondary,
-              fontStyle: message.status_generating === "Completed" ? 'normal' : 'italic',
+              color:
+                message.status_generating === 'Completed'
+                  ? THEME.colors.text.completed
+                  : THEME.colors.text.secondary,
+              fontStyle: message.status_generating === 'Completed' ? 'normal' : 'italic',
               fontSize: THEME.typography.fontSize.tiny,
-              fontWeight: message.status_generating === "Completed" ? THEME.typography.fontWeight.medium : 'normal',
+              fontWeight:
+                message.status_generating === 'Completed'
+                  ? THEME.typography.fontWeight.medium
+                  : 'normal',
               ...(isGenerating && {
                 animation: `${THEME.animations.float} 3s ease-in-out infinite`,
               }),
