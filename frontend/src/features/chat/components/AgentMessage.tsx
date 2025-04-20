@@ -1,12 +1,12 @@
 import React from 'react';
-import { Box, Typography, Avatar, CircularProgress } from '@mui/material';
+import { Box, Typography, Avatar } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import 'highlight.js/styles/atom-one-dark.css'; // Better syntax highlighting theme
 import { Message } from '../../../types';
-import { THEME } from '../styles/theme';
+import { THEME } from '../styles/theme.tsx';
 import { Components } from 'react-markdown';
 
 interface AgentMessageProps {
@@ -211,38 +211,27 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
         <Box
           sx={{
             position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: '42px',
+            height: '42px',
+            marginRight: '12px',
           }}
         >
           <Avatar
-            alt="Elf Agent"
+            alt="Elf Agent Avatar"
             src={THEME.avatars.assistant}
             sx={{
-              width: 32,
-              height: 32,
-              backgroundColor: THEME.colors.accent.purple.light,
-              border: `1.5px solid ${THEME.colors.accent.purple.border}`,
-              boxShadow: THEME.colors.accent.purple.shadow,
-              transition: 'all 0.3s ease',
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'transparent',
+              position: 'relative',
+              boxShadow: message.status_generating === "Completed" 
+                ? THEME.colors.accent.purple.shadow
+                : 'none',
               ...(isGenerating && {
-                animation: `${THEME.animations.pulse} 2s infinite, ${THEME.animations.float} 3s ease-in-out infinite`,
+                animation: `${THEME.animations.float} 3s ease-in-out infinite, ${THEME.animations.pulse} 2s infinite`,
               }),
             }}
           />
-          {isGenerating && (
-            <CircularProgress
-              size={40}
-              thickness={1.5}
-              sx={{
-                position: 'absolute',
-                color: THEME.colors.accent.purple.border,
-                animation: 'none',
-                boxShadow: `0 0 10px ${THEME.colors.accent.purple.main}30`,
-              }}
-            />
-          )}
         </Box>
         <Box sx={{ flex: 1, ml: 2 }}>
           <Box

@@ -1,46 +1,101 @@
-import { createTheme } from '@mui/material/styles';
+import { keyframes } from '@mui/material';
+import userAvatar from '../../../assets/avatars/human-user.svg';
+import assistantAvatar from '../../../assets/avatars/elf-robot.svg';
 
-// Define base colors
-const accentPurple = {
-  light: '#eddffc',
-  main: '#9f56f3',
-  dark: '#7c34d9',
-  border: '#9f56f3'
+// Animations
+export const animations = {
+  pulse: keyframes`
+    0% { box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.4); background-color: transparent !important; }
+    70% { box-shadow: 0 0 0 10px rgba(124, 77, 255, 0); background-color: transparent !important; }
+    100% { box-shadow: 0 0 0 0 rgba(124, 77, 255, 0); background-color: transparent !important; }
+  `,
+  float: keyframes`
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+    100% { transform: translateY(0px); }
+  `,
+  blink: keyframes`
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.2; }
+  `
 };
 
-// Define theme colors
+// Theme constants
 export const THEME = {
   colors: {
     primary: {
-      main: '#7f56da',
-      light: '#e9dffc',
+      main: '#7C4DFF',
+      light: '#9D7FFF',
+      gradient: 'linear-gradient(135deg, #7C4DFF 0%, #FF7597 100%)',
+      hoverGradient: 'linear-gradient(135deg, #6a3fcf 0%, #e76485 100%)',
     },
     text: {
-      primary: '#1c1c1e',
-      secondary: 'rgba(28, 28, 30, 0.65)',
-      muted: 'rgba(28, 28, 30, 0.45)',
-      white: '#ffffff',
-      black: '#000000',
+      primary: '#1C1C1E',
+      secondary: '#6C6C70',
+      muted: 'rgba(28, 28, 30, 0.5)',
+      completed: '#5E35B1',
     },
     background: {
+      // Message backgrounds
+      user: 'rgba(124, 77, 255, 0.1)',
+      assistant: 'transparent',
+      system: 'rgba(0, 122, 255, 0.05)', 
+      
+      // UI elements
+      surface: '#FFFFFF',
+      header: 'linear-gradient(180deg, rgba(247, 249, 252, 0.9) 0%, rgba(247, 249, 252, 0.6) 100%)',
+      headerBorder: 'linear-gradient(90deg, rgba(124, 77, 255, 0.08) 0%, rgba(255, 117, 151, 0.08) 100%)',
+      inputBorder: 'rgba(0, 0, 0, 0.08)',
+      
+      // For backward compatibility
       default: '#f6f6f6',
       paper: '#ffffff',
-      input: '#f6f6f6',
-      inputBorder: '#e2e2e2',
-      inputFocusBorder: '#bebebe',
-      assistant: '#f2f4f8',
-      user: '#f2f0fe',
     },
     accent: {
-      purple: accentPurple,
-    },
+      purple: {
+        light: 'rgba(124, 77, 255, 0.04)',
+        border: 'rgba(124, 77, 255, 0.12)',
+        main: '#7C4DFF',
+        shadow: '0 2px 6px rgba(124, 77, 255, 0.3)',
+      },
+      blue: {
+        light: 'rgba(0, 122, 255, 0.04)',
+        border: 'rgba(0, 122, 255, 0.12)',
+      },
+      red: {
+        light: 'rgba(255, 59, 48, 0.05)',
+        border: 'rgba(255, 59, 48, 0.12)',
+        main: '#FF3B30',
+      }
+    }
+  },
+  avatars: {
+    user: userAvatar,
+    assistant: assistantAvatar,
+  },
+  shadows: {
+    header: '0 1px 0 rgba(0, 0, 0, 0.06)',
+    container: '0 4px 24px rgba(0, 0, 0, 0.04)',
+  },
+  blur: {
+    strong: 'blur(20px)',
+    subtle: 'blur(12px)',
+  },
+  layout: {
+    headerHeight: '70px',
+    contentHeight: 'calc(100vh - 70px)',
+    sidebarWidth: '220px',
+    inputMaxHeight: '100px',
+    inputMinHeight: '50px',
+    maxContentWidth: '1200px',
   },
   typography: {
     fontSize: {
-      tiny: '0.6875rem',
-      small: '0.8125rem',
-      regular: '0.9375rem',
-      large: '1.0625rem'
+      tiny: '0.75rem',      // 12px
+      small: '0.875rem',    // 14px
+      regular: '0.9375rem', // 15px
+      large: '1.25rem',     // 20px
+      xlarge: '1.8rem',     // 28.8px
     },
     fontWeight: {
       regular: 400,
@@ -48,62 +103,11 @@ export const THEME = {
       semibold: 600,
     },
     spacing: {
-      tight: '0.01em',
-      normal: 'normal',
+      tight: '-0.01em', 
+      tighter: '-0.02em',
     }
   },
-  animations: {
-    pulse: '@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }',
-    float: '@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-2px); } 100% { transform: translateY(0px); } }',
-    blink: '@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }',
-  },
-  avatars: {
-    user: '',
-    assistant: 'https://storage.googleapis.com/elf-ai-media/static/avatar.svg',
-  },
-  // Custom syntax highlighting colors
-  syntax: {
-    background: '#282c34', // One Dark background
-    text: '#abb2bf',       // Default text color
-    comment: '#7f848e',    // Comments
-    keyword: '#c678dd',    // Keywords like def, if, import
-    string: '#98c379',     // String literals
-    number: '#d19a66',     // Number literals
-    function: '#61afef',   // Function names
-    operator: '#56b6c2',   // Operators
-    variable: '#e06c75',   // Variables
-    property: '#e5c07b',   // Properties
-    className: '#e5c07b',  // Class names
-    builtin: '#56b6c2',    // Builtin functions like print
-    punctuation: '#7f848e' // Punctuation
-  }
+  animations
 };
 
-export default createTheme({
-  palette: {
-    primary: {
-      main: THEME.colors.primary.main,
-    },
-    text: {
-      primary: THEME.colors.text.primary,
-    },
-    background: {
-      default: THEME.colors.background.default,
-      paper: THEME.colors.background.paper,
-    },
-  },
-  typography: {
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(','),
-  },
-}); 
+export default THEME; 
