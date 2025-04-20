@@ -90,6 +90,7 @@ async def stream_llm_response(url: str, payload: Dict[str, Any], ai_message) -> 
             full_response = ""  # Capture the entire API response as fallback
             
             async for line in response.content:
+                print(line)
                 if line:
                     # Parse the data
                     line_text = line.decode('utf-8')
@@ -265,46 +266,11 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
             api_url = settings.LLM_API_URL
             model = settings.LLM_MODEL_NAME
             
-            # Check for mock mode
-            mock_mode = os.environ.get('LLM_MOCK_MODE', 'false').lower() == 'true'
-            
-            if mock_mode:
-                logger.info("Using mock mode for LLM response")
-                # Use fallback mock content
-                mock_response = f"This is a mock response to your message: '{message_content}'\n\nThe LLM API integration is working, but returning mock content for testing purposes."
-                
-                # Update status to show we're processing
-                with transaction.atomic():
-                    ai_message.status_generating = "Generating mock response..."
-                    ai_message.save(update_fields=['status_generating'])
-                
-                # Simulate streaming by adding content in chunks
-                chunks = [mock_response[i:i+10] for i in range(0, len(mock_response), 10)]
-                content_so_far = ""
-                
-                for chunk in chunks:
-                    content_so_far += chunk
-                    with transaction.atomic():
-                        ai_message.content = content_so_far
-                        ai_message.save(update_fields=['content'])
-                    time.sleep(0.1)  # Slight delay to simulate streaming
-                
-                # Mark generation as complete
-                with transaction.atomic():
-                    ai_message.is_generating = False
-                    ai_message.status_generating = "Completed (mock)"
-                    ai_message.save(update_fields=['is_generating', 'status_generating'])
-                
-                return
-            
-            # Check if we should use streaming or not
-            payload_stream = os.environ.get('LLM_USE_STREAMING', 'true').lower() == 'true'
-            
             # Prepare the request payload
             payload = {
                 "model": model,
                 "prompt": message_content,  # Use prompt instead of messages array
-                "stream": payload_stream,
+                "stream": True,
                 "temperature": 0.7
             }
             
@@ -313,63 +279,16 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 ai_message.status_generating = "Generating response..."
                 ai_message.save(update_fields=['status_generating'])
             
-            # Check if we should use streaming
-            if payload_stream:
-                # For streaming, use the async function
+         
+            loop = asyncio.get_event_loop()
+            try:
+                loop.run_until_complete(stream_llm_response(api_url, payload, ai_message))
+            except RuntimeError:
+                # If there's no event loop, create one
+                asyncio.set_event_loop(asyncio.new_event_loop())
                 loop = asyncio.get_event_loop()
-                try:
-                    loop.run_until_complete(stream_llm_response(api_url, payload, ai_message))
-                except RuntimeError:
-                    # If there's no event loop, create one
-                    asyncio.set_event_loop(asyncio.new_event_loop())
-                    loop = asyncio.get_event_loop()
-                    loop.run_until_complete(stream_llm_response(api_url, payload, ai_message))
-            else:
-                # For non-streaming, make a direct request
-                logger.info("Using non-streaming mode for API request")
-                try:
-                    # Get auth credentials
-                    username = settings.LLM_BASIC_AUTH_USERNAME
-                    password = settings.LLM_BASIC_AUTH_PASSWORD
-                    
-                    # Make the request
-                    import requests
-                    response = requests.post(
-                        api_url,
-                        json=payload,
-                        auth=(username, password) if username and password else None,
-                        headers={'Content-Type': 'application/json'}
-                    )
-                    
-                    if response.status_code != 200:
-                        raise Exception(f"API returned error: {response.status_code}, {response.text}")
-                    
-                    # Parse the response
-                    data = response.json()
-                    logger.info(f"Non-streaming API response format: {json.dumps(data)}")
-                    
-                    # Extract the content from the response
-                    if "response" in data:
-                        content = data["response"]
-                        with transaction.atomic():
-                            ai_message.content = content
-                            ai_message.is_generating = False
-                            ai_message.status_generating = "Completed"
-                            ai_message.save(update_fields=['content', 'is_generating', 'status_generating'])
-                    else:
-                        with transaction.atomic():
-                            ai_message.content = "API response did not contain expected 'response' field"
-                            ai_message.is_generating = False
-                            ai_message.status_generating = "Error"
-                            ai_message.save(update_fields=['content', 'is_generating', 'status_generating'])
-                except Exception as e:
-                    logger.exception(f"Error in non-streaming API request: {e}")
-                    with transaction.atomic():
-                        ai_message.content = f"Error generating response: {str(e)}"
-                        ai_message.is_generating = False
-                        ai_message.status_generating = "Error occurred"
-                        ai_message.save(update_fields=['content', 'is_generating', 'status_generating'])
-                
+                loop.run_until_complete(stream_llm_response(api_url, payload, ai_message))
+        
         except Exception as e:
             logger.exception(f"Error generating AI response for message {ai_message_id}")
             # Update message to indicate error
