@@ -3,7 +3,6 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Loader from './components/common/Loader';
-import NewsView from './features/news/NewsView';
 import ProfileView from './features/profile/ProfileView';
 import LoginPage from './features/auth/LoginPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -90,7 +89,6 @@ function App() {
                 <Route path="/chat" element={<ChatContainer />} />
                 <Route path="/chat/:conversationId" element={<ChatContainer />} />
 
-                <Route path="/news" element={<NewsView />} />
                 <Route path="/profile" element={<ProfileView />} />
               </Route>
             </Route>

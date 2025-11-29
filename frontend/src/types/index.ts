@@ -48,20 +48,9 @@ export interface MessageUpdateRequest {
   content: string;
 }
 
-// News related types
-export interface NewsItem {
-  id: string;
-  title: string;
-  summary: string;
-  url: string;
-  publishedAt: string;
-  source: string;
-  imageUrl?: string;
-}
-
 // Application state types
 export interface AppState {
-  activeTab: 'chat' | 'news' | 'profile';
+  activeTab: 'chat' | 'profile';
   sidebarOpen: boolean;
 }
 

@@ -17,7 +17,6 @@ function Layout({ children, user, onLogout }: LayoutProps) {
   // Determine active tab from URL
   const getActiveTab = () => {
     if (location.pathname.startsWith('/chat')) return 'chat';
-    if (location.pathname.startsWith('/news')) return 'news';
     if (location.pathname.startsWith('/profile')) return 'profile';
     return 'chat'; // Default
   };
@@ -25,7 +24,7 @@ function Layout({ children, user, onLogout }: LayoutProps) {
   const activeTab = getActiveTab();
 
   // Handle tab change
-  const handleTabChange = (tab: 'chat' | 'news' | 'profile') => {
+  const handleTabChange = (tab: 'chat' | 'profile') => {
     navigate(`/${tab}`);
   };
 

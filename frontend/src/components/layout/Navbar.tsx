@@ -21,7 +21,6 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChatIcon from '@mui/icons-material/Chat';
-import NewspaperIcon from '@mui/icons-material/Newspaper';
 import PersonIcon from '@mui/icons-material/Person';
 import { User } from '../../types';
 
@@ -31,8 +30,8 @@ interface NavbarProps {
   onLogout?: () => void;
   isDarkMode?: boolean;
   onToggleTheme?: () => void;
-  activeTab: 'chat' | 'news' | 'profile';
-  onTabChange: (tab: 'chat' | 'news' | 'profile') => void;
+  activeTab: 'chat' | 'profile';
+  onTabChange: (tab: 'chat' | 'profile') => void;
 }
 
 function Navbar({
@@ -127,12 +126,6 @@ function Navbar({
             icon={<ChatIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.4rem' } }} />}
             label="Chat"
             value="chat"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<NewspaperIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.4rem' } }} />}
-            label="News"
-            value="news"
             iconPosition="start"
           />
           <Tab
