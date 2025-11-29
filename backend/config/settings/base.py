@@ -281,6 +281,7 @@ LLM_MODEL_NAME = env("LLM_MODEL_NAME", default="gemma3")
 LLM_BASIC_AUTH_USERNAME = env("LLM_BASIC_AUTH_USERNAME", default="")
 LLM_BASIC_AUTH_PASSWORD = env("LLM_BASIC_AUTH_PASSWORD", default="")
 LLM_API_KEY = env("LLM_API_KEY", default="")
+LLM_VERIFY_SSL = env.bool("LLM_VERIFY_SSL", default=True)
 
 # Celery Configuration
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")

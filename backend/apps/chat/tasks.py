@@ -1,4 +1,5 @@
 import time
+import httpx
 
 from django.conf import settings
 from django.db import transaction
@@ -13,7 +14,7 @@ from .models import Message
 logger = get_logger(__name__)
 
 
-@shared_task
+@shared_task  # type: ignore
 def generate_agent_response(message_content: str, ai_message_id: str) -> None:
     """
     Generate AI response for a message and update the AI message content.
@@ -32,10 +33,12 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 ai_message.status_generating = "Connecting to AI service..."
                 ai_message.save(update_fields=["status_generating"])
 
-            # Initialize OpenAI client
+            # Initialize OpenAI client with custom http_client to control SSL verification
+            http_client = httpx.Client(verify=settings.LLM_VERIFY_SSL)
             client = OpenAI(
                 base_url=settings.LLM_API_URL,
                 api_key=settings.LLM_API_KEY or "not-needed",
+                http_client=http_client,
             )
 
             model = settings.LLM_MODEL_NAME

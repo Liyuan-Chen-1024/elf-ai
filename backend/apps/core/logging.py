@@ -48,7 +48,7 @@ def get_request_logger(request: HttpRequest) -> structlog.BoundLogger:
     extra: Dict[str, Any] = {
         "request_id": getattr(request, "request_id", None),
         "user_id": (
-            request.user.id
+            request.user.pk
             if hasattr(request, "user") and request.user.is_authenticated
             else None
         ),

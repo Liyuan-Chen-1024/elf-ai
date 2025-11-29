@@ -16,6 +16,7 @@ export default defineConfig({
   server: {
     port: parseInt(process.env['PORT'] || '3000'),
     host: true, // Better than '0.0.0.0' for network access
+    allowedHosts: ['elfai.carlsen.io', 'localhost', '127.0.0.1'],
     proxy: {
       '/api': {
         target: process.env['VITE_API_URL'] || 'http://localhost:8000',
@@ -68,11 +69,9 @@ export default defineConfig({
     },
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     passWithNoTests: true,
-    reporters: ['default', 'html'],
-    pool: 'vmThreads',
-    poolOptions: {
-      vmThreads: {
-        useAtomics: true,
+    server: {
+      deps: {
+        inline: ['react-router-dom', 'react-router'],
       },
     },
   },

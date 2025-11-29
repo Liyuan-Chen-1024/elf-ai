@@ -35,7 +35,8 @@ const getCsrfToken = () =>
 
 // Function to fetch CSRF token from server
 const fetchCsrfToken = async () => {
-  await fetch('http://localhost:8000/api/v1/core/csrf-token/', {
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+  await fetch(`${baseUrl}/core/csrf-token/`, {
     method: 'GET',
     credentials: 'include',
   });
@@ -53,7 +54,7 @@ const prepareRequest = (
   body: FormData | JsonData | null = null,
   options: RequestOptions = {}
 ): PrepareRequestResult => {
-  url = 'http://localhost:8000/api/v1' + url;
+  url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1') + url;
   const isLogin = isLoginRoute(url);
   const authToken = getAuthToken();
   const csrfToken = getCsrfToken();
@@ -205,7 +206,7 @@ const api = {
 // Auto-initialize the API when this module is imported
 // This will fetch the CSRF token as soon as possible
 // Only do this in browser environments (not during SSR)
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
   // Initialize in the background - don't block module loading
   initializeApi().catch(err => {
     console.error('Failed to auto-initialize API:', err);

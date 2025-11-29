@@ -40,9 +40,9 @@ class Message(TimeStampedModel, UUIDModel):
         Conversation, on_delete=models.CASCADE, related_name="messages"
     )
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
-    content = models.TextField()
-    is_generating = models.BooleanField(default=False)
-    status_generating = models.CharField(
+    content: str = models.TextField()
+    is_generating: bool = models.BooleanField(default=False)
+    status_generating: str = models.CharField(
         max_length=255,
         blank=True,
         default="",
