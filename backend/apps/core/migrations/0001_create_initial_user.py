@@ -45,6 +45,8 @@ def delete_initial_user(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
+    initial = True
+
     dependencies = [
         (
             "auth",

@@ -48,7 +48,6 @@ services:
       - PYDEVD_DISABLE_FILE_VALIDATION=1
     extra_hosts:
       - "host.docker.internal:host-gateway"
-      - "llm.local.carlsen.io:192.168.1.37"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${API_PORT}/health/"]
       interval: 10s
@@ -126,7 +125,6 @@ services:
     # command: celery -A config worker -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
-      - "llm.local.carlsen.io:192.168.1.37"
 
   celery_beat:
     build:
@@ -173,7 +171,6 @@ services:
     command: celery -A config beat -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
-      - "llm.local.carlsen.io:192.168.1.37"
 
   flower:
     build:
