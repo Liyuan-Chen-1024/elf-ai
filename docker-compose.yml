@@ -39,8 +39,8 @@ services:
       - LANGUAGE_CODE=${LANGUAGE_CODE}
       - TIME_ZONE=${TIME_ZONE}
       - STATIC_URL=${STATIC_URL}
-      - LLM_API_URL=${LLM_API_URL}
-      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - LLM_API_URL=http://host.docker.internal:8080/v1
+      - LLM_MODEL_NAME=/mnt/proxmox-storage/models/llamacpp/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf
       - MEDIA_ROOT=${MEDIA_ROOT}
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
@@ -48,6 +48,7 @@ services:
       - PYDEVD_DISABLE_FILE_VALIDATION=1
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      - "llm.local.carlsen.io:192.168.1.37"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${API_PORT}/health/"]
       interval: 10s
@@ -109,8 +110,8 @@ services:
       - LANGUAGE_CODE=${LANGUAGE_CODE}
       - TIME_ZONE=${TIME_ZONE}
       - STATIC_URL=${STATIC_URL}
-      - LLM_API_URL=${LLM_API_URL}
-      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - LLM_API_URL=http://host.docker.internal:8080/v1
+      - LLM_MODEL_NAME=/mnt/proxmox-storage/models/llamacpp/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf
       - LLM_BASIC_AUTH_USERNAME=${LLM_BASIC_AUTH_USERNAME}
       - LLM_BASIC_AUTH_PASSWORD=${LLM_BASIC_AUTH_PASSWORD}
       - MEDIA_ROOT=${MEDIA_ROOT}
@@ -125,6 +126,7 @@ services:
     # command: celery -A config worker -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      - "llm.local.carlsen.io:192.168.1.37"
 
   celery_beat:
     build:
@@ -157,8 +159,8 @@ services:
       - LANGUAGE_CODE=${LANGUAGE_CODE}
       - TIME_ZONE=${TIME_ZONE}
       - STATIC_URL=${STATIC_URL}
-      - LLM_API_URL=${LLM_API_URL}
-      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - LLM_API_URL=http://host.docker.internal:8080/v1
+      - LLM_MODEL_NAME=/mnt/proxmox-storage/models/llamacpp/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf
       - LLM_BASIC_AUTH_USERNAME=${LLM_BASIC_AUTH_USERNAME}
       - LLM_BASIC_AUTH_PASSWORD=${LLM_BASIC_AUTH_PASSWORD}
       - MEDIA_ROOT=${MEDIA_ROOT}
@@ -171,6 +173,7 @@ services:
     command: celery -A config beat -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      - "llm.local.carlsen.io:192.168.1.37"
 
   flower:
     build:

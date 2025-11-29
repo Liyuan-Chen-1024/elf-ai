@@ -9,6 +9,7 @@
         "isort",
         "mypy",
         "mysqladmin",
+        "ollama",
         "pycache",
         "pytest",
         "PYTHONPATH",

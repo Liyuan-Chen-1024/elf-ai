@@ -276,7 +276,7 @@ RATE_LIMIT_WINDOW: int = env.int("RATE_LIMIT_WINDOW", 1)  # window size in secon
 
 
 # LLM Configuration
-LLM_API_URL = env("LLM_API_URL", default="https://llm.frecar.no/api/generate")
+LLM_API_URL = env("LLM_API_URL", default="http://llm.local.carlsen.io/v1")
 LLM_MODEL_NAME = env("LLM_MODEL_NAME", default="gemma3")
 LLM_BASIC_AUTH_USERNAME = env("LLM_BASIC_AUTH_USERNAME", default="")
 LLM_BASIC_AUTH_PASSWORD = env("LLM_BASIC_AUTH_PASSWORD", default="")
