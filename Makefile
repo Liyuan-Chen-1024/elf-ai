@@ -15,6 +15,9 @@ endef
 # Development
 dev:
 	$(call setup_base_env)
+	@echo "Checking LAN connectivity..."
+	@# Start transparent proxy for LLM if on macOS (required for Docker Desktop LAN routing)
+	@pgrep -f "socat TCP-LISTEN:8080" > /dev/null || (nohup socat TCP-LISTEN:8080,fork,bind=0.0.0.0 TCP:192.168.1.37:443 > /dev/null 2>&1 & echo "  -> Started transparent network bridge to LLM server")
 	@echo "Starting all services..."
 	@echo "View logs with: make logs"
 	@echo "Restart Celery with: make celery-restart"
@@ -92,6 +95,8 @@ build:
 clean:
 	@echo "Cleaning up..."
 	$(call setup_base_env)
+	@# Stop the network bridge
+	-pkill -f "socat TCP-LISTEN:8080" || true
 	-docker compose down -v --remove-orphans 2>/dev/null || true
 	rm -f .env .env.tmp
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

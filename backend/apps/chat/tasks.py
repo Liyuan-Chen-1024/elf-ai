@@ -41,7 +41,7 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 http_client=http_client,
             )
 
-            model = settings.LLM_MODEL_NAME
+            model = settings.LLM_MODEL_NAME or "default"
 
             logger.info(
                 f"Sending request to LLM API: {settings.LLM_API_URL} "

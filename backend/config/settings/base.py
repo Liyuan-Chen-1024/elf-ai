@@ -276,12 +276,10 @@ RATE_LIMIT_WINDOW: int = env.int("RATE_LIMIT_WINDOW", 1)  # window size in secon
 
 
 # LLM Configuration
-LLM_API_URL = env("LLM_API_URL", default="http://llm.local.carlsen.io/v1")
-LLM_MODEL_NAME = env("LLM_MODEL_NAME", default="gemma3")
-LLM_BASIC_AUTH_USERNAME = env("LLM_BASIC_AUTH_USERNAME", default="")
-LLM_BASIC_AUTH_PASSWORD = env("LLM_BASIC_AUTH_PASSWORD", default="")
+LLM_API_URL = env("LLM_API_URL", default="https://llm.local.carlsen.io:8080/v1")
 LLM_API_KEY = env("LLM_API_KEY", default="")
 LLM_VERIFY_SSL = env.bool("LLM_VERIFY_SSL", default=True)
+LLM_MODEL_NAME = env("LLM_MODEL_NAME", default="")
 
 # Celery Configuration
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")

@@ -40,8 +40,7 @@ services:
       - TIME_ZONE=${TIME_ZONE}
       - STATIC_URL=${STATIC_URL}
       - LLM_API_URL=https://llm.local.carlsen.io:8080/v1
-      - LLM_VERIFY_SSL=false
-      - LLM_MODEL_NAME=/mnt/proxmox-storage/models/llamacpp/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf
+      - LLM_VERIFY_SSL=true
       - MEDIA_ROOT=${MEDIA_ROOT}
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
@@ -112,10 +111,7 @@ services:
       - TIME_ZONE=${TIME_ZONE}
       - STATIC_URL=${STATIC_URL}
       - LLM_API_URL=https://llm.local.carlsen.io:8080/v1
-      - LLM_VERIFY_SSL=false
-      - LLM_MODEL_NAME=/mnt/proxmox-storage/models/llamacpp/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf
-      - LLM_BASIC_AUTH_USERNAME=${LLM_BASIC_AUTH_USERNAME}
-      - LLM_BASIC_AUTH_PASSWORD=${LLM_BASIC_AUTH_PASSWORD}
+      - LLM_VERIFY_SSL=true
       - MEDIA_ROOT=${MEDIA_ROOT}
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
@@ -162,10 +158,7 @@ services:
       - TIME_ZONE=${TIME_ZONE}
       - STATIC_URL=${STATIC_URL}
       - LLM_API_URL=https://llm.local.carlsen.io:8080/v1
-      - LLM_VERIFY_SSL=false
-      - LLM_MODEL_NAME=/mnt/proxmox-storage/models/llamacpp/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf
-      - LLM_BASIC_AUTH_USERNAME=${LLM_BASIC_AUTH_USERNAME}
-      - LLM_BASIC_AUTH_PASSWORD=${LLM_BASIC_AUTH_PASSWORD}
+      - LLM_VERIFY_SSL=true
       - MEDIA_ROOT=${MEDIA_ROOT}
       - MEDIA_URL=${MEDIA_URL}
       - STATIC_ROOT=${STATIC_ROOT}
