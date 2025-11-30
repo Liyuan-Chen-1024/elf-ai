@@ -175,6 +175,7 @@ const baseTheme = createTheme({
       styleOverrides: {
         root: {
           boxShadow: '0px 4px 20px rgba(29, 22, 179, 0.1)',
+          border: 'none',
         },
       },
     },
