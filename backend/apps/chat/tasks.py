@@ -1,22 +1,23 @@
 import json
 import time
-import httpx
+from typing import Any, Dict, List
 
+import httpx
+from celery import shared_task
 from django.conf import settings
 from django.db import transaction
-
-from celery import shared_task
+from django.utils import timezone
 from openai import OpenAI
 
 from apps.core.logging import get_logger
-
-from .models import Message, Memory, Conversation
+from .models import Conversation, Memory, Message
+from .tools import registry
 
 logger = get_logger(__name__)
 
 
-def get_llm_client():
-    """Initialize OpenAI client with custom http_client to control SSL verification"""
+def get_llm_client() -> OpenAI:
+    """Initialize OpenAI client with custom http_client to control SSL verification."""
     http_client = httpx.Client(verify=settings.LLM_VERIFY_SSL)
     return OpenAI(
         base_url=settings.LLM_API_URL,
@@ -27,13 +28,11 @@ def get_llm_client():
 
 @shared_task  # type: ignore
 def update_conversation_summary_task(conversation_id: str) -> None:
-    """
-    Generate or update a concise summary of the conversation.
-    """
+    """Generate or update a concise summary of the conversation."""
     try:
         conversation = Conversation.objects.get(id=conversation_id)
         messages = conversation.messages.order_by("created_at")
-        
+
         if not messages.exists():
             return
 
@@ -41,7 +40,8 @@ def update_conversation_summary_task(conversation_id: str) -> None:
         transcript = ""
         for msg in messages:
             role = "User" if msg.role == "user" else "Agent"
-            if msg.role == "system": continue
+            if msg.role == "system":
+                continue
             transcript += f"{role}: {msg.content}\n"
 
         client = get_llm_client()
@@ -67,17 +67,19 @@ Conversation:
         if summary:
             conversation.summary = summary.strip()
             conversation.save(update_fields=["summary"])
-            logger.info(f"Updated summary for conversation {conversation_id}: {summary}")
+            logger.info(
+                f"Updated summary for conversation {conversation_id}: {summary}"
+            )
 
     except Exception as e:
-        logger.exception(f"Error updating summary for conversation {conversation_id}: {e}")
+        logger.exception(
+            f"Error updating summary for conversation {conversation_id}: {e}"
+        )
 
 
 @shared_task  # type: ignore
 def extract_memories_task(user_id: str, message_content: str) -> None:
-    """
-    Analyze user message and update the structured user memory profile.
-    """
+    """Analyze user message and update the structured user memory profile."""
     try:
         client = get_llm_client()
         model = settings.LLM_MODEL_NAME or "default"
@@ -85,7 +87,7 @@ def extract_memories_task(user_id: str, message_content: str) -> None:
         # Fetch or create single memory profile
         memory_profile, created = Memory.objects.get_or_create(user_id=user_id)
         current_data = memory_profile.data
-        
+
         logger.info(f"Updating memory profile for user {user_id}")
 
         extraction_prompt = f"""
@@ -116,7 +118,7 @@ Example Output Structure:
             model=model,
             messages=[{"role": "user", "content": extraction_prompt}],
             temperature=0.0,
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
         )
 
         content = response.choices[0].message.content
@@ -139,6 +141,7 @@ Example Output Structure:
 def generate_agent_response(message_content: str, ai_message_id: str) -> None:
     """
     Generate AI response for a message and update the AI message content.
+    Supports tool usage and multi-turn reasoning.
     """
     try:
         # Get the AI message
@@ -165,19 +168,14 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 f"with model {model}"
             )
 
-            # Update status to show we're processing
-            with transaction.atomic():
-                ai_message.status_generating = "Generating response..."
-                ai_message.save(update_fields=["status_generating"])
-
-            # Prepare system prompt with memory profile
+            # Prepare context (Memory + Summary + History)
             try:
                 memory_profile = Memory.objects.get(user=user)
                 memory_context = json.dumps(memory_profile.data, indent=2)
             except Memory.DoesNotExist:
                 memory_context = "{}"
 
-            # Fetch summaries of past conversations (excluding current one)
+            # Past Summaries
             past_conversations = (
                 Conversation.objects.filter(user=user)
                 .exclude(id=ai_message.conversation.id)
@@ -193,22 +191,23 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                     past_summaries_text += f"- [{date_str}]: {conv.summary}\n"
                 past_summaries_text += "\n"
 
-            # Fetch conversation history (last 20 messages to be safe)
-            # We exclude the current AI message being generated
+            # Recent History
             recent_messages = (
                 Message.objects.filter(conversation=ai_message.conversation)
                 .exclude(id=ai_message.id)
                 .order_by("-created_at")[:20]
             )
 
-            # Construct history text
             history_text = ""
             fetched_messages = list(reversed(recent_messages))
 
-            # Avoid duplication: If the current message is already in the fetched history, remove it.
-            if fetched_messages and fetched_messages[-1].content == message_content and fetched_messages[-1].role == "user":
+            if (
+                fetched_messages
+                and fetched_messages[-1].content == message_content
+                and fetched_messages[-1].role == "user"
+            ):
                 fetched_messages.pop()
-                logger.info("Removed current user message from history text to avoid duplication")
+                logger.info("Removed current user message from history text")
 
             for msg in fetched_messages:
                 role = "Agent" if msg.role == "agent" else "User"
@@ -216,69 +215,191 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                     role = "System"
                 history_text += f"{role}: {msg.content}\n"
 
-            from django.utils import timezone
-            
             current_date = timezone.now().strftime("%Y-%m-%d")
-            
+
             system_prompt = (
                 f"Today's date is {current_date}.\n"
-                "You are ElfAI, an advanced AI assistant with persistent memory.\n\n"
+                "You are ElfAI, an advanced AI assistant with persistent memory and tool capabilities.\n\n"
                 "CRITICAL INSTRUCTIONS:\n"
-                "1. You have full access to the conversation history, user profile, AND summaries of past conversations. ACT LIKE IT.\n"
-                "2. NEVER claim you cannot remember past discussions. Refer to the 'PAST CONVERSATIONS SUMMARY' section.\n"
-                "3. Treat the 'Current User Profile' and 'Current Conversation History' as your own memory.\n"
-                "4. If asked about a previous topic (e.g. 'when we talked about TCP'), check the Past Summaries.\n\n"
+                "1. You have full access to history, memory, and TOOLS. Use them!\n"
+                "2. DIRECT ACTION: Do not explain what you are going to do. If you need info, CALL THE TOOL IMMEDIATELY.\n"
+                "3. Do not output a text plan. Just execute the search or fetch.\n"
+                "4. If you need to search, use 'web_search'. If you need to read a URL, use 'web_fetch'.\n"
+                "5. Do not hallucinate. If search fails, try a different query.\n"
+                "6. Treat the 'Current User Profile' and 'Current Conversation History' as your own memory.\n"
+                "7. Answer naturally and directly once you have the information.\n\n"
                 "CURRENT USER PROFILE (Long-term Memory):\n"
                 f"{memory_context}\n\n"
                 f"{past_summaries_text}"
                 "CURRENT CONVERSATION HISTORY:\n"
                 f"{history_text}\n\n"
-                "Use the above information to answer naturally."
             )
 
-            messages = [
+            messages: List[Dict[str, Any]] = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": message_content}
+                {"role": "user", "content": message_content},
             ]
 
-            # Make the request to OpenAI compatible API
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                stream=True,
-                temperature=0.7,
-            )
+            # Tool loop
+            tools = registry.get_openai_tools()
+            max_turns = 8  # Increased for better orchestration
+            final_content = ""
 
-            accumulated_content = ""
-            last_update_time = time.time()
+            for turn in range(max_turns):
+                logger.info(f"LLM Turn {turn+1}/{max_turns}")
 
-            for chunk in response:
-                if chunk.choices and chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
-                    accumulated_content += content
+                # Stream response
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    tools=tools,
+                    stream=True,
+                    temperature=0.7,
+                )
 
-                    # Update DB every 0.5s or every 50 chars
-                    current_time = time.time()
-                    if current_time - last_update_time > 0.5:
-                        ai_message.content = accumulated_content
+                tool_calls_buffer: Dict[int, Any] = {}
+                content_buffer = ""
+                last_update_time = time.time()
+
+                for chunk in response:
+                    delta = chunk.choices[0].delta
+
+                    # Handle Content
+                    if delta.content:
+                        content_buffer += delta.content
+                        # If final answer (no tool calls), stream it
+                        if not tool_calls_buffer:
+                            current_time = time.time()
+                            if current_time - last_update_time > 0.5:
+                                ai_message.content = (
+                                    final_content + content_buffer
+                                )
+                                ai_message.save(update_fields=["content"])
+                                last_update_time = current_time
+
+                    # Handle Tool Calls
+                    if delta.tool_calls:
+                        for tc in delta.tool_calls:
+                            idx = tc.index
+                            if idx not in tool_calls_buffer:
+                                tool_calls_buffer[idx] = {
+                                    "id": tc.id,
+                                    "type": "function",
+                                    "function": {
+                                        "name": "",
+                                        "arguments": ""
+                                    },
+                                }
+
+                            if tc.id:
+                                tool_calls_buffer[idx]["id"] = tc.id
+
+                            if tc.function:
+                                if tc.function.name:
+                                    tool_calls_buffer[idx]["function"][
+                                        "name"
+                                    ] += tc.function.name
+                                if tc.function.arguments:
+                                    tool_calls_buffer[idx]["function"][
+                                        "arguments"
+                                    ] += tc.function.arguments
+
+                # End of stream for this turn
+                if tool_calls_buffer:
+                    # If content_buffer was generated (thoughts), append to final_content
+                    # so the user sees the planning/thought process.
+                    if content_buffer:
+                        final_content += content_buffer + "\n\n"
+                        ai_message.content = final_content
                         ai_message.save(update_fields=["content"])
-                        last_update_time = current_time
 
-                        # Update status occasionally
-                        if len(accumulated_content) % 100 == 0:
-                            ai_message.status_generating = "Still generating..."
+                    # 1. Append assistant message with tool calls
+                    assistant_msg = {
+                        "role": "assistant",
+                        "content": content_buffer or None,
+                        "tool_calls": list(tool_calls_buffer.values()),
+                    }
+                    messages.append(assistant_msg)
+
+                    # 2. Execute tools
+                    for tc in tool_calls_buffer.values():
+                        func_name = tc["function"]["name"]
+                        args_str = tc["function"]["arguments"]
+                        call_id = tc["id"]
+
+                        # Update status to show detailed activity
+                        # Note: This status is visible to the user
+                        display_status = f"Using tool: {func_name}..."
+                        if func_name == "web_search":
+                            # Try to extract query for better UX
+                            try:
+                                q = json.loads(args_str).get("query", "")
+                                if len(q) > 20:
+                                    q = q[:20] + "..."
+                                display_status = f"Searching web for: {q}"
+                            except:
+                                pass
+                        elif func_name == "web_fetch":
+                             display_status = "Reading website content..."
+
+                        with transaction.atomic():
+                            ai_message.status_generating = display_status
                             ai_message.save(update_fields=["status_generating"])
 
-            # Final update with full content
-            ai_message.content = accumulated_content
+                        logger.info(
+                            f"Executing tool {func_name} with args {args_str}"
+                        )
+
+                        try:
+                            tool = registry.get_tool(func_name)
+                            if tool:
+                                try:
+                                    args = json.loads(args_str)
+                                    result = tool.execute(**args)
+                                except json.JSONDecodeError:
+                                    result = (
+                                        f"Error: Invalid JSON args: {args_str}"
+                                    )
+                            else:
+                                result = f"Error: Tool {func_name} not found"
+                        except Exception as e:
+                            result = f"Error executing tool: {e}"
+
+                        # 3. Append tool result
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": call_id,
+                                "content": str(result),
+                            }
+                        )
+
+                    # We discard the content_buffer (reasoning) from the final user-facing message
+                    # to keep the chat clean. The reasoning is preserved in 'messages' history for the LLM.
+                    # We reset the DB content to what it was before this turn (final_content) so the
+                    # "I need to search..." text disappears from the UI while the tool runs.
+                    ai_message.content = final_content
+                    ai_message.save(update_fields=["content"])
+                    
+                    # Continue to next turn so LLM can use the tool output
+                    continue
+
+            # Final update
+            ai_message.content = final_content
             ai_message.is_generating = False
             ai_message.status_generating = "Completed"
             ai_message.save(
-                update_fields=["content", "is_generating", "status_generating"]
+                update_fields=[
+                    "content",
+                    "is_generating",
+                    "status_generating",
+                ]
             )
-            
-            # Trigger summary update again after response is complete to include AI's answer
-            update_conversation_summary_task.delay(str(ai_message.conversation.id))
+
+            # Trigger summary update again
+            update_conversation_summary_task.delay(
+                str(ai_message.conversation.id)
+            )
 
             logger.info("Successfully generated AI response")
 
@@ -286,7 +407,6 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
             logger.exception(
                 f"Error generating AI response for message {ai_message_id}"
             )
-            # Update message to indicate error
             with transaction.atomic():
                 ai_message.content = f"Error generating response: {str(e)}"
                 ai_message.is_generating = False
