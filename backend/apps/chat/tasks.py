@@ -10,7 +10,7 @@ from openai import OpenAI
 
 from apps.core.logging import get_logger
 
-from .models import Message, Memory
+from .models import Message, Memory, Conversation
 
 logger = get_logger(__name__)
 
@@ -23,6 +23,54 @@ def get_llm_client():
         api_key=settings.LLM_API_KEY or "not-needed",
         http_client=http_client,
     )
+
+
+@shared_task  # type: ignore
+def update_conversation_summary_task(conversation_id: str) -> None:
+    """
+    Generate or update a concise summary of the conversation.
+    """
+    try:
+        conversation = Conversation.objects.get(id=conversation_id)
+        messages = conversation.messages.order_by("created_at")
+        
+        if not messages.exists():
+            return
+
+        # Prepare transcript for summarization
+        transcript = ""
+        for msg in messages:
+            role = "User" if msg.role == "user" else "Agent"
+            if msg.role == "system": continue
+            transcript += f"{role}: {msg.content}\n"
+
+        client = get_llm_client()
+        model = settings.LLM_MODEL_NAME or "default"
+
+        logger.info(f"Updating summary for conversation {conversation_id}")
+
+        prompt = f"""
+Summarize the following conversation in 1-2 sentences. Focus on the main topic and key outcomes.
+Keep it concise (e.g., "User asked about Python asyncio. Agent explained async/await syntax.").
+
+Conversation:
+{transcript}
+"""
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+        )
+
+        summary = response.choices[0].message.content
+        if summary:
+            conversation.summary = summary.strip()
+            conversation.save(update_fields=["summary"])
+            logger.info(f"Updated summary for conversation {conversation_id}: {summary}")
+
+    except Exception as e:
+        logger.exception(f"Error updating summary for conversation {conversation_id}: {e}")
 
 
 @shared_task  # type: ignore
@@ -100,6 +148,9 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
         # Trigger memory extraction in background
         extract_memories_task.delay(str(user.id), message_content)
 
+        # Trigger summary update in background
+        update_conversation_summary_task.delay(str(ai_message.conversation.id))
+
         try:
             # Update initial status
             with transaction.atomic():
@@ -126,12 +177,58 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
             except Memory.DoesNotExist:
                 memory_context = "{}"
             
+            # Fetch summaries of past conversations (excluding current one)
+            past_conversations = (
+                Conversation.objects.filter(user=user)
+                .exclude(id=ai_message.conversation.id)
+                .exclude(summary="")
+                .order_by("-updated_at")[:10]
+            )
+            
+            past_summaries_text = ""
+            if past_conversations.exists():
+                past_summaries_text = "PAST CONVERSATIONS SUMMARY:\n"
+                for conv in past_conversations:
+                    date_str = conv.updated_at.strftime("%Y-%m-%d")
+                    past_summaries_text += f"- [{date_str}]: {conv.summary}\n"
+                past_summaries_text += "\n"
+
+            # Fetch conversation history (last 20 messages to be safe)
+            # We exclude the current AI message being generated
+            recent_messages = (
+                Message.objects.filter(conversation=ai_message.conversation)
+                .exclude(id=ai_message.id)
+                .order_by("-created_at")[:20]
+            )
+            
+            # Construct history text
+            history_text = ""
+            fetched_messages = list(reversed(recent_messages))
+            
+            # Avoid duplication: If the current message is already in the fetched history, remove it.
+            if fetched_messages and fetched_messages[-1].content == message_content and fetched_messages[-1].role == "user":
+                fetched_messages.pop()
+                logger.info("Removed current user message from history text to avoid duplication")
+
+            for msg in fetched_messages:
+                role = "Agent" if msg.role == "agent" else "User"
+                if msg.role == "system":
+                    role = "System"
+                history_text += f"{role}: {msg.content}\n"
+
             system_prompt = (
-                "You are ElfAI, a helpful and friendly AI assistant.\n\n"
-                "You have access to the following User Profile (Long-term memory):\n"
+                "You are ElfAI, an advanced AI assistant with persistent memory.\n\n"
+                "CRITICAL INSTRUCTIONS:\n"
+                "1. You have full access to the conversation history, user profile, AND summaries of past conversations. ACT LIKE IT.\n"
+                "2. NEVER claim you cannot remember past discussions. Refer to the 'PAST CONVERSATIONS SUMMARY' section.\n"
+                "3. Treat the 'Current User Profile' and 'Current Conversation History' as your own memory.\n"
+                "4. If asked about a previous topic (e.g. 'when we talked about TCP'), check the Past Summaries.\n\n"
+                "CURRENT USER PROFILE (Long-term Memory):\n"
                 f"{memory_context}\n\n"
-                "Use this information to personalize your response. "
-                "Treat these details as established facts about the user."
+                f"{past_summaries_text}"
+                "CURRENT CONVERSATION HISTORY:\n"
+                f"{history_text}\n\n"
+                "Use the above information to answer naturally."
             )
 
             messages = [
@@ -174,6 +271,9 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
             ai_message.save(
                 update_fields=["content", "is_generating", "status_generating"]
             )
+            
+            # Trigger summary update again after response is complete to include AI's answer
+            update_conversation_summary_task.delay(str(ai_message.conversation.id))
 
             logger.info("Successfully generated AI response")
 

@@ -18,6 +18,11 @@ class Conversation(TimeStampedModel, UUIDModel):
     )
 
     title = models.CharField(max_length=255, default="New conversation")
+    summary = models.TextField(
+        blank=True, 
+        default="", 
+        help_text="Auto-generated summary of the conversation content"
+    )
 
     class Meta:
         ordering = ["-updated_at"]
