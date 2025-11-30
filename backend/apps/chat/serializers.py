@@ -1,5 +1,3 @@
-from typing import Any, Dict, List
-
 from rest_framework import serializers
 
 from drf_spectacular.utils import extend_schema_field
@@ -43,7 +41,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
         }
     )
-    def get_sender(self, obj: Message) -> Dict[str, str]:
+    def get_sender(self, obj: Message) -> dict[str, str]:
         """Return sender information in the format expected by the frontend."""
         if obj.role == "user":
             # Get the conversation's user as the sender
@@ -91,7 +89,7 @@ class ConversationSerializer(serializers.ModelSerializer):
             },
         }
     )
-    def get_participants(self, obj: Conversation) -> List[Dict[str, str]]:
+    def get_participants(self, obj: Conversation) -> list[dict[str, str]]:
         """Return conversation participants in the format expected by the frontend."""
         user = obj.user
         return [

@@ -7,7 +7,7 @@ including streaming functionality for agent responses.
 
 import json
 import time
-from typing import Any, Dict, Generator, List
+from collections.abc import Generator
 
 from django.db import transaction
 from django.http import StreamingHttpResponse
@@ -99,13 +99,15 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     },
                     status=status.HTTP_201_CREATED,
                 )
+        
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action(
         detail=True, methods=["GET"], url_path="messages/(?P<message_id>[^/.]+)/stream"
     )
     def stream_agent_response(
         self, request: Request, pk=None, message_id=None
-    ) -> StreamingHttpResponse:
+    ) -> StreamingHttpResponse | Response:
         """
         Stream the agent's response for a specific message.
 

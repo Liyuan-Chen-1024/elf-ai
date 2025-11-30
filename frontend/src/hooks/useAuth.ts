@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi, AuthResponse } from '../services/authApi';
-import { AxiosError } from 'axios';
+import { ApiError } from '../services/fetchClient';
+import { useAuthStore } from '../stores/authStore';
 
 export const AUTH_QUERY_KEYS = {
   user: ['user'],
@@ -9,6 +10,9 @@ export const AUTH_QUERY_KEYS = {
 
 export function useAuth() {
   const queryClient = useQueryClient();
+  const token = useAuthStore(state => state.token);
+  const setToken = useAuthStore(state => state.setToken);
+  const logoutStore = useAuthStore(state => state.logout);
 
   // Fetch current user
   const {
@@ -19,9 +23,8 @@ export function useAuth() {
   } = useQuery({
     queryKey: AUTH_QUERY_KEYS.user,
     queryFn: async () => {
-      const token = window.localStorage.getItem('authToken');
       if (import.meta.env.DEV) {
-        window.console.log('🔑 Auth token:', token ? 'present' : 'missing');
+        console.log('🔑 Auth token:', token ? 'present' : 'missing');
       }
 
       if (!token) {
@@ -31,15 +34,15 @@ export function useAuth() {
       try {
         const userData = await authApi.getCurrentUser();
         if (import.meta.env.DEV) {
-          window.console.log('👤 User data loaded:', userData);
+          console.log('👤 User data loaded:', userData);
         }
         return userData;
       } catch (err) {
         if (import.meta.env.DEV) {
-          window.console.error('❌ Failed to load user data:', err);
+          console.error('❌ Failed to load user data:', err);
         }
         // If we get a rate limit error (429), don't throw - just return the cached data
-        if (err instanceof AxiosError && err.response?.status === 429) {
+        if (err instanceof ApiError && err.status === 429) {
           // Return previous data or null
           const previousData = queryClient.getQueryData(AUTH_QUERY_KEYS.user);
           return previousData || null;
@@ -49,7 +52,7 @@ export function useAuth() {
     },
     retry: (failureCount: number, error: Error) => {
       // Don't retry on 429 errors
-      if (error instanceof AxiosError && error.response?.status === 429) {
+      if (error instanceof ApiError && error.status === 429) {
         return false;
       }
       // Only retry a few times for other errors
@@ -57,7 +60,7 @@ export function useAuth() {
     },
     staleTime: 1000 * 60 * 60, // 60 minutes - greatly increased to reduce API calls
     gcTime: 1000 * 60 * 120, // 120 minutes for cache
-    enabled: !!window.localStorage.getItem('authToken'),
+    enabled: !!token,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -73,29 +76,29 @@ export function useAuth() {
     },
     onSuccess: (data: AuthResponse) => {
       if (import.meta.env.DEV) {
-        window.console.log('Login successful:', data);
+        console.log('Login successful:', data);
       }
 
       // Extract token from different possible formats
-      let token = null;
+      let newToken = null;
       if (data.token) {
-        token = data.token;
+        newToken = data.token;
       } else if ('key' in data) {
-        token = (data as unknown as { key: string }).key;
+        newToken = (data as unknown as { key: string }).key;
       }
 
-      if (token) {
-        // Store token in localStorage
-        window.localStorage.setItem('authToken', token);
+      if (newToken) {
+        // Store token in store (handles localStorage)
+        setToken(newToken);
 
         if (import.meta.env.DEV) {
-          window.console.log(
-            'Stored auth token in localStorage after login:',
-            token.substring(0, 5) + '...'
+          console.log(
+            'Stored auth token after login:',
+            newToken.substring(0, 5) + '...'
           );
         }
       } else {
-        window.console.error('No token found in login response', data);
+        console.error('No token found in login response', data);
       }
 
       // Update current user query
@@ -107,17 +110,12 @@ export function useAuth() {
       // Invalidate queries that might depend on auth status
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
-    onError: (error: AxiosError) => {
+    onError: (error: ApiError) => {
       if (import.meta.env.DEV) {
-        window.console.error('Login error details:', {
+        console.error('Login error details:', {
           message: error.message,
-          status: error.response?.status,
-          data: error.response?.data,
-          config: {
-            url: error.config?.url,
-            baseURL: error.config?.baseURL,
-            method: error.config?.method,
-          },
+          status: error.status,
+          data: error.data,
         });
       }
     },
@@ -131,6 +129,8 @@ export function useAuth() {
       queryClient.setQueryData(AUTH_QUERY_KEYS.user, null);
       // Clear all queries when logging out
       queryClient.clear();
+      // Clear store
+      logoutStore();
     },
   });
 

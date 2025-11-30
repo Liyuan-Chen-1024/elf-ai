@@ -1,51 +1,41 @@
-// Simplified auth store for now - will integrate with full implementation later
+import { create } from 'zustand';
+import { User } from '../types';
+
 interface AuthState {
   token: string | null;
-  user: Record<string, unknown> | null;
+  user: User | null;
   isAuthenticated: boolean;
+  setToken: (token: string | null) => void;
+  setUser: (user: User | null) => void;
+  logout: () => void;
 }
 
-// Simple store getter
-export const useAuthStore = {
-  getState: (): AuthState => {
-    // Get token from localStorage
-    const token = window.localStorage.getItem('authToken');
+export const useAuthStore = create<AuthState>((set) => ({
+  token: localStorage.getItem('authToken'),
+  user: JSON.parse(localStorage.getItem('user') || 'null'),
+  isAuthenticated: !!localStorage.getItem('authToken'),
 
-    // Try to get user data
-    let user = null;
-    try {
-      const userJson = window.localStorage.getItem('user');
-      if (userJson) {
-        user = JSON.parse(userJson);
-      }
-    } catch (_error) {
-      // Silently fail if we can't parse the user data
-      window.console.error('Failed to parse user data from localStorage');
+  setToken: (token) => {
+    if (token) {
+      localStorage.setItem('authToken', token);
+    } else {
+      localStorage.removeItem('authToken');
     }
-
-    return {
-      token,
-      user,
-      isAuthenticated: !!token,
-    };
+    set({ token, isAuthenticated: !!token });
   },
 
-  // Store setter
-  setState: (state: Partial<AuthState>) => {
-    if (state.token !== undefined) {
-      if (state.token === null) {
-        window.localStorage.removeItem('authToken');
-      } else {
-        window.localStorage.setItem('authToken', state.token);
-      }
+  setUser: (user) => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
     }
-
-    if (state.user !== undefined) {
-      if (state.user === null) {
-        window.localStorage.removeItem('user');
-      } else {
-        window.localStorage.setItem('user', JSON.stringify(state.user));
-      }
-    }
+    set({ user });
   },
-};
+
+  logout: () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    set({ token: null, user: null, isAuthenticated: false });
+  },
+}));

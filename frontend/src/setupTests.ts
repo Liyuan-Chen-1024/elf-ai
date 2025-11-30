@@ -1,4 +1,4 @@
-import { expect, afterEach, beforeAll, vi } from 'vitest';
+import { afterEach, beforeAll, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { within, fireEvent, screen } from '@testing-library/react';

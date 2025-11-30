@@ -1,13 +1,8 @@
 // === fetchClient.ts ===
 
-// Add proper type declarations for browser APIs
-declare const localStorage: Storage;
-declare const document: Document;
-declare const fetch: typeof window.fetch;
-declare const console: Console;
-
 // Import the StreamingResponse type
 import { StreamingResponse } from './chatApi';
+import { useAuthStore } from '../stores/authStore';
 
 // Define RequestOptions type to replace 'any'
 interface RequestOptions extends RequestInit {
@@ -16,6 +11,19 @@ interface RequestOptions extends RequestInit {
 
 // Define a type for JSON data
 type JsonData = Record<string, unknown>;
+
+// Custom error class for API errors
+export class ApiError extends Error {
+  status: number;
+  data: unknown;
+
+  constructor(message: string, status: number, data: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+  }
+}
 
 // Define response type with data
 interface ApiResponse<T = unknown> {
@@ -26,7 +34,6 @@ interface ApiResponse<T = unknown> {
   text: () => Promise<string>;
 }
 
-const getAuthToken = () => localStorage.getItem('authToken');
 const getCsrfToken = () =>
   document.cookie
     .split('; ')
@@ -56,7 +63,9 @@ const prepareRequest = (
 ): PrepareRequestResult => {
   url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1') + url;
   const isLogin = isLoginRoute(url);
-  const authToken = getAuthToken();
+  
+  // Get token from store
+  const authToken = useAuthStore.getState().token;
   const csrfToken = getCsrfToken();
 
   // Debug headers being sent for non-GET requests
@@ -112,8 +121,10 @@ const fetchClient = async <T = unknown>(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `HTTP ${response.status}: ${errorData.detail || errorData.message || response.statusText}`
+      throw new ApiError(
+        `HTTP ${response.status}: ${errorData.detail || errorData.message || response.statusText}`,
+        response.status,
+        errorData
       );
     }
 

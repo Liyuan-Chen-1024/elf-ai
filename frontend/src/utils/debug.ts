@@ -2,8 +2,6 @@
  * Debugging utility functions
  */
 
-/* global console */
-
 import api from '../services/fetchClient';
 
 type ElfAIDebug = {

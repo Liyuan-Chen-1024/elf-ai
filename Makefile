@@ -65,7 +65,6 @@ lint:
 lint-frontend:
 	$(call setup_test_env)
 	@echo "Running lint..."
-	docker compose run --rm --build --entrypoint="" frontend sh -c "cd /app && npm install"
 	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && npm run lint"
 	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && npm run format"
 

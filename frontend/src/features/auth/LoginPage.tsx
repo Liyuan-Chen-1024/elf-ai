@@ -10,7 +10,7 @@ import {
   Container,
   Divider,
 } from '@mui/material';
-import { AxiosError } from 'axios';
+import { ApiError } from '../../services/fetchClient';
 import { useLoginForm } from './hooks';
 
 function LoginPage() {
@@ -31,9 +31,9 @@ function LoginPage() {
   const getErrorMessage = () => {
     if (!loginError) return null;
 
-    if (loginError instanceof AxiosError) {
-      const status = loginError.response?.status;
-      const data = loginError.response?.data;
+    if (loginError instanceof ApiError) {
+      const status = loginError.status;
+      const data = loginError.data;
 
       // Handle different error types
       if (status === 404) {
@@ -155,14 +155,14 @@ function LoginPage() {
                     </Typography>
                     <Typography variant="caption" display="block">
                       Status:{' '}
-                      {loginError instanceof AxiosError
-                        ? loginError.response?.status || 'No status'
+                      {loginError instanceof ApiError
+                        ? loginError.status || 'No status'
                         : 'N/A'}
                     </Typography>
                     <Typography variant="caption" display="block">
                       URL:{' '}
-                      {loginError instanceof AxiosError
-                        ? loginError.config?.url || 'No URL'
+                      {loginError instanceof ApiError
+                        ? 'See console' || 'No URL'
                         : 'N/A'}
                     </Typography>
                   </>

@@ -10,7 +10,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useAuth } from './hooks/useAuth';
 import './styles/global.css';
 import theme from './styles/theme';
-import { AxiosError } from 'axios';
+import { ApiError } from './services/fetchClient';
 import { ChatContainer } from './features/chat';
 
 // Create a query client
@@ -20,7 +20,7 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: (failureCount: number, error: unknown) => {
         // Don't retry 429 errors - they'll only make things worse
-        if (error instanceof AxiosError && error.response?.status === 429) {
+        if (error instanceof ApiError && error.status === 429) {
           return false;
         }
         // For other errors, retry a limited number of times

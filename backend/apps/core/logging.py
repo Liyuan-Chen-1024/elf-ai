@@ -1,6 +1,6 @@
 """Logging configuration and utilities for the application."""
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional
 
 from django.http import HttpRequest, HttpResponse
 
@@ -45,7 +45,7 @@ def get_request_logger(request: HttpRequest) -> structlog.BoundLogger:
     logger = get_logger(__name__)
 
     # Extract useful request information
-    extra: Dict[str, Any] = {
+    extra: dict[str, Any] = {
         "request_id": getattr(request, "request_id", None),
         "user_id": (
             request.user.pk
@@ -113,7 +113,7 @@ def log_request_finished(
 def log_model_change(
     logger: structlog.BoundLogger,
     model_name: str,
-    instance_id: Optional[Union[int, str]],
+    instance_id: int | str | None,
     action: str,
     **extra: Any,
 ) -> None:
