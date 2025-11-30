@@ -4,8 +4,9 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
+import json
 
-from .models import Conversation, Message
+from .models import Conversation, Message, Memory
 
 
 class MessageInline(admin.TabularInline):
@@ -169,3 +170,28 @@ class MessageAdmin(admin.ModelAdmin):
         return content
 
     short_content.short_description = "Content"
+
+
+@admin.register(Memory)
+class MemoryAdmin(admin.ModelAdmin):
+    list_display = ("user", "pretty_json_data", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("user__username", "user__email", "data")
+    readonly_fields = ("created_at", "updated_at")
+    date_hierarchy = "created_at"
+
+    def pretty_json_data(self, obj):
+        """Format JSON data for display in list view"""
+        try:
+            # Just show the keys/categories for brevity in list view
+            keys = list(obj.data.keys())
+            return f"Profile Keys: {', '.join(keys)}" if keys else "Empty Profile"
+        except Exception:
+            return "Invalid Data"
+    
+    pretty_json_data.short_description = "Memory Profile Summary"
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('user',)
+        return self.readonly_fields

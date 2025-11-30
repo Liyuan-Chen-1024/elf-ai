@@ -34,6 +34,7 @@ class Message(TimeStampedModel, UUIDModel):
     ROLE_CHOICES = [
         ("user", "User"),
         ("agent", "Agent"),
+        ("system", "System"),
     ]
 
     conversation = models.ForeignKey(
@@ -58,3 +59,20 @@ class Message(TimeStampedModel, UUIDModel):
 
     def __str__(self):
         return f"{self.role} message in {self.conversation.title} ({self.id})"
+
+
+class Memory(TimeStampedModel, UUIDModel):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memory"
+    )
+    data = models.JSONField(
+        default=dict, 
+        help_text="Structured user profile data (e.g., {'personal': ..., 'interests': ...})"
+    )
+    
+    class Meta:
+        verbose_name = "User Memory Profile"
+        verbose_name_plural = "User Memory Profiles"
+
+    def __str__(self):
+        return f"Memory Profile for {self.user}"
