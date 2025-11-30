@@ -176,7 +176,7 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 memory_context = json.dumps(memory_profile.data, indent=2)
             except Memory.DoesNotExist:
                 memory_context = "{}"
-            
+
             # Fetch summaries of past conversations (excluding current one)
             past_conversations = (
                 Conversation.objects.filter(user=user)
@@ -184,7 +184,7 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 .exclude(summary="")
                 .order_by("-updated_at")[:10]
             )
-            
+
             past_summaries_text = ""
             if past_conversations.exists():
                 past_summaries_text = "PAST CONVERSATIONS SUMMARY:\n"
@@ -200,11 +200,11 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 .exclude(id=ai_message.id)
                 .order_by("-created_at")[:20]
             )
-            
+
             # Construct history text
             history_text = ""
             fetched_messages = list(reversed(recent_messages))
-            
+
             # Avoid duplication: If the current message is already in the fetched history, remove it.
             if fetched_messages and fetched_messages[-1].content == message_content and fetched_messages[-1].role == "user":
                 fetched_messages.pop()
@@ -216,7 +216,12 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                     role = "System"
                 history_text += f"{role}: {msg.content}\n"
 
+            from django.utils import timezone
+            
+            current_date = timezone.now().strftime("%Y-%m-%d")
+            
             system_prompt = (
+                f"Today's date is {current_date}.\n"
                 "You are ElfAI, an advanced AI assistant with persistent memory.\n\n"
                 "CRITICAL INSTRUCTIONS:\n"
                 "1. You have full access to the conversation history, user profile, AND summaries of past conversations. ACT LIKE IT.\n"
