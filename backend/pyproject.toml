@@ -2,7 +2,7 @@
 name = "elfai"
 version = "0.1.0"
 description = "Elf AI Backend"
-authors = ["Fredrik Carlsen <fredrik@frecar.no>"]
+authors = ["Liyuan Chen <liyuan.chen.1024@gmail.com>"]
 readme = "README.md"
 packages = [{include = "apps"}, {include = "config"}]
 license = "MIT"
