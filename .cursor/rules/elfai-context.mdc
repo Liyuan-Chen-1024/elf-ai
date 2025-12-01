@@ -1,0 +1,67 @@
+---
+description: ElfAI Project Specific Context (Architecture, Memory System, Linting)
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# ElfAI Project Rules & Context
+
+## 1. Project Architecture & Structure
+This is a **Monorepo** containing a Django backend and a React frontend.
+
+- **Root**: Contains project-wide config (`Makefile`, `docker-compose.yml`, `.flake8`).
+- **Backend** (`/backend`): Django 5, Django Rest Framework, Celery, Redis, PostgreSQL.
+  - **Apps**: Located in `backend/apps/`.
+  - **Core Logic**: `backend/apps/chat/tasks.py` handles the AI agent orchestration.
+- **Frontend** (`/frontend`): React 18, Vite, TypeScript, Material UI.
+  - **Features**: Organized by feature in `src/features/`.
+
+## 2. Development Workflow
+- **Orchestration**: ALWAYS use **Docker Compose** or the **Makefile**.
+  - Start Dev: `make dev` (or `docker-compose up`).
+  - Run Tests: `make test`.
+  - Linting: `make lint`.
+- **Terminal Commands**: 
+  - Do NOT run `python` or `npm` commands directly on the host unless you are sure of the environment.
+  - Prefer `docker-compose exec backend <command>` or `docker-compose exec frontend <command>`.
+
+## 3. Coding Standards & Linting (STRICT)
+- **Python (Backend)**:
+  - **Linter**: `flake8`.
+  - **Config**: The configuration is at the **PROJECT ROOT** (`.flake8`).
+  - **Rule**: You MUST fix all linting errors. Do not introduce new warnings.
+  - **Imports**: Sort imports (standard lib -> third party -> local).
+- **TypeScript/React (Frontend)**:
+  - **Linter**: `ESLint`.
+  - **Config**: Located in `frontend/`.
+  - **Rule**: Run `npm run lint` in `frontend/` to verify.
+  - **Imports**: Use relative imports for local files (e.g., `../../components`).
+
+## 4. Key Feature Implementation Details
+
+### AI Agent & Memory System
+- **Memory Model**: `Memory` is a singleton per user (OneToOne) found in `apps.chat.models`.
+  - It stores a structured `JSONField` (`data`), NOT a list of text strings.
+  - **Do not** create multiple memory objects for a user.
+- **Agent Logic**: 
+  - Located in `apps.chat.tasks.generate_agent_response`.
+  - **System Prompt**: Dynamically constructed to include:
+    1. Current Date/Time.
+    2. Long-term Memory (JSON profile).
+    3. Conversation Summary.
+    4. Recent Message History.
+- **Tools**:
+  - Defined in `apps.chat.tools`.
+  - Registered via `ToolRegistry`.
+  - Supported: `WebSearchTool` (DuckDuckGo), `WebFetchTool` (HTTPX/BS4).
+
+### Frontend Patterns
+- **API**: Use the typed services in `src/services/`.
+- **State**: Use Context or simple hooks.
+- **UI**: Material UI components.
+
+## 5. AI Behavior Guidelines
+- **No Hallucinations**: If you don't know, use a tool or ask.
+- **Linting First**: Before marking a task as complete, verify linting passes.
+- **Files**: When creating files, ensure they are in the correct directory (`backend/apps/...` or `frontend/src/...`).
+- **Security**: Never hardcode secrets. Use `os.environ` or Django settings.

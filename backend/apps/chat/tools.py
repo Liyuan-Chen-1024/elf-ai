@@ -1,12 +1,13 @@
 import json
 import logging
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Optional, Protocol, Type
 
 import httpx
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 
 logger = logging.getLogger(__name__)
+
 
 class Tool(Protocol):
     name: str
@@ -17,14 +18,7 @@ class Tool(Protocol):
         ...
 
     def to_openai_schema(self) -> Dict[str, Any]:
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": self.parameters,
-            },
-        }
+        ...
 
 
 class WebSearchTool:

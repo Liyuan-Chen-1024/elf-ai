@@ -28,5 +28,11 @@
         "VITE",
         "Xfrozen",
         "xlarge"
+    ],
+    "eslint.workingDirectories": [
+        "./frontend"
+    ],
+    "python.analysis.extraPaths": [
+        "./backend"
     ]
 }

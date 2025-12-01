@@ -39,6 +39,20 @@ test:
 	make test-frontend
 	@echo "All tests passed!"
 
+# Formatting
+format:
+	$(call setup_base_env)
+	@echo "Formatting backend..."
+	docker compose run --rm --entrypoint="" backend sh -c "cd /app && python -m black . && python -m isort ."
+	@echo "Formatting frontend..."
+	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && npm run format"
+
+# Seeding
+seed:
+	$(call setup_base_env)
+	@echo "Seeding database..."
+	docker compose exec backend python manage.py create_test_user
+
 # Testing
 test-backend:
 	$(call setup_test_env)

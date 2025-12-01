@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-azuretools.vscode-docker",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "tamasfe.even-better-toml",
+    "charliermarsh.ruff",
+    "batisteo.vscode-django",
+    "ms-python.black-formatter",
+    "ms-python.isort"
+  ]
+}
+

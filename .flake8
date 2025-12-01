@@ -14,7 +14,9 @@ exclude =
     .env,
     .tox,
     docs,
-    */settings/*
+    */settings/*,
+    frontend,
+    node_modules
 
 # Line length settings
 max-line-length = 120
@@ -38,4 +40,4 @@ format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
 accept-encodings = utf-8
 inline-quotes = double
 multiline-quotes = double
-docstring-quotes = double 
+docstring-quotes = double
