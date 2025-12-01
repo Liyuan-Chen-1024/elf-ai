@@ -130,7 +130,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
             updates to the message content and status.
             """
             try:
-                last_content = ""
+                last_content = message.content
+                last_status = message.status_generating
+                
                 # Initial event with starting state
                 yield json.dumps(
                     {
@@ -148,15 +150,19 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
                     # Get new content since last update
                     new_content = message.content[len(last_content) :]
-                    if new_content:
+                    status_changed = message.status_generating != last_status
+
+                    if new_content or status_changed:
                         last_content = message.content
+                        last_status = message.status_generating
+                        
                         yield json.dumps(
                             {
                                 "type": "chunk",
                                 "message_id": str(message.id),
                                 "is_generating": message.is_generating,
                                 "status_generating": message.status_generating,
-                                "content": new_content,
+                                "content": new_content,  # Only send the *new* text
                             }
                         ) + "\n"
 

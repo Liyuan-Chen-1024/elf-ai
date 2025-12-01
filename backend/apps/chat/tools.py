@@ -21,11 +21,11 @@ class Tool(Protocol):
 
 class WebSearchTool:
     name = "web_search"
-    description = "Search the internet for current information, facts, or news. Returns a list of results with snippets and URLs."
+    description = "Search the internet. Returns snippets and URLs. You MUST use 'web_fetch' to read the full content of interesting URLs found here."
     parameters = {
         "type": "object",
         "properties": {
-            "query": {"type": "string", "description": "The search query to look up."}
+            "query": {"type": "string", "description": "The keyword-optimized search query."}
         },
         "required": ["query"],
     }
@@ -36,15 +36,15 @@ class WebSearchTool:
             logger.info(f"Executing web search for: {query}")
             # Add a timeout to prevent hanging indefinitely
             with DDGS(timeout=20) as ddgs:
-                results = list(ddgs.text(query, max_results=5))
+                results = list(ddgs.text(query, max_results=8))
 
             if not results:
-                return "No results found."
+                return "No results found. Try a broader query."
 
             formatted_results = f"Search results for '{query}':\n\n"
             for i, r in enumerate(results, 1):
                 formatted_results += (
-                    f"{i}. {r['title']}\n   {r['body']}\n   URL: {r['href']}\n\n"
+                    f"{i}. Title: {r['title']}\n   URL: {r['href']}\n   Snippet: {r['body']}\n\n"
                 )
 
             return formatted_results
@@ -61,6 +61,9 @@ class WebSearchTool:
                 "parameters": self.parameters,
             },
         }
+
+
+from urllib.parse import urljoin
 
 
 class WebFetchTool:
@@ -86,6 +89,7 @@ class WebFetchTool:
             ) as client:
                 response = client.get(url)
                 response.raise_for_status()
+                base_url = str(response.url)
 
             soup = BeautifulSoup(response.text, "html.parser")
 
@@ -94,6 +98,15 @@ class WebFetchTool:
                 ["script", "style", "nav", "footer", "iframe", "noscript"]
             ):
                 script.extract()
+
+            # Convert links to markdown format before getting text
+            for a in soup.find_all("a", href=True):
+                href = a["href"]
+                text = a.get_text(strip=True)
+                if text and href:
+                    # Resolve relative URLs
+                    absolute_url = urljoin(base_url, href)
+                    a.replace_with(f" [{text}]({absolute_url}) ")
 
             # Get text
             text = soup.get_text()

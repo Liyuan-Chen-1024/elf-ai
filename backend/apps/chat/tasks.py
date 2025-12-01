@@ -1,3 +1,4 @@
+import re
 import json
 import time
 from typing import Any, Dict, List
@@ -26,6 +27,32 @@ def get_llm_client() -> OpenAI:
         api_key=settings.LLM_API_KEY or "not-needed",
         http_client=http_client,
     )
+
+
+def format_links_to_markdown(text: str) -> str:
+    """
+    Fix common link formatting issues in LLM output.
+    
+    Converts:
+    1. '* Title (URL)' -> '* [Title](URL)'
+    2. '* **Title** (URL)' -> '* [**Title**](URL)'
+    3. 'Title (URL)' -> '[Title](URL)' (when it looks like a list item)
+    """
+    # Pattern to match list items with parenthesized URLs
+    pattern = re.compile(r'^(\s*[-*•]\s+)(.*?)\s+\((https?://[^\)]+)\)$', re.MULTILINE)
+    
+    def replacement(match):
+        prefix = match.group(1)
+        title = match.group(2).strip()
+        url = match.group(3).strip()
+        
+        # If title is already a markdown link, don't touch it
+        if '[' in title and ']' in title:
+            return match.group(0)
+            
+        return f"{prefix}[{title}]({url})"
+
+    return pattern.sub(replacement, text)
 
 
 @shared_task  # type: ignore
@@ -227,9 +254,22 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 "2. DIRECT ACTION: Do not explain what you are going to do. If you need info, CALL THE TOOL IMMEDIATELY.\n"
                 "3. Do not output a text plan. Just execute the search or fetch.\n"
                 "4. If you need to search, use 'web_search'. If you need to read a URL, use 'web_fetch'.\n"
-                "5. Do not hallucinate. If search fails, try a different query.\n"
-                "6. Treat the 'Current User Profile' and 'Current Conversation History' as your own memory.\n"
-                "7. Answer naturally and directly once you have the information.\n\n"
+                "5. SEARCH STRATEGY:\n"
+                "   - Start with specific KEYWORDS.\n"
+                "   - If search results contains a promising URL, USE 'web_fetch' TO READ IT immediately.\n"
+                "   - DO NOT keep searching for the same thing over and over. Read the available content!\n"
+                "   - If the first search fails, try synonyms or broader terms.\n"
+                "6. CITATIONS & FORMATTING (STRICT):\n"
+                "   - WHEN LISTING SEARCH RESULTS, NEWS, OR ARTICLES, YOU MUST INCLUDE THE URL.\n"
+                "   - DO NOT output a list without links.\n"
+                "   - CORRECT FORMAT: - **[Title of Page](https://example.com)**: Description here.\n"
+                "   - INCORRECT FORMAT: - Title of Page (https://example.com)\n"
+                "   - INCORRECT FORMAT: - Title of Page (no link)\n"
+                "   - INCORRECT FORMAT: - **Title of Page** (https://example.com)\n"
+                "   - NEVER SHOW THE RAW URL TEXT IN THE CHAT, HIDE IT BEHIND THE TITLE.\n"
+                "   - If a URL is available in the tool output, USE IT.\n"
+                "7. Treat the 'Current User Profile' and 'Current Conversation History' as your own memory.\n"
+                "8. Answer naturally and directly once you have the information.\n\n"
                 "CURRENT USER PROFILE (Long-term Memory):\n"
                 f"{memory_context}\n\n"
                 f"{past_summaries_text}"
@@ -272,8 +312,12 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                         # If final answer (no tool calls), stream it
                         if not tool_calls_buffer:
                             current_time = time.time()
-                            if current_time - last_update_time > 0.5:
-                                ai_message.content = final_content + content_buffer
+                            # Update DB more frequently (every 0.1s) to make streaming smoother
+                            if current_time - last_update_time > 0.1:
+                                current_text = final_content + content_buffer
+                                # Apply formatting to the current accumulated text so the user sees it live
+                                formatted_text = format_links_to_markdown(current_text)
+                                ai_message.content = formatted_text
                                 ai_message.save(update_fields=["content"])
                                 last_update_time = current_time
 
@@ -303,12 +347,9 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
 
                 # End of stream for this turn
                 if tool_calls_buffer:
-                    # If content_buffer was generated (thoughts), append to final_content
-                    # so the user sees the planning/thought process.
-                    if content_buffer:
-                        final_content += content_buffer + "\n\n"
-                        ai_message.content = final_content
-                        ai_message.save(update_fields=["content"])
+                    # DO NOT append content_buffer (reasoning/thoughts) to final_content
+                    # This prevents the user from seeing "I will now search for..."
+                    # The thoughts ARE preserved in the 'messages' list below for the LLM's context.
 
                     # 1. Append assistant message with tool calls
                     assistant_msg = {
@@ -380,6 +421,9 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                 # No tool calls - this is the final answer
                 if content_buffer:
                     final_content += content_buffer
+
+                # Apply post-processing formatting fix
+                final_content = format_links_to_markdown(final_content)
 
                 ai_message.content = final_content
                 ai_message.is_generating = False
