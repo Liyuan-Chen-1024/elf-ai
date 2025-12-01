@@ -59,17 +59,14 @@ const {
 ## Benefits of the New Structure
 
 1. **Clearer Separation of Concerns**:
-
    - Data fetching hooks handle API interactions only
    - Action hooks handle business logic
    - UI hooks handle presentation concerns
 
 2. **Feature Cohesion**:
-
    - All chat hooks are grouped with the feature they support
 
 3. **Better Testability**:
-
    - Each hook has a more focused responsibility
    - Easier to mock for tests
 

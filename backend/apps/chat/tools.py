@@ -14,11 +14,9 @@ class Tool(Protocol):
     description: str
     parameters: Dict[str, Any]
 
-    def execute(self, **kwargs) -> str:
-        ...
+    def execute(self, **kwargs) -> str: ...
 
-    def to_openai_schema(self) -> Dict[str, Any]:
-        ...
+    def to_openai_schema(self) -> Dict[str, Any]: ...
 
 
 class WebSearchTool:
@@ -27,12 +25,9 @@ class WebSearchTool:
     parameters = {
         "type": "object",
         "properties": {
-            "query": {
-                "type": "string",
-                "description": "The search query to look up."
-            }
+            "query": {"type": "string", "description": "The search query to look up."}
         },
-        "required": ["query"]
+        "required": ["query"],
     }
 
     def execute(self, query: str) -> str:
@@ -42,14 +37,16 @@ class WebSearchTool:
             # Add a timeout to prevent hanging indefinitely
             with DDGS(timeout=20) as ddgs:
                 results = list(ddgs.text(query, max_results=5))
-            
+
             if not results:
                 return "No results found."
-            
+
             formatted_results = f"Search results for '{query}':\n\n"
             for i, r in enumerate(results, 1):
-                formatted_results += f"{i}. {r['title']}\n   {r['body']}\n   URL: {r['href']}\n\n"
-            
+                formatted_results += (
+                    f"{i}. {r['title']}\n   {r['body']}\n   URL: {r['href']}\n\n"
+                )
+
             return formatted_results
         except Exception as e:
             logger.error(f"Search failed: {e}")
@@ -72,12 +69,9 @@ class WebFetchTool:
     parameters = {
         "type": "object",
         "properties": {
-            "url": {
-                "type": "string",
-                "description": "The URL to fetch content from."
-            }
+            "url": {"type": "string", "description": "The URL to fetch content from."}
         },
-        "required": ["url"]
+        "required": ["url"],
     }
 
     def execute(self, url: str) -> str:
@@ -87,33 +81,37 @@ class WebFetchTool:
             headers = {
                 "User-Agent": "Mozilla/5.0 (compatible; ElfAI/1.0; +http://example.com)"
             }
-            with httpx.Client(timeout=15.0, follow_redirects=True, headers=headers) as client:
+            with httpx.Client(
+                timeout=15.0, follow_redirects=True, headers=headers
+            ) as client:
                 response = client.get(url)
                 response.raise_for_status()
-                
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
+
+            soup = BeautifulSoup(response.text, "html.parser")
+
             # Remove script and style elements
-            for script in soup(["script", "style", "nav", "footer", "iframe", "noscript"]):
+            for script in soup(
+                ["script", "style", "nav", "footer", "iframe", "noscript"]
+            ):
                 script.extract()
-            
+
             # Get text
             text = soup.get_text()
-            
+
             # Break into lines and remove leading/trailing space on each
             lines = (line.strip() for line in text.splitlines())
             # Break multi-headlines into a line each
             chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
             # Drop blank lines
-            text = '\n'.join(chunk for chunk in chunks if chunk)
-            
+            text = "\n".join(chunk for chunk in chunks if chunk)
+
             # Limit length to avoid overflowing context
             max_length = 8000
             if len(text) > max_length:
                 text = text[:max_length] + "\n...(content truncated)..."
-            
+
             return f"Content from {url}:\n\n{text}"
-            
+
         except Exception as e:
             logger.error(f"Fetch failed for {url}: {e}")
             return f"Failed to fetch URL {url}: {str(e)}"
@@ -132,13 +130,13 @@ class WebFetchTool:
 class ToolRegistry:
     def __init__(self):
         self._tools: Dict[str, Tool] = {}
-    
+
     def register(self, tool: Tool):
         self._tools[tool.name] = tool
-    
+
     def get_tool(self, name: str) -> Optional[Tool]:
         return self._tools.get(name)
-    
+
     def get_openai_tools(self) -> List[Dict[str, Any]]:
         return [tool.to_openai_schema() for tool in self._tools.values()]
 

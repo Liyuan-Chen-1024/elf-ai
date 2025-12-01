@@ -155,15 +155,10 @@ function LoginPage() {
                     </Typography>
                     <Typography variant="caption" display="block">
                       Status:{' '}
-                      {loginError instanceof ApiError
-                        ? loginError.status || 'No status'
-                        : 'N/A'}
+                      {loginError instanceof ApiError ? loginError.status || 'No status' : 'N/A'}
                     </Typography>
                     <Typography variant="caption" display="block">
-                      URL:{' '}
-                      {loginError instanceof ApiError
-                        ? 'See console' || 'No URL'
-                        : 'N/A'}
+                      URL: {loginError instanceof ApiError ? 'See console' || 'No URL' : 'N/A'}
                     </Typography>
                   </>
                 )}

@@ -1,12 +1,13 @@
+import json
+
 from django.contrib import admin
 from django.db.models import Count
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
-import json
 
-from .models import Conversation, Message, Memory
+from .models import Conversation, Memory, Message
 
 
 class MessageInline(admin.TabularInline):
@@ -188,10 +189,10 @@ class MemoryAdmin(admin.ModelAdmin):
             return f"Profile Keys: {', '.join(keys)}" if keys else "Empty Profile"
         except Exception:
             return "Invalid Data"
-    
+
     pretty_json_data.short_description = "Memory Profile Summary"
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ('user',)
+            return self.readonly_fields + ("user",)
         return self.readonly_fields

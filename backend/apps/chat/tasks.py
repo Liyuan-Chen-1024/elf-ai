@@ -2,14 +2,16 @@ import json
 import time
 from typing import Any, Dict, List
 
-import httpx
-from celery import shared_task
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+
+import httpx
+from celery import shared_task
 from openai import OpenAI
 
 from apps.core.logging import get_logger
+
 from .models import Conversation, Memory, Message
 from .tools import registry
 
@@ -271,9 +273,7 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                         if not tool_calls_buffer:
                             current_time = time.time()
                             if current_time - last_update_time > 0.5:
-                                ai_message.content = (
-                                    final_content + content_buffer
-                                )
+                                ai_message.content = final_content + content_buffer
                                 ai_message.save(update_fields=["content"])
                                 last_update_time = current_time
 
@@ -285,10 +285,7 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                                 tool_calls_buffer[idx] = {
                                     "id": tc.id,
                                     "type": "function",
-                                    "function": {
-                                        "name": "",
-                                        "arguments": ""
-                                    },
+                                    "function": {"name": "", "arguments": ""},
                                 }
 
                             if tc.id:
@@ -340,15 +337,13 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                             except:
                                 pass
                         elif func_name == "web_fetch":
-                             display_status = "Reading website content..."
+                            display_status = "Reading website content..."
 
                         with transaction.atomic():
                             ai_message.status_generating = display_status
                             ai_message.save(update_fields=["status_generating"])
 
-                        logger.info(
-                            f"Executing tool {func_name} with args {args_str}"
-                        )
+                        logger.info(f"Executing tool {func_name} with args {args_str}")
 
                         try:
                             tool = registry.get_tool(func_name)
@@ -357,9 +352,7 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                                     args = json.loads(args_str)
                                     result = tool.execute(**args)
                                 except json.JSONDecodeError:
-                                    result = (
-                                        f"Error: Invalid JSON args: {args_str}"
-                                    )
+                                    result = f"Error: Invalid JSON args: {args_str}"
                             else:
                                 result = f"Error: Tool {func_name} not found"
                         except Exception as e:
@@ -380,28 +373,30 @@ def generate_agent_response(message_content: str, ai_message_id: str) -> None:
                     # "I need to search..." text disappears from the UI while the tool runs.
                     ai_message.content = final_content
                     ai_message.save(update_fields=["content"])
-                    
+
                     # Continue to next turn so LLM can use the tool output
                     continue
 
-            # Final update
-            ai_message.content = final_content
-            ai_message.is_generating = False
-            ai_message.status_generating = "Completed"
-            ai_message.save(
-                update_fields=[
-                    "content",
-                    "is_generating",
-                    "status_generating",
-                ]
-            )
+                # No tool calls - this is the final answer
+                if content_buffer:
+                    final_content += content_buffer
 
-            # Trigger summary update again
-            update_conversation_summary_task.delay(
-                str(ai_message.conversation.id)
-            )
+                ai_message.content = final_content
+                ai_message.is_generating = False
+                ai_message.status_generating = "Completed"
+                ai_message.save(
+                    update_fields=[
+                        "content",
+                        "is_generating",
+                        "status_generating",
+                    ]
+                )
 
-            logger.info("Successfully generated AI response")
+                # Trigger summary update again
+                update_conversation_summary_task.delay(str(ai_message.conversation.id))
+
+                logger.info("Successfully generated AI response")
+                break
 
         except Exception as e:
             logger.exception(

@@ -10,12 +10,12 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>(set => ({
   token: localStorage.getItem('authToken'),
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   isAuthenticated: !!localStorage.getItem('authToken'),
 
-  setToken: (token) => {
+  setToken: token => {
     if (token) {
       localStorage.setItem('authToken', token);
     } else {
@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ token, isAuthenticated: !!token });
   },
 
-  setUser: (user) => {
+  setUser: user => {
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
     } else {

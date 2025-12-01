@@ -137,6 +137,8 @@ INSTALLED_APPS = [
     # Local apps
     "apps.core",
     "apps.chat",
+    "django_celery_results",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [

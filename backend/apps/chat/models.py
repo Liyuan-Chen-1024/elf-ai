@@ -19,9 +19,9 @@ class Conversation(TimeStampedModel, UUIDModel):
 
     title = models.CharField(max_length=255, default="New conversation")
     summary = models.TextField(
-        blank=True, 
-        default="", 
-        help_text="Auto-generated summary of the conversation content"
+        blank=True,
+        default="",
+        help_text="Auto-generated summary of the conversation content",
     )
 
     class Meta:
@@ -71,10 +71,10 @@ class Memory(TimeStampedModel, UUIDModel):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memory"
     )
     data = models.JSONField(
-        default=dict, 
-        help_text="Structured user profile data (e.g., {'personal': ..., 'interests': ...})"
+        default=dict,
+        help_text="Structured user profile data (e.g., {'personal': ..., 'interests': ...})",
     )
-    
+
     class Meta:
         verbose_name = "User Memory Profile"
         verbose_name_plural = "User Memory Profiles"

@@ -92,10 +92,7 @@ export function useAuth() {
         setToken(newToken);
 
         if (import.meta.env.DEV) {
-          console.log(
-            'Stored auth token after login:',
-            newToken.substring(0, 5) + '...'
-          );
+          console.log('Stored auth token after login:', newToken.substring(0, 5) + '...');
         }
       } else {
         console.error('No token found in login response', data);

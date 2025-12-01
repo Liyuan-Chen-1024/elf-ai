@@ -63,7 +63,7 @@ const prepareRequest = (
 ): PrepareRequestResult => {
   url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1') + url;
   const isLogin = isLoginRoute(url);
-  
+
   // Get token from store
   const authToken = useAuthStore.getState().token;
   const csrfToken = getCsrfToken();

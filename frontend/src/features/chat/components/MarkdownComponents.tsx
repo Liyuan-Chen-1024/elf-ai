@@ -169,4 +169,3 @@ export const MarkdownComponents: Partial<Components> = {
     return <h3 {...rest}>{children}</h3>;
   },
 };
-

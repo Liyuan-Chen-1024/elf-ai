@@ -45,7 +45,7 @@ format:
 	@echo "Formatting backend..."
 	docker compose run --rm --entrypoint="" backend sh -c "cd /app && python -m black . && python -m isort ."
 	@echo "Formatting frontend..."
-	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && npm run format"
+	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && [ -d node_modules ] || npm install && npm run format"
 
 # Seeding
 seed:
@@ -65,13 +65,11 @@ test-backend:
 	docker compose run --rm --build backend python manage.py migrate
 	@echo "Running pytest tests..."
 	docker compose run --rm backend pytest -v
-	@echo "Running Django tests..."
-	docker compose run --rm backend python manage.py test
 
 test-frontend:
 	$(call setup_test_env)
 	@echo "Running frontend tests..."
-	docker compose run --rm --build --entrypoint "npm" frontend test
+	docker compose run --rm --build --entrypoint="" frontend sh -c "cd /app && [ -d node_modules ] || npm install && npm run test"
 
 lint:
 	$(call setup_test_env)
@@ -82,8 +80,8 @@ lint:
 lint-frontend:
 	$(call setup_test_env)
 	@echo "Running lint..."
-	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && npm run lint"
-	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && npm run format"
+	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && [ -d node_modules ] || npm install && npm run lint"
+	docker compose run --rm --entrypoint="" frontend sh -c "cd /app && [ -d node_modules ] || npm install && npm run format"
 
 lint-backend:
 	$(call setup_test_env)

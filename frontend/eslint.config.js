@@ -16,7 +16,7 @@ export default [
       parser: tsParser,
       parserOptions: {
         project: ['./tsconfig.json'],
-        tsconfigRootDir: '.',
+        tsconfigRootDir: import.meta.dirname,
       },
       globals: {
         process: 'readonly',
@@ -30,7 +30,7 @@ export default [
       parserOptions: {
         ecmaFeatures: { jsx: true },
         project: ['./tsconfig.json'],
-        tsconfigRootDir: '.',
+        tsconfigRootDir: import.meta.dirname,
       },
       globals: {
         document: 'readonly',
@@ -68,6 +68,7 @@ export default [
           jsx: true,
         },
         project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
       },
       globals: {
         document: 'readonly',

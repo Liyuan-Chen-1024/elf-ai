@@ -99,7 +99,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     },
                     status=status.HTTP_201_CREATED,
                 )
-        
+
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action(

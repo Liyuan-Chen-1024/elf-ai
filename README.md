@@ -16,6 +16,12 @@ make test
 # Run linters
 make lint
 
+# Format code (prettier, black, isort)
+make format
+
+# Seed database with test user
+make seed
+
 # Clean up resources
 make clean
 ```
@@ -72,4 +78,4 @@ The application consists of:
 - React frontend (TypeScript)
 - PostgreSQL database
 - Redis for caching and Celery
-- Celery for background tasks 
+- Celery for background tasks
